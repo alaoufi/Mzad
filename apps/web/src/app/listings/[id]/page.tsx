@@ -56,6 +56,13 @@ export default function ListingPage({ params }: { params: { id: string } }) {
     } catch (e: any) { uiToast(e.message, 'error'); }
     finally { setSavingEdit(false); }
   };
+  const requestPurchase = async () => {
+    if (!user) { uiToast('سجّل الدخول أولاً لإرسال طلبك', 'info'); return; }
+    try {
+      await api(`/listings/${params.id}/messages`, { method: 'POST', body: JSON.stringify({ body: 'مرحباً، أرغب بشراء هذا الإعلان. هل ما زال متاحاً؟' }) });
+      uiToast('تم إرسال طلبك للبائع — تابع المحادثة بالأسفل', 'success');
+    } catch (e: any) { uiToast(e.message, 'error'); }
+  };
   const toggleArchive = async () => {
     try {
       await api(`/listings/${params.id}`, { method: 'PATCH', body: JSON.stringify({ archived: !listing.archived }) });
@@ -264,7 +271,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                       {listing.price ? `${Number(listing.price).toLocaleString('ar-SA')} ﷼` : 'على السوم'}
                     </div>
                   </div>
-                  <button className="btn-primary">اطلب الشراء</button>
+                  <button className="btn-primary" onClick={requestPurchase}>اطلب الشراء</button>
                 </div>
               )}
 
