@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
+import { InterestPicker } from '@/components/InterestPicker';
 import { resolveTheme, resolveIcon, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { usePageTheme } from '@/lib/theme-context';
 import { AdBanner } from '@/components/AdBanner';
@@ -11,18 +13,36 @@ interface Cat { id: string; name: string; icon?: string; themeKey?: string | nul
 type Mode = 'DIRECT' | 'AUCTION' | 'SUPPLIES';
 
 export default function HomePage() {
+  const { user } = useAuth();
   const [tree, setTree] = useState<Cat[]>([]);
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [mode, setMode] = useState<Mode>('DIRECT');
   const [path, setPath] = useState<Cat[]>([]);
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
-  const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
+
+  // الاهتمامات الشخصية
+  const [interests, setInterests] = useState<string[]>([]);
+  const [interestActive, setInterestActive] = useState(true);
+  const [showPicker, setShowPicker] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => { api<Cat[]>('/categories').then(setTree).catch(() => {}); }, []);
 
   useEffect(() => {
-    api<Cat[]>('/categories').then(setTree).catch(() => {});
-    api<{ entryMode: 'GENERAL' | 'SPECIALIZED' }>('/settings').then((r) => setEntryMode(r.entryMode)).catch(() => {});
-  }, []);
+    if (!user) { setProfileLoaded(true); return; }
+    api<{ interests?: string[] }>('/users/me')
+      .then((r) => setInterests(r.interests ?? []))
+      .catch(() => {})
+      .finally(() => setProfileLoaded(true));
+  }, [user]);
+
+  // عرض رسالة «ما يهمّك» أول دخول للمسجّلين بلا اهتمامات
+  useEffect(() => {
+    if (!profileLoaded || !user) return;
+    const skipped = typeof window !== 'undefined' && localStorage.getItem('mazad_interest_skip');
+    if (interests.length === 0 && !skipped) setShowPicker(true);
+  }, [profileLoaded, user, interests.length]);
 
   const animals = useMemo(() => tree.filter((s) => s.name !== SUPPLIES_NAME), [tree]);
   const suppliesRoot = useMemo(() => tree.find((s) => s.name === SUPPLIES_NAME), [tree]);
@@ -31,19 +51,22 @@ export default function HomePage() {
   const activeCategoryId =
     path.length ? path[path.length - 1].id : mode === 'SUPPLIES' ? suppliesRoot?.id ?? null : null;
 
+  const useInterests = mode !== 'SUPPLIES' && interestActive && interests.length > 0 && path.length === 0;
+
   // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة
   const chain: CatNode[] = mode === 'SUPPLIES'
     ? [...[...path].reverse(), ...(suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : [])]
     : [...path].reverse();
   const theme = resolveTheme(chain);
-  const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐪';
-  usePageTheme(theme); // يلوّن ترويسة الموقع والشريط السفلي بلون النوع
+  const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
+  usePageTheme(theme);
 
   const load = () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
     if (activeCategoryId) params.set('categoryId', activeCategoryId);
+    else if (useInterests) params.set('categoryIds', interests.join(','));
     else if (mode !== 'SUPPLIES' && suppliesRoot) params.set('exclude', suppliesRoot.id);
     if (q) params.set('q', q);
     api<{ items: ListingSummary[] }>(`/listings?${params}`)
@@ -53,98 +76,99 @@ export default function HomePage() {
   };
 
   useEffect(() => { setPath([]); }, [mode]);
-  useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ }, [mode, activeCategoryId, tree.length]);
+  useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ },
+    [mode, activeCategoryId, tree.length, useInterests, interests.join(',')]);
 
   const deepest = path[path.length - 1];
   const title =
     mode === 'SUPPLIES'
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
-      : `${mode === 'DIRECT' ? 'عروض' : 'مزاد'} ${deepest?.name ?? 'المواشي'}`;
+      : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${deepest?.name ?? (useInterests ? 'تهمّك' : 'المواشي')}`;
   const tagline = path.length
     ? path.map((p) => p.name).join(' · ')
-    : mode === 'SUPPLIES' ? 'أعلاف · صيدليات بيطرية · مستلزمات' : 'إبل · غنم · ماعز · بقر · خيل';
+    : mode === 'SUPPLIES' ? 'أعلاف · صيدليات بيطرية · مستلزمات' : 'إبل · غنم · خيل';
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
 
-  // بوابة الدخول المتخصص: يختار الزائر النوع أول دخول ويتصفّح داخله كأنه موقع مستقل
-  const showGate = entryMode === 'SPECIALIZED' && mode !== 'SUPPLIES' && path.length === 0;
-  if (showGate && animals.length > 0) {
-    return (
-      <div className="-mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
-        style={{ background: sceneBackground(resolveTheme([])), ...themeVars(resolveTheme([])) }}>
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-6xl">🐾</p>
-          <h1 className="mt-3 text-2xl font-extrabold text-engrave sm:text-3xl">أهلاً بك في مزاد</h1>
-          <p className="mt-2 text-gray-500">اختر النوع الذي تريد تصفّحه — كل نوع بهويته الخاصة وكأنه موقع مستقل.</p>
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {animals.map((s) => {
-              const t = resolveTheme([{ name: s.name, themeKey: s.themeKey ?? null }]);
-              return (
-                <button key={s.id} onClick={() => pick(0, s)}
-                  className="group relative overflow-hidden rounded-3xl p-5 text-white shadow-lift transition hover:-translate-y-0.5"
-                  style={{ backgroundImage: gradient(t), boxShadow: `0 22px 44px -20px ${t.from}aa` }}>
-                  <span className="pointer-events-none absolute -left-3 -bottom-4 select-none text-7xl leading-none opacity-15">{s.icon ?? '🐾'}</span>
-                  <span className="relative block text-4xl drop-shadow animate-floaty">{s.icon ?? '🐾'}</span>
-                  <span className="relative mt-2 block text-lg font-extrabold text-emboss-light">{s.name}</span>
-                </button>
-              );
-            })}
-          </div>
-          <button onClick={() => setMode('SUPPLIES')}
-            className="mt-5 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-gray-600 ring-1 ring-sand-200">
-            🛒 أو تصفّح سوق المستلزمات
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const inSpecialized = entryMode === 'SPECIALIZED' && mode !== 'SUPPLIES';
+  const saveInterests = async (ids: string[]) => {
+    setInterests(ids);
+    setInterestActive(ids.length > 0);
+    setShowPicker(false);
+    if (user) { try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); } catch {} }
+  };
+  const skipInterests = () => {
+    if (typeof window !== 'undefined') localStorage.setItem('mazad_interest_skip', '1');
+    setShowPicker(false);
+  };
 
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme), ...themeVars(theme) }}>
-      {/* علامة مائية للنوع (إحساس المكان) — مطلقة لا ثابتة لتفادي إعادة الرسم عند التمرير */}
       <div className="pointer-events-none absolute left-0 top-24 -z-0 select-none text-[30vw] leading-none opacity-[0.04]">
-        {emoji}
+        {emoji === '🐾' ? '🐪' : emoji}
       </div>
 
       <div className="relative">
         {/* الهيرو */}
-        <div className="relative mb-4 overflow-hidden rounded-4xl p-6 text-white shadow-xl transition-all duration-500"
-          style={{ backgroundImage: gradient(theme), boxShadow: `0 26px 52px -22px ${theme.from}aa` }}>
-          {/* لمعة علوية وزخرفة */}
+        <div className="relative mb-4 overflow-hidden rounded-4xl p-5 text-white shadow-lg transition-all duration-500"
+          style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 44px -24px ${theme.from}aa` }}>
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40" />
-          <span className="pointer-events-none absolute -left-4 -bottom-6 select-none text-[8rem] leading-none opacity-15">{emoji}</span>
-          <div className="relative">
-            <h1 className="flex items-center gap-3 text-2xl font-extrabold text-emboss-light sm:text-3xl">
-              <span className="text-4xl drop-shadow animate-floaty">{emoji}</span> {title}
-            </h1>
-            <p className="mt-1 text-white/85">{tagline}</p>
+          <span className="pointer-events-none absolute -left-3 -bottom-5 select-none text-[7rem] leading-none opacity-15">{emoji === '🐾' ? '🐪' : emoji}</span>
+          <div className="relative flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-extrabold text-emboss-light sm:text-3xl">{title}</h1>
+              <p className="mt-1 text-sm text-white/85">{tagline}</p>
+            </div>
+            {user && interests.length > 0 && mode !== 'SUPPLIES' && (
+              <button onClick={() => setShowPicker(true)}
+                className="shrink-0 rounded-2xl bg-white/20 px-3 py-2 text-xs font-bold ring-1 ring-white/25">
+                ✎ اهتماماتي
+              </button>
+            )}
           </div>
         </div>
 
-        {/* مساحة إعلانية حسب السوق */}
-        {mode !== 'SUPPLIES' ? (
-          <AdBanner placement="HOME_TOP" onClick={() => setMode('SUPPLIES')} />
+        {mode === 'SUPPLIES' ? (
+          <>
+            <button onClick={() => setMode('DIRECT')}
+              className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
+              → العودة لأسواق المواشي
+            </button>
+            <AdBanner placement="SUPPLIES_TOP" />
+          </>
         ) : (
-          <AdBanner placement="SUPPLIES_TOP" />
-        )}
+          <>
+            <AdBanner placement="HOME_TOP" />
 
-        {/* الأسواق الثلاثة */}
-        <div className="glass mb-4 grid grid-cols-3 gap-1.5 rounded-3xl p-1.5">
-          {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات'], ['SUPPLIES', '🛒 المستلزمات']] as [Mode, string][]).map(
-            ([m, label]) => (
-              <button key={m} onClick={() => setMode(m)}
-                className={`rounded-xl py-3 text-sm font-bold transition sm:text-base ${
-                  mode === m ? 'text-white shadow' : 'text-gray-500'}`}
-                style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
-                {label}
-              </button>
-            ),
-          )}
-        </div>
+            {/* المبدّل الرئيسي: عروض / مزادات */}
+            <div className="mb-3 grid grid-cols-2 gap-2 rounded-3xl bg-white/80 p-1.5 ring-1 ring-black/[0.04]">
+              {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
+                <button key={m} onClick={() => setMode(m)}
+                  className={`rounded-2xl py-3 text-sm font-bold transition sm:text-base ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
+                  style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* مبدّل الاهتمامات */}
+            {user && interests.length > 0 && (
+              <div className="mb-3 flex gap-2">
+                <button onClick={() => setInterestActive(true)}
+                  className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
+                  style={interestActive ? { backgroundColor: theme.accent } : undefined}>
+                  ⭐ ما يهمّني
+                </button>
+                <button onClick={() => setInterestActive(false)}
+                  className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${!interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
+                  style={!interestActive ? { backgroundColor: theme.accent } : undefined}>
+                  🌐 كل الأنواع
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
         {/* بحث */}
         <form onSubmit={(e) => { e.preventDefault(); load(); }} className="mb-4 flex gap-2">
@@ -152,31 +176,22 @@ export default function HomePage() {
           <button type="submit" className="btn-primary !px-5">🔍</button>
         </form>
 
-        {/* المستوى 1 — في الوضع المتخصص يُستبدل بزر تغيير النوع */}
-        {inSpecialized ? (
-          <button onClick={() => reset(0)}
-            className="mb-2 flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-bold text-white shadow"
-            style={{ backgroundImage: gradient(theme) }}>
-            <span>{emoji} {path[0]?.name}</span>
-            <span className="opacity-90">↩︎ تغيير النوع</span>
-          </button>
-        ) : (
-          <Row label={mode === 'SUPPLIES' ? 'الفئة' : 'النوع'}>
-            <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
-            {topList.map((c) => (
-              <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
-                {c.icon} {c.name}
-              </Chip>
-            ))}
-          </Row>
-        )}
+        {/* المستوى 1 */}
+        <Row label={mode === 'SUPPLIES' ? 'الفئة' : 'النوع'}>
+          <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
+          {topList.map((c) => (
+            <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
+              {c.icon} {c.name}
+            </Chip>
+          ))}
+        </Row>
 
         {/* المستوى 2 */}
         {path[0]?.children && path[0].children.length > 0 && (
           <Row label={mode === 'SUPPLIES' ? 'الصنف' : 'اللون / الصنف'}>
             <Chip active={path.length === 1} accent={theme.accent} onClick={() => reset(1)}>الكل</Chip>
             {path[0].children.map((c) => (
-              <Chip key={c.id} active={path[1]?.id === c.id} accent={theme.accent} onClick={() => pick(1, c)}>{c.name}</Chip>
+              <Chip key={c.id} active={path[1]?.id === c.id} accent={theme.accent} onClick={() => pick(1, c)}>{c.icon} {c.name}</Chip>
             ))}
           </Row>
         )}
@@ -198,8 +213,8 @@ export default function HomePage() {
               {[0, 1, 2, 3].map((i) => <div key={i} className="card h-44 animate-pulse bg-black/5" />)}
             </div>
           ) : listings.length === 0 ? (
-            <div className="py-16 text-center text-gray-500">
-              <p className="text-6xl">{emoji}</p>
+            <div className="py-14 text-center text-gray-500">
+              <p className="text-6xl">{emoji === '🐾' ? '🐪' : emoji}</p>
               <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
             </div>
           ) : (
@@ -208,7 +223,29 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
+        {/* المستلزمات — مدخل ثانوي (ليس سوقاً رئيسياً) */}
+        {mode !== 'SUPPLIES' && suppliesRoot && (
+          <button onClick={() => setMode('SUPPLIES')}
+            className="mt-6 flex w-full items-center gap-3 rounded-3xl bg-white p-4 text-right shadow-sm ring-1 ring-sand-200 transition active:scale-[0.99]">
+            <span className="text-3xl">🛒</span>
+            <span className="flex-1">
+              <span className="block font-bold text-gray-800">سوق المستلزمات</span>
+              <span className="block text-xs text-gray-500">أعلاف · صيدليات بيطرية · أدوات ومعدّات</span>
+            </span>
+            <span className="text-gray-300">‹</span>
+          </button>
+        )}
       </div>
+
+      {showPicker && (
+        <InterestPicker
+          initial={interests}
+          onSave={saveInterests}
+          onClose={() => setShowPicker(false)}
+          onSkip={interests.length === 0 ? skipInterests : undefined}
+        />
+      )}
     </div>
   );
 }

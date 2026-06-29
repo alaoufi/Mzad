@@ -6,6 +6,7 @@ import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { HijriDate } from '@/components/HijriDate';
+import { InterestPicker } from '@/components/InterestPicker';
 import { accountTypeDef } from '@/lib/roles';
 
 interface Profile {
@@ -17,6 +18,7 @@ interface Profile {
   isPhoneVerified: boolean;
   identityStatus: string;
   trustScore: number;
+  interests?: string[];
   createdAt?: string;
   _count: { listings: number; reviewsReceived: number };
   ratings: { avgRating: number; avgDescMatch: number; count: number };
@@ -30,8 +32,15 @@ export default function AccountPage() {
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
+  const [editInterests, setEditInterests] = useState(false);
 
   const loadProfile = () => api<Profile>('/users/me').then(setProfile).catch(() => {});
+
+  const saveInterests = async (ids: string[]) => {
+    setEditInterests(false);
+    try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); await loadProfile(); }
+    catch (e: any) { alert(e.message); }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -154,9 +163,34 @@ export default function AccountPage() {
         </button>
       </div>
 
+      {/* اهتماماتي */}
+      <div className="card flex items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">⭐</span>
+          <div>
+            <div className="font-bold">اهتماماتي</div>
+            <div className="text-sm text-gray-500">
+              {profile?.interests?.length ? `${profile.interests.length} تصنيف مختار — تظهر لك إعلاناته` : 'لم تحدّد بعد — اختر ما يهمّك'}
+            </div>
+          </div>
+        </div>
+        <button onClick={() => setEditInterests(true)} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm">
+          {profile?.interests?.length ? 'تعديل' : 'اختيار'}
+        </button>
+      </div>
+
       <button className="card float-box flex w-full items-center justify-center gap-2 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
         ⚖️ نزاعاتي
       </button>
+
+      {editInterests && (
+        <InterestPicker
+          initial={profile?.interests ?? []}
+          title="اهتماماتي"
+          onSave={saveInterests}
+          onClose={() => setEditInterests(false)}
+        />
+      )}
 
       {/* روابط اللوحات */}
       {(profile?.role === 'BROKER' || profile?.role === 'ADMIN') && (
