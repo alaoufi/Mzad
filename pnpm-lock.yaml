@@ -154,6 +154,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.6
         version: 3.4.19(yaml@2.9.0)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.19.43)(typescript@5.5.4)
       typescript:
         specifier: ^5.5.0
         version: 5.5.4
