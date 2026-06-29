@@ -137,19 +137,23 @@ export async function POST(req: NextRequest) {
   });
 
   const now = new Date();
+  const isBroker = user.role === 'BROKER' || user.role === 'ADMIN';
   if (dto.saleType === 'AUCTION' && dto.auction) {
-    // مزاد مؤقّت بوقت نهاية
+    // مزاد مؤقّت — يدعم الجدولة بموعد بداية مستقبلي (للدلال)
     const durationHours = Number(dto.auction.durationHours) || 24;
+    const startAt = dto.auction.startAt ? new Date(dto.auction.startAt) : now;
+    const scheduled = startAt.getTime() > now.getTime() + 60_000;
     await prisma.auction.create({
       data: {
         listingId: listing.id,
+        brokerId: isBroker ? user.sub : null,
         startPrice: new Prisma.Decimal(dto.auction.startPrice),
         minIncrement: new Prisma.Decimal(dto.auction.minIncrement ?? 100),
         reservePrice: dto.auction.reservePrice != null ? new Prisma.Decimal(dto.auction.reservePrice) : null,
         deposit: dto.auction.deposit != null ? new Prisma.Decimal(dto.auction.deposit) : null,
-        startAt: now,
-        endAt: new Date(now.getTime() + durationHours * 3600_000),
-        status: 'LIVE',
+        startAt,
+        endAt: new Date(startAt.getTime() + durationHours * 3600_000),
+        status: scheduled ? 'SCHEDULED' : 'LIVE',
       },
     });
   } else if (dto.onsoom) {

@@ -18,6 +18,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
   const [startPrice, setStartPrice] = useState(0);
   const [minIncrement, setMinIncrement] = useState(100);
   const [endAt, setEndAt] = useState('');
+  const [startAt, setStartAt] = useState('');
   const [status, setStatus] = useState('LIVE');
   const [bids, setBids] = useState<BidRow[]>([]);
   const [amount, setAmount] = useState(0);
@@ -35,6 +36,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
     setStartPrice(Number(s.startPrice));
     setMinIncrement(Number(s.minIncrement));
     setEndAt(s.endAt);
+    if (s.startAt) setStartAt(s.startAt);
     if (s.status) setStatus(s.status);
     setBids((s.bids ?? []).map((b: any) => ({ bidderName: b.bidder?.name ?? 'مزايد', amount: Number(b.amount) })));
     if (!touched.current) setAmount(hb + Number(s.minIncrement));
@@ -73,13 +75,17 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
     catch (e: any) { alert(e.message); }
   };
 
+  const scheduled = status === 'SCHEDULED';
+  const cancelled = status === 'CANCELLED';
   const ended = status === 'ENDED' || (!open && endAt && new Date(endAt).getTime() <= Date.now());
 
   return (
     <div className="card p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-extrabold">{open ? '🤝 على السوم' : '🔨 المزاد المباشر'}</h2>
-        {open ? (
+        {scheduled ? (
+          <span className="chip !bg-blue-100 !text-blue-700">مجدول</span>
+        ) : open ? (
           <span className="chip">مزايدة مفتوحة بلا وقت</span>
         ) : endAt ? (
           <div className="rounded-xl bg-sand-100 px-3 py-2">ينتهي خلال <Countdown endAt={endAt} /></div>
@@ -96,7 +102,13 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
 
       {msg && <div className="mb-3 rounded-2xl bg-amber-50 p-3 text-center text-amber-800">{msg}</div>}
 
-      {!ended ? (
+      {cancelled ? (
+        <div className="rounded-2xl bg-red-50 p-4 text-center font-bold text-red-700">أُلغي المزاد</div>
+      ) : scheduled ? (
+        <div className="rounded-2xl bg-blue-50 p-4 text-center font-bold text-blue-700">
+          🗓️ يبدأ المزاد خلال {startAt ? <Countdown endAt={startAt} /> : '—'}
+        </div>
+      ) : !ended ? (
         <>
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex flex-1 items-center gap-2">

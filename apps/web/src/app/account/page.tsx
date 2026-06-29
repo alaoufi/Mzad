@@ -98,7 +98,12 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* رابط الإدارة */}
+      {/* روابط اللوحات */}
+      {(profile?.role === 'BROKER' || profile?.role === 'ADMIN') && (
+        <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/broker')}>
+          🧑‍⚖️ لوحة الدلال
+        </button>
+      )}
       {profile?.role === 'ADMIN' && (
         <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/admin')}>
           🛡️ لوحة الإدارة

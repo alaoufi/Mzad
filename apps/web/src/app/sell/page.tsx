@@ -40,9 +40,11 @@ export default function SellPage() {
     categoryId: '',
     title: '', description: '', photos: [] as string[],
     count: 1, sex: 'MIXED', approxWeightKg: '', city: '', region: '',
-    saleType: 'DIRECT', price: '', startPrice: '', minIncrement: 500, durationHours: 24,
+    saleType: 'DIRECT', price: '', startPrice: '', minIncrement: 500, durationHours: 24, startAt: '',
     health: {} as Record<string, boolean>,
   });
+
+  const isBroker = user?.role === 'BROKER' || user?.role === 'ADMIN';
 
   useEffect(() => { api<Cat[]>('/categories').then(setTree).catch(() => {}); }, []);
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
@@ -88,7 +90,11 @@ export default function SellPage() {
         body.onsoom = true;
         body.auction = { startPrice: Number(form.startPrice || 0), minIncrement: Number(form.minIncrement) };
       } else {
-        body.auction = { startPrice: Number(form.startPrice), minIncrement: Number(form.minIncrement), durationHours: Number(form.durationHours) };
+        body.auction = {
+          startPrice: Number(form.startPrice), minIncrement: Number(form.minIncrement),
+          durationHours: Number(form.durationHours),
+          ...(isBroker && form.startAt ? { startAt: form.startAt } : {}),
+        };
       }
       const created = await api<{ id: string }>('/listings', { method: 'POST', body: JSON.stringify(body) });
       router.push(`/listings/${created.id}`);
@@ -279,6 +285,13 @@ export default function SellPage() {
                   <div><label className="mb-2 block font-bold">المدة (ساعات)</label>
                     <input type="number" className="input" value={form.durationHours} onChange={(e) => set('durationHours', e.target.value)} /></div>
                 </div>
+                {isBroker && (
+                  <div>
+                    <label className="mb-2 block font-bold">🗓️ موعد بداية المزاد (للدلال — اختياري)</label>
+                    <input type="datetime-local" className="input" value={form.startAt} onChange={(e) => set('startAt', e.target.value)} />
+                    <p className="mt-1 text-sm text-gray-500">اتركه فارغاً ليبدأ فوراً، أو حدّد موعداً مستقبلياً ليُجدول.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
