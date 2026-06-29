@@ -7,6 +7,7 @@ import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
 import { resolveTheme, resolveIcon, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { usePageTheme } from '@/lib/theme-context';
+import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
 
 interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[]; }
@@ -18,7 +19,7 @@ export default function HomePage() {
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [mode, setMode] = useState<Mode>('DIRECT');
   const [path, setPath] = useState<Cat[]>([]);
-  const [q, setQ] = useState('');
+  const q = useSearchTerm();
   const [loading, setLoading] = useState(true);
 
   // الاهتمامات الشخصية
@@ -83,15 +84,6 @@ export default function HomePage() {
     return false;
   };
 
-  // عند تفعيل «ما يهمّني»: ادخل النوع الوحيد المهتمّ به مباشرة، وامنع الخروج عنه
-  useEffect(() => {
-    if (mode === 'SUPPLIES' || !interestActive || marketInterests.length === 0 || !animals.length) return;
-    if (path[0] && !relevant(path[0].id)) { setPath([]); return; }
-    const tops = animals.filter((a) => relevant(a.id));
-    if (tops.length === 1 && path.length === 0) setPath([tops[0]]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interestActive, mode, animals, marketInterests.join(','), path[0]?.id]);
-
   // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة
   const chain: CatNode[] = mode === 'SUPPLIES'
     ? [...[...path].reverse(), ...(suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : [])]
@@ -117,7 +109,7 @@ export default function HomePage() {
 
   useEffect(() => { setPath([]); }, [mode]);
   useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ },
-    [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id]);
+    [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id, q]);
 
   const deepest = path[path.length - 1];
   const title =
@@ -206,11 +198,12 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* بحث */}
-        <form onSubmit={(e) => { e.preventDefault(); load(); }} className="mb-4 flex gap-2">
-          <input className="input flex-1" placeholder="ابحث..." value={q} onChange={(e) => setQ(e.target.value)} />
-          <button type="submit" className="btn-primary !px-5">🔍</button>
-        </form>
+        {q && (
+          <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
+            <span className="font-bold text-gray-600">نتائج البحث: «{q}»</span>
+            <button onClick={() => setSearchTerm('')} className="mr-auto rounded-lg bg-sand-100 px-2 py-1 text-xs font-bold text-gray-500">✕ مسح</button>
+          </div>
+        )}
 
         {/* المستوى 1 (الرأس) — مصفّى حسب اهتمامك */}
         <Row label={levelLabel(mode, 0)}>

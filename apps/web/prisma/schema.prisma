@@ -133,6 +133,7 @@ model Listing {
   lng              Float?
   hidePhone        Boolean       @default(false)
   status           ListingStatus @default(ACTIVE)
+  archived         Boolean       @default(false) // أرشفة من البائع
   createdAt        DateTime      @default(now())
 
   media   Media[]

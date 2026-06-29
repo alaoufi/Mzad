@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
 
   const where: Prisma.ListingWhereInput = {
     status: 'ACTIVE',
+    archived: false,
     ...categoryFilter,
     ...excludeFilter,
     ...(region ? { region } : {}),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -27,12 +28,40 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const [listing, setListing] = useState<any>(null);
   const [error, setError] = useState('');
   const [activeImg, setActiveImg] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [form, setForm] = useState<any>({});
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const load = useCallback(() => {
     api(`/listings/${params.id}`).then(setListing).catch((e) => setError(e.message));
   }, [params.id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const openEdit = () => {
+    setForm({
+      title: listing.title, description: listing.description, count: listing.count, sex: listing.sex,
+      approxWeightKg: listing.approxWeightKg ?? '', city: listing.city, region: listing.region,
+      price: listing.price ?? '',
+    });
+    setEditing(true);
+  };
+  const saveEdit = async () => {
+    setSavingEdit(true);
+    try {
+      await api(`/listings/${params.id}`, { method: 'PATCH', body: JSON.stringify(form) });
+      setEditing(false); uiToast('تم حفظ التعديل', 'success'); load();
+    } catch (e: any) { uiToast(e.message, 'error'); }
+    finally { setSavingEdit(false); }
+  };
+  const toggleArchive = async () => {
+    try {
+      await api(`/listings/${params.id}`, { method: 'PATCH', body: JSON.stringify({ archived: !listing.archived }) });
+      uiToast(listing.archived ? 'أُعيد الإعلان للعرض' : 'نُقل الإعلان للأرشيف', 'success'); load();
+    } catch (e: any) { uiToast(e.message, 'error'); }
+  };
 
   const convert = async (to: 'DIRECT' | 'AUCTION' | 'ONSOOM') => {
     try {
@@ -63,6 +92,13 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const emoji = resolveIcon(chain);
   const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
 
+  // صلاحيات التعديل والأرشفة
+  const isOwner = !!user && user.id === listing.seller?.id;
+  const isStaff = user?.role === 'ADMIN' || user?.role === 'BROKER';
+  const within2h = !!listing.createdAt && Date.now() - new Date(listing.createdAt).getTime() < 2 * 60 * 60 * 1000;
+  const canEditFields = isStaff || (isOwner && within2h);
+  const canArchive = isOwner || isStaff;
+
   return (
     <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme), ...themeVars(theme) }}>
       {/* لافتة السوق حسب النوع */}
@@ -80,6 +116,24 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       {listing.status === 'DRAFT' && (
         <div className="mb-4 rounded-2xl bg-amber-50 p-3 text-center font-bold text-amber-800">
           ⏳ إعلانك بانتظار موافقة الإدارة قبل ظهوره للجميع
+        </div>
+      )}
+
+      {/* شريط إدارة الإعلان (تعديل/أرشفة) */}
+      {(canEditFields || canArchive) && (
+        <div className="card mb-4 flex flex-wrap items-center gap-2 p-3">
+          {listing.archived && <span className="chip !bg-gray-200 !text-gray-700">🗄️ مؤرشف</span>}
+          {canEditFields && (
+            <button onClick={openEdit} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm">✏️ تعديل الإعلان</button>
+          )}
+          {canArchive && (
+            <button onClick={toggleArchive} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">
+              {listing.archived ? '♻️ استرجاع للعرض' : '🗄️ نقل للأرشيف'}
+            </button>
+          )}
+          {isOwner && !within2h && !isStaff && (
+            <span className="text-xs text-gray-400">انتهت مهلة التعديل (ساعتان من النشر) — تواصل مع الدلال أو الإدارة.</span>
+          )}
         </div>
       )}
 
@@ -266,6 +320,43 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
       </div>
       </div>
+
+      {editing && mounted && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-3" onClick={() => setEditing(false)}>
+          <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold">✏️ تعديل الإعلان</h3>
+              <button onClick={() => setEditing(false)} className="text-2xl leading-none text-gray-400">×</button>
+            </div>
+            <div className="space-y-3">
+              <input className="input" placeholder="عنوان الإعلان" value={form.title ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, title: e.target.value }))} />
+              <textarea className="input min-h-[100px]" placeholder="الوصف" value={form.description ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, description: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-3">
+                <input type="number" className="input" placeholder="العدد" value={form.count ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, count: e.target.value }))} />
+                <input type="number" className="input" placeholder="الوزن (كجم)" value={form.approxWeightKg ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, approxWeightKg: e.target.value }))} />
+              </div>
+              <div className="flex gap-2">
+                {[['MALE', 'ذكر'], ['FEMALE', 'أنثى'], ['MIXED', 'مختلط']].map(([v, l]) => (
+                  <button key={v} onClick={() => setForm((f: any) => ({ ...f, sex: v }))}
+                    className={`flex-1 rounded-2xl border-2 py-2.5 font-bold ${form.sex === v ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{l}</button>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <input className="input" placeholder="المدينة" value={form.city ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, city: e.target.value }))} />
+                <input className="input" placeholder="المنطقة" value={form.region ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, region: e.target.value }))} />
+              </div>
+              {!listing.auction && (
+                <input type="number" className="input text-xl" placeholder="السعر (ريال) — اتركه فارغاً لِـ«على السوم»" value={form.price ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, price: e.target.value }))} />
+              )}
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setEditing(false)} className="btn-outline flex-1">إلغاء</button>
+              <button onClick={saveEdit} disabled={savingEdit} className="btn-primary flex-1 disabled:opacity-50">{savingEdit ? '...' : 'حفظ'}</button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
