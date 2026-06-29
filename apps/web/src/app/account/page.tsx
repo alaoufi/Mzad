@@ -180,13 +180,16 @@ export default function AccountPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <button className="card float-box flex items-center justify-center gap-2 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
-          ⚖️ نزاعاتي
+      <div className="grid grid-cols-3 gap-3">
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
+          ⚖️ <span>نزاعاتي</span>
+        </button>
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold" onClick={() => router.push('/help')}>
+          ❓ <span>كيف يعمل</span>
         </button>
         <a href="https://wa.me/9665000000" target="_blank" rel="noopener noreferrer"
-          className="card float-box flex items-center justify-center gap-2 p-3 text-sm font-bold text-green-700">
-          💬 الدعم الفني
+          className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold text-green-700">
+          💬 <span>الدعم</span>
         </a>
       </div>
 
@@ -247,12 +250,25 @@ export default function AccountPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {listings.map((l) => (
+            {listings.filter((l) => !l.archived).map((l) => (
               <ListingCard key={l.id} listing={l} />
             ))}
           </div>
         )}
       </div>
+
+      {/* الأرشيف */}
+      {listings.some((l) => l.archived) && (
+        <div>
+          <h2 className="mb-3 text-xl font-bold">🗄️ الأرشيف</h2>
+          <p className="mb-3 text-sm text-gray-500">إعلانات أخفيتها عن العرض — افتحها لاسترجاعها.</p>
+          <div className="grid grid-cols-1 gap-4 opacity-70 sm:grid-cols-2">
+            {listings.filter((l) => l.archived).map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

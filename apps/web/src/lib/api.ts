@@ -39,6 +39,7 @@ export interface ListingSummary {
   region: string;
   price?: string | null;
   saleType: 'DIRECT' | 'AUCTION';
+  archived?: boolean;
   category?: { name: string; icon?: string };
   media?: { url: string }[];
   seller?: { name: string; trustScore: number; identityStatus: string };
