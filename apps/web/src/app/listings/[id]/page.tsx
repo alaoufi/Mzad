@@ -8,6 +8,7 @@ import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
 import { themeFor, gradient, sceneBackground } from '@/lib/themes';
 import { isOpenEnd } from '@/lib/auction';
+import { HeartButton } from '@/lib/favorites';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -108,11 +109,12 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
       {/* التفاصيل */}
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
-          <p className="mt-1 text-gray-500">
-            📍 {listing.city} — {listing.region}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
+            <p className="mt-1 text-gray-500">📍 {listing.city} — {listing.region}</p>
+          </div>
+          <HeartButton id={listing.id} className="shrink-0 !h-11 !w-11 !text-2xl ring-1 ring-sand-200" />
         </div>
 
         {/* البائع والثقة */}

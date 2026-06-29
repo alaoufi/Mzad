@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ListingSummary } from '@/lib/api';
 import { Countdown } from './Countdown';
 import { isOpenEnd } from '@/lib/auction';
+import { HeartButton } from '@/lib/favorites';
 
 export function ListingCard({ listing }: { listing: ListingSummary }) {
   const img = listing.media?.[0]?.url;
@@ -28,8 +29,9 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
             🤝 سوم
           </span>
         )}
+        <HeartButton id={listing.id} className="absolute left-1.5 top-1.5 !h-8 !w-8 !text-base" />
         {listing.seller?.identityStatus === 'VERIFIED' && (
-          <span className="absolute left-1.5 top-1.5 rounded-full bg-white/85 px-1.5 py-0.5 text-[10px] font-bold text-brand backdrop-blur">
+          <span className="absolute left-11 top-2 rounded-full bg-white/85 px-1.5 py-0.5 text-[10px] font-bold text-brand backdrop-blur">
             ✔ موثّق
           </span>
         )}

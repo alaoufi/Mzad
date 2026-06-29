@@ -86,6 +86,16 @@ export default function AccountPage() {
           value={profile?.ratings.avgDescMatch ? `${Math.round((profile.ratings.avgDescMatch / 5) * 100)}%` : '—'} />
       </div>
 
+      {/* روابط سريعة */}
+      <div className="grid grid-cols-2 gap-3">
+        <button className="card float-box flex items-center justify-center gap-2 p-4 font-bold" onClick={() => router.push('/favorites')}>
+          ❤️ المفضلة
+        </button>
+        <button className="card float-box flex items-center justify-center gap-2 p-4 font-bold" onClick={() => router.push('/messages')}>
+          💬 رسائلي
+        </button>
+      </div>
+
       {/* روابط اللوحات */}
       {(profile?.role === 'BROKER' || profile?.role === 'ADMIN') && (
         <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/broker')}>

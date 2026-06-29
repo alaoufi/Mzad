@@ -45,6 +45,7 @@ model User {
   messages        Message[]
   reports         Report[]
   otps            OtpCode[]
+  favorites       Favorite[]
 }
 
 // رموز التحقق بالجوال
@@ -130,6 +131,7 @@ model Listing {
   health  HealthAttribute[]
   auction Auction?
   conversations Conversation[]
+  favorites Favorite[]
 
   @@index([categoryId, status, region])
   @@index([status, createdAt])
@@ -319,4 +321,18 @@ model Ad {
   createdAt   DateTime  @default(now())
 
   @@index([placement, status])
+}
+
+// ───────────────────────── المفضلة ─────────────────────────
+
+model Favorite {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listingId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId])
 }
