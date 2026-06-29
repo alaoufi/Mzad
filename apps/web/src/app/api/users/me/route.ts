@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
       id: true,
       name: true,
       role: true,
+      accountType: true,
       city: true,
       region: true,
       isPhoneVerified: true,

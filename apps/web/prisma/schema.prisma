@@ -29,6 +29,7 @@ model User {
   phone           String         @unique
   name            String
   role            Role           @default(USER)
+  accountType     String?        @default("SHOPPER") // الدور التفصيلي
   isPhoneVerified Boolean        @default(false)
   identityStatus  IdentityStatus @default(NONE)
   city            String?

@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
+import { accountTypeDef } from '@/lib/roles';
 
 interface Profile {
   name: string;
   role: string;
+  accountType?: string;
   city?: string;
   region?: string;
   isPhoneVerified: boolean;
@@ -18,11 +20,6 @@ interface Profile {
   ratings: { avgRating: number; avgDescMatch: number; count: number };
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  USER: 'مستخدم',
-  BROKER: 'دلال معتمد',
-  ADMIN: 'إدارة',
-};
 
 export default function AccountPage() {
   const router = useRouter();
@@ -70,7 +67,9 @@ export default function AccountPage() {
           <div className="flex-1">
             <h1 className="text-2xl font-extrabold text-emboss-light">{profile?.name ?? user.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-              <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">{ROLE_LABEL[profile?.role ?? 'USER']}</span>
+              <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">
+                {accountTypeDef(profile?.accountType).emoji} {accountTypeDef(profile?.accountType).label}
+              </span>
               {profile?.identityStatus === 'VERIFIED' && (
                 <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">✔ موثّق بالهوية</span>
               )}

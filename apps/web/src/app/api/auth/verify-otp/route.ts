@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
         name: (name ?? '').trim() || (isAdmin ? 'مشرف المنصة' : 'مستخدم جديد'),
         isPhoneVerified: true,
         role: isAdmin ? 'ADMIN' : 'USER',
+        accountType: isAdmin ? 'SUPER_ADMIN' : 'SHOPPER',
       },
     });
   } else {
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
       where: { id: user.id },
       data: {
         isPhoneVerified: true,
-        ...(isAdmin && user.role !== 'ADMIN' ? { role: 'ADMIN' } : {}),
+        ...(isAdmin && user.role !== 'ADMIN' ? { role: 'ADMIN', accountType: 'SUPER_ADMIN' } : {}),
       },
     });
   }

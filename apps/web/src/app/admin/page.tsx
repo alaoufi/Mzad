@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { ACCOUNT_TYPES, accountTypeDef } from '@/lib/roles';
 
 interface AdminData {
   stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number };
@@ -15,7 +16,6 @@ interface AdminData {
 }
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'نشط', DRAFT: 'بانتظار الموافقة', SOLD: 'مُباع', CLOSED: 'مخفي' };
-const ROLE_LABEL: Record<string, string> = { USER: 'متسوّق', BROKER: 'دلال', ADMIN: 'مشرف' };
 
 export default function AdminPage() {
   const router = useRouter();
@@ -42,8 +42,8 @@ export default function AdminPage() {
     if (!confirm('حذف هذا الإعلان نهائياً؟')) return;
     try { await api(`/admin/listings/${id}`, { method: 'DELETE' }); load(); } catch (e: any) { alert(e.message); }
   };
-  const setRole = async (id: string, role: string) => {
-    try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ role }) }); load(); }
+  const setRole = async (id: string, accountType: string) => {
+    try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ accountType }) }); load(); }
     catch (e: any) { alert(e.message); }
   };
 
@@ -183,12 +183,14 @@ export default function AdminPage() {
               <div key={u.id} className="flex items-center gap-3 rounded-2xl bg-sand-50 p-3">
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-bold">{u.name}</div>
-                  <div className="text-xs text-gray-500">{u.phone} · {u.city ?? '—'}</div>
+                  <div className="text-xs text-gray-500">
+                    {u.phone} · {accountTypeDef(u.accountType).emoji} {accountTypeDef(u.accountType).label}
+                  </div>
                 </div>
-                <select value={u.role} onChange={(e) => setRole(u.id, e.target.value)}
+                <select value={u.accountType ?? 'SHOPPER'} onChange={(e) => setRole(u.id, e.target.value)}
                   className="rounded-xl border-2 border-sand-200 bg-white px-2 py-2 text-sm font-bold">
-                  {Object.entries(ROLE_LABEL).map(([k, label]) => (
-                    <option key={k} value={k}>{label}</option>
+                  {ACCOUNT_TYPES.map((a) => (
+                    <option key={a.key} value={a.key}>{a.emoji} {a.label}</option>
                   ))}
                 </select>
               </div>
