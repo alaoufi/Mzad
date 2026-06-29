@@ -19,9 +19,32 @@ export async function GET(req: NextRequest) {
   const lng = sp.get('lng') ? Number(sp.get('lng')) : undefined;
   const page = Math.max(1, Number(sp.get('page') ?? 1));
 
+  // إن اختير تصنيف أعلى (نوع/لون) نطابق كل السلالات المنحدرة منه
+  let categoryFilter: Prisma.ListingWhereInput = {};
+  if (categoryId) {
+    const all = await prisma.category.findMany({ select: { id: true, parentId: true } });
+    const childrenMap = new Map<string, string[]>();
+    for (const c of all) {
+      if (c.parentId) {
+        const arr = childrenMap.get(c.parentId) ?? [];
+        arr.push(c.id);
+        childrenMap.set(c.parentId, arr);
+      }
+    }
+    const ids: string[] = [];
+    const stack = [categoryId];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      ids.push(cur);
+      const kids = childrenMap.get(cur);
+      if (kids) stack.push(...kids);
+    }
+    categoryFilter = { categoryId: { in: ids } };
+  }
+
   const where: Prisma.ListingWhereInput = {
     status: 'ACTIVE',
-    ...(categoryId ? { categoryId } : {}),
+    ...categoryFilter,
     ...(region ? { region } : {}),
     ...(saleType ? { saleType: saleType as any } : {}),
     ...(q
