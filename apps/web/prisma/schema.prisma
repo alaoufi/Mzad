@@ -281,3 +281,36 @@ model Report {
   status     ReportStatus @default(OPEN)
   createdAt  DateTime     @default(now())
 }
+
+// ───────────────────────── أنواع المزادات (تُدار من الإدارة) ─────────────────────────
+
+model AuctionType {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  commissionPct   Float    @default(0)
+  requiresDeposit Boolean  @default(false)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+}
+
+// ───────────────────────── الإعلانات والمساحات الإعلانية ─────────────────────────
+
+model Ad {
+  id          String    @id @default(uuid())
+  type        String    @default("BANNER")   // BANNER / CLASSIFIED / HOUSE
+  title       String
+  imageUrl    String?
+  link        String?
+  placement   String    @default("HOME_TOP")
+  status      String    @default("ACTIVE")   // ACTIVE / PAUSED
+  priority    Int       @default(0)
+  advertiser  String?
+  startAt     DateTime?
+  endAt       DateTime?
+  impressions Int       @default(0)
+  clicks      Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([placement, status])
+}

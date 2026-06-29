@@ -83,8 +83,12 @@ export default function AdminPage() {
     <div className="animate-fadeup space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold">🛡️ لوحة الإدارة</h1>
-        <button onClick={() => router.push('/admin/categories')}
-          className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">🗂️ التصنيفات</button>
+        <div className="flex gap-2">
+          <button onClick={() => router.push('/admin/categories')}
+            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">🗂️ التصنيفات</button>
+          <button onClick={() => router.push('/admin/marketing')}
+            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">📣 التسويق</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
