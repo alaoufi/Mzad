@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
 import { getCommissionConfig } from '@/lib/commission';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   });
 
   await prisma.listing.update({ where: { id: params.id }, data: { status } });
+
+  // إشعار البائع عند الموافقة على إعلانه
+  if (status === 'ACTIVE' && before && before.status === 'DRAFT') {
+    await notify(before.sellerId, 'LISTING_APPROVED', '✅ تمت الموافقة على إعلانك وظهر للجميع', `/listings/${params.id}`);
+  }
 
   // عند تحويل الإعلان إلى «مُباع» لأول مرة: قيد عمولة المنصة على البائع حسب نوع المزاد
   if (status === 'SOLD' && before && before.status !== 'SOLD') {

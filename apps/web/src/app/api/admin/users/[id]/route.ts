@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
 import { ACCOUNT_TYPES, roleForAccountType } from '@/lib/roles';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,5 +33,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (Object.keys(data).length === 0) return json({ message: 'لا تغييرات' }, 400);
 
   await prisma.user.update({ where: { id: params.id }, data });
+
+  if (identityStatus === 'VERIFIED') {
+    await notify(params.id, 'VERIFIED', '🛡️ تم توثيق هويتك — تظهر شارة «موثّق» على إعلاناتك');
+  }
   return json({ ok: true });
 }

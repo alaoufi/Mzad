@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { useActiveTheme } from '@/lib/theme-context';
 import { gradient } from '@/lib/themes';
 import { setSearchTerm } from '@/lib/search';
@@ -16,6 +17,15 @@ export function Header() {
   const isHome = pathname === '/';
   const [searchOpen, setSearchOpen] = useState(false);
   const [term, setTerm] = useState('');
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user) { setUnread(0); return; }
+    const fetchUnread = () => api<{ unread: number }>('/notifications').then((r) => setUnread(r.unread)).catch(() => {});
+    fetchUnread();
+    const t = setInterval(fetchUnread, 30000);
+    return () => clearInterval(t);
+  }, [user, pathname]);
 
   const submitSearch = () => {
     setSearchTerm(term.trim());
@@ -45,6 +55,17 @@ export function Header() {
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl ring-1 ring-white/20 hover:bg-white/25">
             🔍
           </button>
+          {user && (
+            <button onClick={() => router.push('/notifications')} aria-label="الإشعارات"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl ring-1 ring-white/20 hover:bg-white/25">
+              🔔
+              {unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white/40">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+          )}
           <Link href="/sell"
             className="hidden rounded-2xl px-4 py-2 text-base font-bold text-white shadow-md sm:inline-flex"
             style={{ backgroundImage: 'linear-gradient(135deg, #e0b85a, #b9852b)' }}>

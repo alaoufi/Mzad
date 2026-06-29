@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -66,6 +67,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
           const bidCount = await tx.bid.count({ where: { auctionId } });
           return {
             auctionId,
+            listingId: auction.listingId,
+            prevBidderId: auction.bids[0]?.bidderId ?? null,
             amount: bidAmount,
             bidderId: user.sub,
             bidderName: bid.bidder.name,
@@ -78,6 +81,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
 
+      // إشعار صاحب أعلى عرض سابق بأنه تمّت المزايدة فوقه
+      if (result.prevBidderId && result.prevBidderId !== user.sub) {
+        await notify(result.prevBidderId, 'OUTBID',
+          `🔔 تمت المزايدة فوق عرضك بمبلغ ${result.amount.toLocaleString('ar-SA')} ﷼`,
+          `/listings/${result.listingId}`);
+      }
       return json(result);
     } catch (e: any) {
       if (e instanceof HttpError) return json({ message: e.message }, e.status);
