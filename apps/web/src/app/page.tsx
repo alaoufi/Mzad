@@ -62,6 +62,36 @@ export default function HomePage() {
 
   const useInterests = interestActive && path.length === 0 && marketInterests.length > 0;
 
+  // فهرسة الأب لكل عقدة + حساب صلة التصنيف بالاهتمام (لتصفية أزرار التصفّح)
+  const parentOf = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    const walk = (n: Cat, p?: string) => { m.set(n.id, p); n.children?.forEach((c) => walk(c, n.id)); };
+    tree.forEach((t) => walk(t, undefined));
+    return m;
+  }, [tree]);
+  const interestSet = useMemo(() => new Set(marketInterests), [marketInterests]);
+  const interestAncestors = useMemo(() => {
+    const s = new Set<string>();
+    for (const id of marketInterests) { let p = parentOf.get(id); while (p) { s.add(p); p = parentOf.get(p); } }
+    return s;
+  }, [marketInterests, parentOf]);
+  const relevant = (id: string): boolean => {
+    if (!interestActive || marketInterests.length === 0) return true;
+    if (interestSet.has(id) || interestAncestors.has(id)) return true;
+    let p: string | undefined = id;
+    while (p) { if (interestSet.has(p)) return true; p = parentOf.get(p); }
+    return false;
+  };
+
+  // عند تفعيل «ما يهمّني»: ادخل النوع الوحيد المهتمّ به مباشرة، وامنع الخروج عنه
+  useEffect(() => {
+    if (mode === 'SUPPLIES' || !interestActive || marketInterests.length === 0 || !animals.length) return;
+    if (path[0] && !relevant(path[0].id)) { setPath([]); return; }
+    const tops = animals.filter((a) => relevant(a.id));
+    if (tops.length === 1 && path.length === 0) setPath([tops[0]]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interestActive, mode, animals, marketInterests.join(','), path[0]?.id]);
+
   // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة
   const chain: CatNode[] = mode === 'SUPPLIES'
     ? [...[...path].reverse(), ...(suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : [])]
@@ -182,10 +212,10 @@ export default function HomePage() {
           <button type="submit" className="btn-primary !px-5">🔍</button>
         </form>
 
-        {/* المستوى 1 (الرأس) */}
+        {/* المستوى 1 (الرأس) — مصفّى حسب اهتمامك */}
         <Row label={levelLabel(mode, 0)}>
           <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
-          {topList.map((c) => (
+          {topList.filter((c) => relevant(c.id)).map((c) => (
             <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
               {c.icon} {c.name}
             </Chip>
@@ -193,17 +223,19 @@ export default function HomePage() {
         </Row>
 
         {/* المستويات الأعمق — بأي عدد حسب التصنيف */}
-        {path.map((node, i) =>
-          node.children && node.children.length > 0 ? (
+        {path.map((node, i) => {
+          const kids = (node.children ?? []).filter((c) => relevant(c.id));
+          return kids.length > 0 ? (
             <Row key={node.id} label={levelLabel(mode, i + 1)}>
               <Chip active={path.length === i + 1} accent={theme.accent} onClick={() => reset(i + 1)}>الكل</Chip>
-              {node.children.map((c) => (
+              {kids.map((c) => (
                 <Chip key={c.id} active={path[i + 1]?.id === c.id} accent={theme.accent} onClick={() => pick(i + 1, c)}>
                   {c.icon} {c.name}
                 </Chip>
               ))}
             </Row>
-          ) : null,
+          ) : null;
+        }
         )}
 
         {/* النتائج */}
