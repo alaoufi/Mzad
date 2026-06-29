@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation';
 
 const ITEMS = [
   { href: '/', label: 'الرئيسية', icon: '🏠' },
+  { href: '/favorites', label: 'المفضلة', icon: '❤️' },
+  { href: '/sell', label: 'أضف', icon: '＋', primary: true },
   { href: '/messages', label: 'رسائلي', icon: '💬' },
-  { href: '/sell', label: 'أضف', icon: '➕', primary: true },
   { href: '/account', label: 'حسابي', icon: '👤' },
 ];
 
@@ -14,26 +15,25 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-sand-200 bg-white/95 backdrop-blur sm:hidden">
-      <div className="mx-auto flex max-w-5xl items-stretch">
+    <nav className="fixed inset-x-0 bottom-0 z-40 sm:hidden">
+      <div className="glass mx-auto flex max-w-5xl items-stretch rounded-t-3xl border-t border-white/40 px-1">
         {ITEMS.map((item) => {
           const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
           if (item.primary) {
             return (
               <Link key={item.href} href={item.href} className="flex flex-1 items-center justify-center">
-                <span className="-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-l from-gold to-amber-500 text-2xl text-white shadow-lg shadow-gold/30">
+                <span className="-mt-7 flex h-15 w-15 items-center justify-center rounded-full text-3xl text-white shadow-lg shadow-gold/30 ring-4 ring-white"
+                  style={{ height: '3.6rem', width: '3.6rem', backgroundImage: 'linear-gradient(135deg, #e0b85a, #b9852b)' }}>
                   {item.icon}
                 </span>
               </Link>
             );
           }
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`navitem ${active ? 'navitem-active' : ''}`}
-            >
-              <span className="text-xl">{item.icon}</span>
+            <Link key={item.href} href={item.href} className={`navitem ${active ? 'navitem-active' : ''}`}>
+              <span className={`flex h-8 w-12 items-center justify-center rounded-full text-xl transition-all ${active ? 'bg-brand/10' : ''}`}>
+                {item.icon}
+              </span>
               {item.label}
             </Link>
           );

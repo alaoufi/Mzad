@@ -62,12 +62,17 @@ export default function HomePage() {
 
       <div className="relative">
         {/* الهيرو */}
-        <div className="mb-4 overflow-hidden rounded-[28px] p-6 text-white shadow-xl transition-all duration-500"
-          style={{ backgroundImage: gradient(theme), boxShadow: `0 24px 48px -20px ${theme.from}88` }}>
-          <h1 className="flex items-center gap-3 text-2xl font-extrabold text-emboss-light sm:text-3xl">
-            <span className="text-4xl drop-shadow animate-floaty">{theme.emoji}</span> {title}
-          </h1>
-          <p className="mt-1 text-white/85">{theme.tagline}</p>
+        <div className="relative mb-4 overflow-hidden rounded-4xl p-6 text-white shadow-xl transition-all duration-500"
+          style={{ backgroundImage: gradient(theme), boxShadow: `0 26px 52px -22px ${theme.from}aa` }}>
+          {/* لمعة علوية وزخرفة */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40" />
+          <span className="pointer-events-none absolute -left-4 -bottom-6 select-none text-[8rem] leading-none opacity-15">{theme.emoji}</span>
+          <div className="relative">
+            <h1 className="flex items-center gap-3 text-2xl font-extrabold text-emboss-light sm:text-3xl">
+              <span className="text-4xl drop-shadow animate-floaty">{theme.emoji}</span> {title}
+            </h1>
+            <p className="mt-1 text-white/85">{theme.tagline}</p>
+          </div>
         </div>
 
         {/* مساحة إعلانية حسب السوق */}
@@ -78,7 +83,7 @@ export default function HomePage() {
         )}
 
         {/* الأسواق الثلاثة */}
-        <div className="float-box mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/85 p-1 ring-1 ring-black/5 backdrop-blur">
+        <div className="glass mb-4 grid grid-cols-3 gap-1.5 rounded-3xl p-1.5">
           {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات'], ['SUPPLIES', '🛒 المستلزمات']] as [Mode, string][]).map(
             ([m, label]) => (
               <button key={m} onClick={() => setMode(m)}

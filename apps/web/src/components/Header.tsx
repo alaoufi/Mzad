@@ -7,40 +7,35 @@ export function Header() {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-gradient-to-l from-brand-dark to-brand text-white shadow-lg shadow-brand/20">
+    <header className="sticky top-0 z-40 text-white shadow-lg shadow-brand/20"
+      style={{ backgroundImage: 'linear-gradient(120deg, #0a5246, #0f7b6c 60%, #1aa893)' }}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold">
-          <span className="text-3xl">🐪</span>
+        <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold text-emboss-light">
+          <span className="text-3xl drop-shadow">🐪</span>
           <span>مزاد</span>
         </Link>
 
         <nav className="flex items-center gap-2">
-          <Link
-            href="/sell"
-            className="hidden rounded-xl bg-gradient-to-l from-gold to-amber-500 px-4 py-2 text-base font-bold shadow sm:inline-flex"
-          >
+          <Link href="/sell"
+            className="hidden rounded-2xl px-4 py-2 text-base font-bold text-white shadow-md sm:inline-flex"
+            style={{ backgroundImage: 'linear-gradient(135deg, #e0b85a, #b9852b)' }}>
             ＋ أضف إعلان
           </Link>
           {user ? (
-            <Link
-              href="/account"
-              className="flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2 hover:bg-white/25"
-            >
+            <Link href="/account" className="flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2 ring-1 ring-white/20 hover:bg-white/25">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/25 text-sm font-bold">
                 {user.name.charAt(0)}
               </span>
               <span className="hidden text-sm font-bold sm:inline">حسابي</span>
             </Link>
           ) : (
-            <Link
-              href="/login"
-              className="rounded-xl bg-white/15 px-4 py-2 text-base font-bold hover:bg-white/25"
-            >
+            <Link href="/login" className="rounded-2xl bg-white/15 px-4 py-2 text-base font-bold ring-1 ring-white/20 hover:bg-white/25">
               دخول
             </Link>
           )}
         </nav>
       </div>
+      <div className="h-0.5 w-full" style={{ backgroundImage: 'linear-gradient(90deg, transparent, #e0b85a, transparent)' }} />
     </header>
   );
 }

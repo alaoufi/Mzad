@@ -10,51 +10,57 @@
   }
   body {
     @apply text-gray-800 antialiased;
-    /* ألوان أخف ومريحة للعين */
-    background-color: #fbfbf8;
+    background-color: #fbf9f4;
     font-family: 'Tajawal', system-ui, sans-serif;
-    background-image: radial-gradient(circle at 100% 0%, rgba(19, 160, 140, 0.05), transparent 38%),
-      radial-gradient(circle at 0% 8%, rgba(199, 154, 58, 0.04), transparent 32%);
+    background-image: radial-gradient(circle at 100% -10%, rgba(26, 168, 147, 0.07), transparent 42%),
+      radial-gradient(circle at -10% 5%, rgba(199, 154, 58, 0.06), transparent 38%);
     background-attachment: fixed;
   }
   * {
     -webkit-tap-highlight-color: transparent;
   }
+  ::selection {
+    background: rgba(15, 123, 108, 0.18);
+  }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-base font-bold transition-all duration-200 active:translate-y-0.5 active:shadow-md min-h-[52px];
+    @apply relative inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3.5 text-base font-bold transition-all duration-200 active:translate-y-0.5 min-h-[52px];
   }
   .btn-primary {
-    @apply btn bg-gradient-to-br from-brand-light to-brand-dark text-white shadow-lg shadow-brand/25 hover:shadow-xl hover:-translate-y-0.5;
+    @apply btn text-white shadow-lg shadow-brand/25 hover:-translate-y-0.5 hover:shadow-xl;
+    background-image: linear-gradient(135deg, #1aa893, #0a5246);
   }
   .btn-gold {
-    @apply btn bg-gradient-to-br from-amber-400 to-gold text-white shadow-lg shadow-gold/25 hover:-translate-y-0.5 hover:shadow-xl;
+    @apply btn text-white shadow-lg shadow-gold/25 hover:-translate-y-0.5 hover:shadow-xl;
+    background-image: linear-gradient(135deg, #e0b85a, #b9852b);
   }
   .btn-outline {
-    @apply btn border-2 border-sand-200 text-brand-dark bg-white/80 backdrop-blur hover:border-brand hover:bg-white;
+    @apply btn border border-sand-200 text-brand-dark bg-white/70 backdrop-blur hover:border-brand hover:bg-white;
   }
-  /* بطاقات بإحساس عمق ناعم */
+  /* بطاقات أنيقة بإحساس عمق */
   .card {
-    @apply bg-white rounded-2xl overflow-hidden ring-1 ring-black/[0.04];
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03), 0 6px 18px -10px rgba(16, 24, 40, 0.14);
+    @apply bg-white/95 rounded-3xl overflow-hidden ring-1 ring-black/[0.04] shadow-soft backdrop-blur-sm;
   }
   .card-3d {
-    @apply card transition-all duration-300;
+    @apply card transition-all duration-300 will-change-transform;
   }
   .card-3d:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(16, 24, 40, 0.05), 0 18px 32px -16px rgba(16, 24, 40, 0.22);
+    @apply -translate-y-1 shadow-lift;
+  }
+  /* زجاجية */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl ring-1 ring-black/[0.06] shadow-glass;
   }
   .input {
-    @apply w-full rounded-2xl border-2 border-sand-200 bg-white px-4 py-3.5 text-base transition-colors focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10;
+    @apply w-full rounded-2xl border border-sand-200 bg-white px-4 py-3.5 text-base transition-all placeholder:text-gray-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full bg-sand-100 px-3 py-1 text-sm font-bold text-brand-dark;
+    @apply inline-flex items-center gap-1 rounded-full bg-sand-100 px-3.5 py-1.5 text-sm font-bold text-brand-dark ring-1 ring-black/[0.03];
   }
   .navitem {
-    @apply flex flex-1 flex-col items-center justify-center gap-1 py-2 text-xs font-bold text-gray-400 transition-colors;
+    @apply flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-gray-400 transition-colors;
   }
   .navitem-active {
     @apply text-brand;
@@ -65,32 +71,16 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* نصوص بارزة (Embossed) — تبدو ناتئة عن السطح */
-  .text-emboss {
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75), 0 2px 4px rgba(16, 24, 40, 0.14);
-  }
-  /* نصوص محفورة (Engraved) — تبدو محفورة في السطح الفاتح */
-  .text-engrave {
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
-  }
-  /* نصوص بيضاء بارزة فوق الخلفيات الملوّنة */
-  .text-emboss-light {
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25), 0 0 14px rgba(255, 255, 255, 0.18);
-  }
-  /* مربّع طائر — يطفو عن الصفحة بظل قوي ناعم */
-  .float-box {
-    box-shadow: 0 12px 28px -10px rgba(16, 24, 40, 0.28), 0 2px 6px rgba(16, 24, 40, 0.08);
-  }
+  .text-emboss { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75), 0 2px 4px rgba(16, 24, 40, 0.14); }
+  .text-engrave { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9); }
+  .text-emboss-light { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), 0 0 16px rgba(255, 255, 255, 0.16); }
+  .float-box { box-shadow: 0 12px 28px -10px rgba(16, 24, 40, 0.26), 0 2px 6px rgba(16, 24, 40, 0.07); }
 
-  @keyframes fadeup {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate-fadeup { animation: fadeup 0.35s ease both; }
+  @keyframes fadeup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fadeup { animation: fadeup 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-  @keyframes floaty {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-  }
-  .animate-floaty { animation: floaty 4s ease-in-out infinite; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  .animate-floaty { animation: floaty 4.5s ease-in-out infinite; }
+
+  @keyframes shimmer { 100% { transform: translateX(-100%); } }
 }
