@@ -235,21 +235,6 @@ export default function HomePage() {
           </>
         )}
 
-        {/* مبدّل الاهتمامات — يعمل في العروض والمزادات والمستلزمات */}
-        {user && marketInterests.length > 0 && (
-          <div className="mb-3 flex gap-2">
-            <button onClick={() => setInterestActive(true)}
-              className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
-              style={interestActive ? { backgroundColor: theme.accent } : undefined}>
-              ⭐ ما يهمّني
-            </button>
-            <button onClick={() => setInterestActive(false)}
-              className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${!interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
-              style={!interestActive ? { backgroundColor: theme.accent } : undefined}>
-              {mode === 'SUPPLIES' ? '🛒 كل المستلزمات' : '🌐 كل الأنواع'}
-            </button>
-          </div>
-        )}
 
         {q && (
           <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
