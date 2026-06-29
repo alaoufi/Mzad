@@ -81,7 +81,11 @@ export default function AdminPage() {
 
   return (
     <div className="animate-fadeup space-y-6">
-      <h1 className="text-2xl font-extrabold">🛡️ لوحة الإدارة</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-extrabold">🛡️ لوحة الإدارة</h1>
+        <button onClick={() => router.push('/admin/categories')}
+          className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">🗂️ التصنيفات</button>
+      </div>
 
       <div className="grid grid-cols-3 gap-3">
         {cards.map((c) => (
