@@ -1,38 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { ListingCard } from '@/components/ListingCard';
-import { themeFor, gradient } from '@/lib/themes';
+import { themeFor, gradient, sceneBackground, SUPPLIES_NAME } from '@/lib/themes';
 
-interface Cat {
-  id: string;
-  name: string;
-  icon?: string;
-  children?: Cat[];
-}
+interface Cat { id: string; name: string; icon?: string; children?: Cat[]; }
+type Mode = 'DIRECT' | 'AUCTION' | 'SUPPLIES';
 
 export default function HomePage() {
   const [tree, setTree] = useState<Cat[]>([]);
   const [listings, setListings] = useState<ListingSummary[]>([]);
-  const [mode, setMode] = useState<'DIRECT' | 'AUCTION'>('DIRECT');
-  const [species, setSpecies] = useState<Cat | null>(null);
-  const [color, setColor] = useState<Cat | null>(null);
-  const [breed, setBreed] = useState<Cat | null>(null);
+  const [mode, setMode] = useState<Mode>('DIRECT');
+  const [path, setPath] = useState<Cat[]>([]);
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api<Cat[]>('/categories').then(setTree).catch(() => {});
-  }, []);
+  useEffect(() => { api<Cat[]>('/categories').then(setTree).catch(() => {}); }, []);
 
-  const activeCategoryId = breed?.id ?? color?.id ?? species?.id ?? null;
+  const animals = useMemo(() => tree.filter((s) => s.name !== SUPPLIES_NAME), [tree]);
+  const suppliesRoot = useMemo(() => tree.find((s) => s.name === SUPPLIES_NAME), [tree]);
+
+  const topList = mode === 'SUPPLIES' ? suppliesRoot?.children ?? [] : animals;
+  const activeCategoryId =
+    path.length ? path[path.length - 1].id : mode === 'SUPPLIES' ? suppliesRoot?.id ?? null : null;
+
+  const theme = themeFor(mode === 'SUPPLIES' ? SUPPLIES_NAME : path[0]?.name);
 
   const load = () => {
     setLoading(true);
     const params = new URLSearchParams();
-    params.set('saleType', mode);
+    params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
     if (activeCategoryId) params.set('categoryId', activeCategoryId);
+    else if (mode !== 'SUPPLIES' && suppliesRoot) params.set('exclude', suppliesRoot.id);
     if (q) params.set('q', q);
     api<{ items: ListingSummary[] }>(`/listings?${params}`)
       .then((r) => setListings(r.items))
@@ -40,97 +40,102 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, activeCategoryId]);
+  useEffect(() => { setPath([]); }, [mode]);
+  useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ }, [mode, activeCategoryId, tree.length]);
 
-  const theme = themeFor(species?.name);
+  const title =
+    mode === 'SUPPLIES'
+      ? `${theme.label}${path[0] ? ` — ${path[0].name}` : ''}`
+      : `${mode === 'DIRECT' ? 'عروض' : 'مزاد'} ${path[0]?.name ?? 'المواشي'}`;
+
+  const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
+  const reset = (level: number) => setPath((p) => p.slice(0, level));
 
   return (
-    <div
-      className="-mx-4 -my-6 min-h-screen px-4 py-6 transition-colors duration-500 animate-fadeup"
-      style={{ backgroundColor: theme.bg }}
-    >
-      {/* بطاقة ترحيب حسب النوع */}
-      <div className="mb-4 overflow-hidden rounded-3xl p-6 text-white shadow-lg transition-all duration-500"
-        style={{ backgroundImage: gradient(theme) }}>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold sm:text-3xl">
-          <span className="text-4xl">{theme.emoji}</span> {theme.label}
-        </h1>
-        <p className="mt-1 text-white/85">{theme.tagline}</p>
+    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 transition-all duration-500 animate-fadeup"
+      style={{ background: sceneBackground(theme) }}>
+      {/* علامة مائية للنوع (إحساس المكان) */}
+      <div className="pointer-events-none fixed left-0 top-24 -z-0 select-none text-[40vw] leading-none opacity-[0.04]">
+        {theme.emoji}
       </div>
 
-      {/* فاصل: العروض / المزادات */}
-      <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-sand-200">
-        <button onClick={() => setMode('DIRECT')}
-          className={`rounded-xl py-3 text-lg font-bold transition ${mode === 'DIRECT' ? 'bg-brand text-white shadow' : 'text-gray-500'}`}>
-          🏷️ العروض
-        </button>
-        <button onClick={() => setMode('AUCTION')}
-          className={`rounded-xl py-3 text-lg font-bold transition ${mode === 'AUCTION' ? 'bg-gradient-to-l from-gold to-amber-500 text-white shadow' : 'text-gray-500'}`}>
-          🔨 المزادات
-        </button>
-      </div>
+      <div className="relative">
+        {/* الهيرو */}
+        <div className="mb-4 overflow-hidden rounded-[28px] p-6 text-white shadow-xl transition-all duration-500"
+          style={{ backgroundImage: gradient(theme), boxShadow: `0 24px 48px -20px ${theme.from}88` }}>
+          <h1 className="flex items-center gap-3 text-2xl font-extrabold sm:text-3xl">
+            <span className="text-4xl drop-shadow">{theme.emoji}</span> {title}
+          </h1>
+          <p className="mt-1 text-white/85">{theme.tagline}</p>
+        </div>
 
-      {/* بحث */}
-      <form onSubmit={(e) => { e.preventDefault(); load(); }} className="mb-4 flex gap-2">
-        <input className="input flex-1" placeholder="ابحث..." value={q} onChange={(e) => setQ(e.target.value)} />
-        <button type="submit" className="btn-primary !px-5">🔍</button>
-      </form>
+        {/* الأسواق الثلاثة */}
+        <div className="mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/80 p-1 shadow-sm ring-1 ring-black/5 backdrop-blur">
+          {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات'], ['SUPPLIES', '🛒 المستلزمات']] as [Mode, string][]).map(
+            ([m, label]) => (
+              <button key={m} onClick={() => setMode(m)}
+                className={`rounded-xl py-3 text-sm font-bold transition sm:text-base ${
+                  mode === m ? 'text-white shadow' : 'text-gray-500'}`}
+                style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
+                {label}
+              </button>
+            ),
+          )}
+        </div>
 
-      {/* المستوى 1: النوع */}
-      <Row label="النوع">
-        <Chip active={!species} onClick={() => { setSpecies(null); setColor(null); setBreed(null); }}>الكل</Chip>
-        {tree.map((s) => (
-          <Chip key={s.id} active={species?.id === s.id}
-            color={species?.id === s.id ? themeFor(s.name).accent : undefined}
-            onClick={() => { setSpecies(s); setColor(null); setBreed(null); }}>
-            {s.icon} {s.name}
-          </Chip>
-        ))}
-      </Row>
+        {/* بحث */}
+        <form onSubmit={(e) => { e.preventDefault(); load(); }} className="mb-4 flex gap-2">
+          <input className="input flex-1" placeholder="ابحث..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <button type="submit" className="btn-primary !px-5">🔍</button>
+        </form>
 
-      {/* المستوى 2: اللون/الصنف */}
-      {species?.children && species.children.length > 0 && (
-        <Row label="اللون / الصنف">
-          <Chip active={!color} onClick={() => { setColor(null); setBreed(null); }} color={!color ? theme.accent : undefined}>الكل</Chip>
-          {species.children.map((c) => (
-            <Chip key={c.id} active={color?.id === c.id} color={color?.id === c.id ? theme.accent : undefined}
-              onClick={() => { setColor(c); setBreed(null); }}>{c.name}</Chip>
+        {/* المستوى 1 */}
+        <Row label={mode === 'SUPPLIES' ? 'الفئة' : 'النوع'}>
+          <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
+          {topList.map((c) => (
+            <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
+              {c.icon} {c.name}
+            </Chip>
           ))}
         </Row>
-      )}
 
-      {/* المستوى 3: السلالة */}
-      {color?.children && color.children.length > 0 && (
-        <Row label="السلالة">
-          <Chip active={!breed} onClick={() => setBreed(null)} color={!breed ? theme.accent : undefined}>الكل</Chip>
-          {color.children.map((b) => (
-            <Chip key={b.id} active={breed?.id === b.id} color={breed?.id === b.id ? theme.accent : undefined}
-              onClick={() => setBreed(b)}>{b.name}</Chip>
-          ))}
-        </Row>
-      )}
-
-      {/* النتائج */}
-      <div className="mt-5">
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => <div key={i} className="card h-72 animate-pulse bg-black/5" />)}
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="py-16 text-center text-gray-500">
-            <p className="text-6xl">{theme.emoji}</p>
-            <p className="mt-3 text-lg font-bold">
-              {mode === 'AUCTION' ? 'لا توجد مزادات في هذا القسم' : 'لا توجد عروض في هذا القسم'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
-          </div>
+        {/* المستوى 2 */}
+        {path[0]?.children && path[0].children.length > 0 && (
+          <Row label={mode === 'SUPPLIES' ? 'الصنف' : 'اللون / الصنف'}>
+            <Chip active={path.length === 1} accent={theme.accent} onClick={() => reset(1)}>الكل</Chip>
+            {path[0].children.map((c) => (
+              <Chip key={c.id} active={path[1]?.id === c.id} accent={theme.accent} onClick={() => pick(1, c)}>{c.name}</Chip>
+            ))}
+          </Row>
         )}
+
+        {/* المستوى 3 */}
+        {path[1]?.children && path[1].children.length > 0 && (
+          <Row label="السلالة">
+            <Chip active={path.length === 2} accent={theme.accent} onClick={() => reset(2)}>الكل</Chip>
+            {path[1].children.map((c) => (
+              <Chip key={c.id} active={path[2]?.id === c.id} accent={theme.accent} onClick={() => pick(2, c)}>{c.name}</Chip>
+            ))}
+          </Row>
+        )}
+
+        {/* النتائج */}
+        <div className="mt-5">
+          {loading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[0, 1, 2].map((i) => <div key={i} className="card h-72 animate-pulse bg-black/5" />)}
+            </div>
+          ) : listings.length === 0 ? (
+            <div className="py-16 text-center text-gray-500">
+              <p className="text-6xl">{theme.emoji}</p>
+              <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -139,19 +144,17 @@ export default function HomePage() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-2">
-      <div className="mb-1 text-xs font-bold text-gray-400">{label}</div>
+      <div className="mb-1 text-xs font-bold text-gray-500">{label}</div>
       <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">{children}</div>
     </div>
   );
 }
 
-function Chip({
-  children, active, onClick, color,
-}: { children: React.ReactNode; active?: boolean; onClick: () => void; color?: string }) {
+function Chip({ children, active, onClick, accent }: { children: React.ReactNode; active?: boolean; onClick: () => void; accent: string }) {
   return (
     <button onClick={onClick}
-      className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${active && !color ? '!bg-brand !text-white' : ''}`}
-      style={color ? { backgroundColor: color, color: '#fff' } : undefined}>
+      className="chip whitespace-nowrap !px-4 !py-2 !text-base shadow-sm transition"
+      style={active ? { backgroundColor: accent, color: '#fff' } : undefined}>
       {children}
     </button>
   );

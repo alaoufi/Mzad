@@ -7,10 +7,7 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
   const isAuction = listing.saleType === 'AUCTION';
 
   return (
-    <Link
-      href={`/listings/${listing.id}`}
-      className="card group block transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-    >
+    <Link href={`/listings/${listing.id}`} className="card-3d group block">
       <div className="relative aspect-[4/3] bg-sand-100">
         {img ? (
           // eslint-disable-next-line @next/next/no-img-element
