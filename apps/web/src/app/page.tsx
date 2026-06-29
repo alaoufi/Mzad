@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { ListingCard } from '@/components/ListingCard';
 import { themeFor, gradient, sceneBackground, SUPPLIES_NAME } from '@/lib/themes';
+import { AdBanner } from '@/components/AdBanner';
 
 interface Cat { id: string; name: string; icon?: string; children?: Cat[]; }
 type Mode = 'DIRECT' | 'AUCTION' | 'SUPPLIES';
@@ -68,6 +69,9 @@ export default function HomePage() {
           </h1>
           <p className="mt-1 text-white/85">{theme.tagline}</p>
         </div>
+
+        {/* مساحة إعلانية (HOME_TOP) */}
+        {mode !== 'SUPPLIES' && <AdBanner placement="HOME_TOP" onClick={() => setMode('SUPPLIES')} />}
 
         {/* الأسواق الثلاثة */}
         <div className="mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/80 p-1 shadow-sm ring-1 ring-black/5 backdrop-blur">
