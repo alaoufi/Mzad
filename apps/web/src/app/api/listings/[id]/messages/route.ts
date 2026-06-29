@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     data: { conversationId: conv.id, senderId: auth.sub, type: 'TEXT', body: body.trim() },
     include: { sender: { select: { id: true, name: true } } },
   });
+
+  // إشعار صاحب الإعلان برسالة جديدة (إن لم يكن هو المُرسِل)
+  const listing = await prisma.listing.findUnique({ where: { id: params.id }, select: { sellerId: true, title: true } });
+  if (listing && listing.sellerId !== auth.sub) {
+    await notify(listing.sellerId, 'MESSAGE', `💬 رسالة جديدة من ${message.sender.name} على إعلانك «${listing.title}»`, `/listings/${params.id}`);
+  }
 
   return json({ message });
 }
