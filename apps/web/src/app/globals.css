@@ -12,6 +12,9 @@
     @apply text-gray-800 antialiased;
     background-color: #fbf9f4;
     font-family: 'Tajawal', system-ui, sans-serif;
+    /* خط أكبر وأسطر مريحة لضعاف الخبرة وكبار السن */
+    font-size: 17px;
+    line-height: 1.75;
     background-image: radial-gradient(circle at 100% -10%, rgba(26, 168, 147, 0.07), transparent 42%),
       radial-gradient(circle at -10% 5%, rgba(199, 154, 58, 0.06), transparent 38%);
     /* لا نستخدم background-attachment: fixed لأنه يسبّب بطئاً شديداً عند التمرير على الجوال */
@@ -60,7 +63,7 @@
     @apply w-full rounded-2xl border border-sand-200 bg-white px-4 py-3.5 text-base transition-all placeholder:text-gray-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full bg-sand-100 px-3.5 py-1.5 text-sm font-bold text-brand-dark ring-1 ring-black/[0.03];
+    @apply inline-flex items-center gap-1 rounded-full bg-sand-100 px-4 py-2 text-base font-bold text-brand-dark ring-1 ring-black/[0.03];
   }
   .navitem {
     @apply flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-gray-400 transition-colors;

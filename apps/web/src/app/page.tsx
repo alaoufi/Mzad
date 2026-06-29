@@ -255,7 +255,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function Chip({ children, active, onClick, accent }: { children: React.ReactNode; active?: boolean; onClick: () => void; accent: string }) {
   return (
     <button onClick={onClick}
-      className="chip whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm transition"
+      className="chip whitespace-nowrap shadow-sm transition"
       style={active ? { backgroundColor: accent, color: '#fff' } : undefined}>
       {children}
     </button>
