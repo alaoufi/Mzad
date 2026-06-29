@@ -1,3 +1,7 @@
+# تشغيل المنصة كاملة بأمر واحد:  docker compose up
+# ثم افتح المتصفح على:  http://localhost:3000
+#
+# يشغّل: قاعدة بيانات PostgreSQL + تطبيق الويب (مع تهيئة وبذر تلقائي).
 services:
   postgres:
     image: postgres:16-alpine
@@ -11,13 +15,27 @@ services:
       - "5432:5432"
     volumes:
       - mazad_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mazad"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  redis:
-    image: redis:7-alpine
-    container_name: mazad-redis
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: mazad-web
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://mazad:mazad@postgres:5432/mazad?schema=public"
+      JWT_SECRET: "mazad-local-secret-change-me"
+      NODE_ENV: "production"
     ports:
-      - "6379:6379"
+      - "3000:3000"
 
 volumes:
   mazad_pg:

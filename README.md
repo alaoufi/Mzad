@@ -27,28 +27,35 @@
 
 ---
 
-## 🚀 التشغيل السريع (Quick Start)
+## 🚀 أسهل طريقة للتجربة — أمر واحد فقط
 
-المتطلبات: Node.js ≥ 20، pnpm ≥ 9، Docker (لقاعدة البيانات).
+المتطلبات: **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** فقط. ثم:
 
 ```bash
-# 1) تثبيت الحزم
-pnpm install
-
-# 2) تشغيل قاعدة البيانات (PostgreSQL + Redis)
-docker compose up -d
-
-# 3) تجهيز قاعدة البيانات وبياناتها التجريبية
-pnpm --filter @mazad/api prisma:migrate
-pnpm --filter @mazad/api prisma:seed
-
-# 4) تشغيل الواجهة الخلفية والويب معاً
-pnpm dev
+docker compose up
 ```
 
-- الواجهة الخلفية (API): http://localhost:4000
+انتظر حتى يكتمل البناء، ثم افتح **http://localhost:3000** 🎉
+(يُنشئ قاعدة البيانات ويعبّئها بالبيانات التجريبية تلقائياً. سجّل دخول بجوال `0500000001` والرمز يظهر على الشاشة.)
+
+> **تريد رابطاً على الإنترنت تشاركه؟** اتبع [دليل النشر المبسّط](./docs/08-deploy.md).
+
+---
+
+## 🛠️ التشغيل للتطوير (Dev Mode)
+
+المتطلبات: Node.js ≥ 20، pnpm ≥ 9، Docker.
+
+```bash
+pnpm install
+docker compose up -d postgres                      # قاعدة البيانات فقط
+pnpm --filter @mazad/api prisma:migrate
+pnpm --filter @mazad/api prisma:seed
+pnpm dev                                            # API على 4000 + الويب على 3000
+```
+
 - تطبيق الويب: http://localhost:3000
-- توثيق الـ API (Swagger): http://localhost:4000/docs
+- الواجهة الخلفية (API): http://localhost:4000 · توثيق Swagger: http://localhost:4000/docs
 
 > راجع [دليل التشغيل التفصيلي](./docs/07-getting-started.md).
 
