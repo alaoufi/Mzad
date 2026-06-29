@@ -51,11 +51,15 @@ export default function SellPage() {
 
   const [auctionTypes, setAuctionTypes] = useState<{ id: string; name: string; icon?: string | null; commissionPct: number }[]>([]);
   const [healthItems, setHealthItems] = useState<HealthItem[]>(FALLBACK_HEALTH);
+  const [commission, setCommission] = useState({ marketCommissionPct: 0, commissionNote: '' });
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
     api<{ items: HealthItem[] }>('/health-items')
       .then((r) => { if (r.items?.length) setHealthItems(r.items); })
+      .catch(() => {});
+    api<{ marketCommissionPct: number; commissionNote: string }>('/settings')
+      .then((r) => setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '' }))
       .catch(() => {});
   }, []);
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
@@ -294,6 +298,21 @@ export default function SellPage() {
                   className={`rounded-2xl border-2 py-4 text-base font-bold transition ${form.saleType === v ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{l}</button>
               ))}
             </div>
+
+            {/* إفصاح العمولة قبل إطلاق البيع */}
+            {commission.marketCommissionPct > 0 && (() => {
+              const base = Number(form.saleType === 'DIRECT' ? form.price : form.startPrice) || 0;
+              const amount = Math.round((base * commission.marketCommissionPct) / 100);
+              return (
+                <div className="rounded-2xl border-2 border-gold/40 bg-gold/10 p-3 text-sm">
+                  <div className="font-extrabold text-brand-dark">
+                    💰 عمولة السوق {commission.marketCommissionPct}%
+                    {base > 0 && <> = <span className="text-amber-700">{amount.toLocaleString('ar-SA')} ﷼</span></>}
+                  </div>
+                  <p className="mt-1 leading-relaxed text-gray-600">{commission.commissionNote}</p>
+                </div>
+              );
+            })()}
 
             {form.saleType === 'DIRECT' && (
               <div><label className="mb-2 block font-bold">السعر (ريال)</label>

@@ -19,6 +19,16 @@ interface AdminData {
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'نشط', DRAFT: 'بانتظار الموافقة', SOLD: 'مُباع', CLOSED: 'مخفي' };
 const TARGET_LABEL: Record<string, string> = { listing: 'إعلان', user: 'مستخدم', message: 'رسالة', auction: 'مزاد' };
 
+function Field({ label, hint, value, onChange }: { label: string; hint?: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-gray-600">{label}{hint && <span className="text-gray-400"> ({hint})</span>}</label>
+      <input type="number" min={0} max={100} className="input !py-2 text-center" value={value}
+        onChange={(e) => onChange(Number(e.target.value) || 0)} />
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -27,6 +37,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'pending' | 'verify' | 'listings' | 'users'>('pending');
   const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
+  const [comm, setComm] = useState({ marketCommissionPct: 0, brokerSharePct: 0, supervisorSharePct: 0, commissionNote: '' });
+  const [savingComm, setSavingComm] = useState(false);
 
   const load = () =>
     api<AdminData>('/admin/stats').then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
@@ -34,7 +46,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     load();
-    api<{ entryMode: 'GENERAL' | 'SPECIALIZED' }>('/admin/settings').then((r) => setEntryMode(r.entryMode)).catch(() => {});
+    api<any>('/admin/settings').then((r) => {
+      setEntryMode(r.entryMode);
+      setComm({
+        marketCommissionPct: r.marketCommissionPct ?? 0, brokerSharePct: r.brokerSharePct ?? 0,
+        supervisorSharePct: r.supervisorSharePct ?? 0, commissionNote: r.commissionNote ?? '',
+      });
+    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -42,6 +60,12 @@ export default function AdminPage() {
     setEntryMode(m);
     try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ entryMode: m }) }); }
     catch (e: any) { alert(e.message); }
+  };
+  const saveCommission = async () => {
+    setSavingComm(true);
+    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify(comm) }); alert('✅ حُفظت إعدادات العمولة'); }
+    catch (e: any) { alert(e.message); }
+    finally { setSavingComm(false); }
   };
 
   const setStatus = async (id: string, status: string) => {
@@ -58,6 +82,10 @@ export default function AdminPage() {
   };
   const setIdentity = async (id: string, identityStatus: string) => {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ identityStatus }) }); load(); }
+    catch (e: any) { alert(e.message); }
+  };
+  const setActive = async (id: string, active: boolean) => {
+    try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) }); load(); }
     catch (e: any) { alert(e.message); }
   };
   const setReportStatus = async (id: string, status: string) => {
@@ -161,6 +189,30 @@ export default function AdminPage() {
             ),
           )}
         </div>
+      </div>
+
+      {/* إعدادات العمولة */}
+      <div className="card space-y-3 p-4">
+        <h2 className="text-lg font-bold">💰 العمولات</h2>
+        <div className="grid grid-cols-3 gap-2">
+          <Field label="عمولة السوق %" value={comm.marketCommissionPct}
+            onChange={(v) => setComm((c) => ({ ...c, marketCommissionPct: v }))} />
+          <Field label="نصيب الدلال %" hint="من العمولة" value={comm.brokerSharePct}
+            onChange={(v) => setComm((c) => ({ ...c, brokerSharePct: v }))} />
+          <Field label="نصيب المشرف %" hint="من العمولة" value={comm.supervisorSharePct}
+            onChange={(v) => setComm((c) => ({ ...c, supervisorSharePct: v }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-bold text-gray-600">عبارة الإفصاح (تظهر للبائع قبل إطلاق البيع)</label>
+          <textarea className="input min-h-[70px]" value={comm.commissionNote}
+            onChange={(e) => setComm((c) => ({ ...c, commissionNote: e.target.value }))} />
+        </div>
+        <p className="rounded-xl bg-sand-50 p-2 text-xs text-gray-500">
+          عمولة السوق تُحسب من سعر البيع. نصيب الدلال والمشرف يُقتطعان <b>من قيمة العمولة</b>، ويُقيَّدان عند إتمام البيع.
+        </p>
+        <button onClick={saveCommission} disabled={savingComm} className="btn-primary w-full disabled:opacity-50">
+          {savingComm ? '...' : 'حفظ إعدادات العمولة'}
+        </button>
       </div>
 
       {/* تبويبات */}
@@ -271,15 +323,20 @@ export default function AdminPage() {
           <h2 className="mb-3 text-lg font-bold">إدارة المستخدمين والصلاحيات</h2>
           <div className="space-y-2">
             {data.usersList.map((u) => (
-              <div key={u.id} className="flex items-center gap-3 rounded-2xl bg-sand-50 p-3">
+              <div key={u.id} className={`flex items-center gap-2 rounded-2xl bg-sand-50 p-3 ${u.active === false ? 'opacity-60' : ''}`}>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-bold">
                     {u.name}{u.identityStatus === 'VERIFIED' && <span className="mr-1 text-green-600" title="موثّق">✔</span>}
+                    {u.active === false && <span className="mr-1 text-xs text-red-500">(معطّل)</span>}
                   </div>
                   <div className="text-xs text-gray-500">
                     {u.phone} · {accountTypeDef(u.accountType).emoji} {accountTypeDef(u.accountType).label}
                   </div>
                 </div>
+                <button onClick={() => setActive(u.id, u.active === false)}
+                  className={`shrink-0 rounded-xl px-2 py-2 text-xs font-bold ${u.active === false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                  {u.active === false ? '▶' : '⏸'}
+                </button>
                 <select value={u.accountType ?? 'SHOPPER'} onChange={(e) => setRole(u.id, e.target.value)}
                   className="rounded-xl border-2 border-sand-200 bg-white px-2 py-2 text-sm font-bold">
                   {ACCOUNT_TYPES.map((a) => (

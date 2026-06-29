@@ -21,7 +21,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!allowed) return json({ message: 'غير مصرّح' }, 403);
 
   if (auth.role === 'BROKER' && auction.listing.sellerId !== auth.sub) {
-    const me = await prisma.user.findUnique({ where: { id: auth.sub }, select: { brokerCategories: true } });
+    const me = await prisma.user.findUnique({ where: { id: auth.sub }, select: { brokerCategories: true, active: true } });
+    if (me && me.active === false) return json({ message: 'حسابك كدلال معطّل حالياً' }, 403);
     if (!(await isInBrokerScope(auction.listing.categoryId, me?.brokerCategories ?? []))) {
       return json({ message: 'هذا التصنيف خارج نطاقك المُسند كدلال' }, 403);
     }

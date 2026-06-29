@@ -12,9 +12,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
-  const { accountType, identityStatus } = await req.json();
+  const { accountType, identityStatus, active } = await req.json();
 
   const data: any = {};
+  if (active !== undefined) data.active = !!active;
   if (accountType !== undefined) {
     if (!ACCOUNT_TYPES.some((a) => a.key === accountType)) {
       return json({ message: 'دور غير صحيح' }, 400);

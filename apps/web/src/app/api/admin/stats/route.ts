@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
         take: 50,
-        select: { id: true, name: true, phone: true, role: true, accountType: true, trustScore: true, city: true, identityStatus: true },
+        select: { id: true, name: true, phone: true, role: true, accountType: true, trustScore: true, city: true, identityStatus: true, active: true },
       }),
       prisma.report.findMany({
         where: { status: { in: ['OPEN', 'REVIEWING'] } },

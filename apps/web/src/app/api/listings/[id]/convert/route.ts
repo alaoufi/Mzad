@@ -25,9 +25,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const allowed = listing.sellerId === auth.sub || auth.role === 'BROKER' || auth.role === 'ADMIN';
   if (!allowed) return json({ message: 'غير مصرّح بتحويل هذا الإعلان' }, 403);
 
-  // الدلال (وليس المالك ولا الإدارة) مقيّد بنطاقه المُسند
+  // الدلال (وليس المالك ولا الإدارة) مقيّد بنطاقه المُسند وبتفعيل حسابه
   if (auth.role === 'BROKER' && listing.sellerId !== auth.sub) {
-    const me = await prisma.user.findUnique({ where: { id: auth.sub }, select: { brokerCategories: true } });
+    const me = await prisma.user.findUnique({ where: { id: auth.sub }, select: { brokerCategories: true, active: true } });
+    if (me && me.active === false) return json({ message: 'حسابك كدلال معطّل حالياً' }, 403);
     if (!(await isInBrokerScope(listing.categoryId, me?.brokerCategories ?? []))) {
       return json({ message: 'هذا التصنيف خارج نطاقك المُسند كدلال' }, 403);
     }

@@ -37,6 +37,8 @@ model User {
   trustScore      Float          @default(0)
   interests       String[]       @default([]) // معرّفات التصنيفات التي يهتم بها (أي مستوى)
   brokerCategories String[]      @default([]) // نطاق الدلال: التصنيفات المُسندة إليه
+  brokerSharePct  Float?         // نسبة الدلال من العمولة (تجاوز للنسبة العامة)
+  active          Boolean        @default(true) // تفعيل/تعطيل الحساب (للدلالين خاصة)
   createdAt       DateTime       @default(now())
 
   listings        Listing[]

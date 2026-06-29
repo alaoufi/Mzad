@@ -37,6 +37,8 @@ model User {
   trustScore      Float          @default(0)
   interests       String[]       @default([])
   brokerCategories String[]      @default([])
+  brokerSharePct  Float?
+  active          Boolean        @default(true)
   createdAt       DateTime       @default(now())
 
   listings        Listing[]

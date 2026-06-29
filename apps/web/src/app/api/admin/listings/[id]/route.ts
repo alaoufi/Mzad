@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
+import { getCommissionConfig } from '@/lib/commission';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   return json({ ok: true });
 }
 
-// احتساب عمولة البيع وقيدها كحركة سالبة في محفظة البائع
+// احتساب عمولة البيع وتوزيعها (سجل إتمام البيع): على البائع، ونصيب الدلال والمشرف
 async function recordCommission(listingId: string, sellerId: string) {
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
@@ -42,7 +43,7 @@ async function recordCommission(listingId: string, sellerId: string) {
       price: true,
       auction: {
         select: {
-          highestBidId: true,
+          brokerId: true,
           type: { select: { commissionPct: true } },
           bids: { orderBy: { amount: 'desc' }, take: 1, select: { amount: true } },
         },
@@ -51,31 +52,52 @@ async function recordCommission(listingId: string, sellerId: string) {
   });
   if (!listing) return;
 
-  const pct = listing.auction?.type?.commissionPct ?? 0;
-  if (!pct) return; // لا عمولة محددة لنوع المزاد
+  const cfg = await getCommissionConfig();
+  // عمولة السوق من الإعدادات، وإلا عمولة نوع المزاد
+  const pct = cfg.marketCommissionPct || listing.auction?.type?.commissionPct || 0;
+  if (!pct) return;
 
-  // قيمة الصفقة: أعلى مزايدة إن وُجدت، وإلا السعر الثابت
   const finalAmount = listing.auction?.bids?.[0]?.amount ?? listing.price;
   if (!finalAmount) return;
 
   const commission = new Prisma.Decimal(finalAmount).mul(pct).div(100);
   if (commission.lte(0)) return;
 
-  // تفادي التكرار إن سبق قيد عمولة لهذا الإعلان
-  const existing = await prisma.walletTxn.findFirst({
-    where: { userId: sellerId, type: 'COMMISSION', refId: listingId },
-  });
+  // تفادي التكرار
+  const existing = await prisma.walletTxn.findFirst({ where: { type: 'COMMISSION', refId: listingId } });
   if (existing) return;
 
+  // عمولة السوق في ذمة البائع (سالبة)
   await prisma.walletTxn.create({
-    data: {
-      userId: sellerId,
-      type: 'COMMISSION',
-      amount: commission.negated(),
-      refId: listingId,
-      note: `عمولة المنصة (${pct}%) على بيع الإعلان`,
-    },
+    data: { userId: sellerId, type: 'COMMISSION', amount: commission.negated(), refId: listingId,
+      note: `عمولة السوق (${pct}%) على بيع الإعلان` },
   });
+
+  // نصيب الدلال من العمولة (موجب)
+  const brokerId = listing.auction?.brokerId;
+  if (brokerId) {
+    const broker = await prisma.user.findUnique({ where: { id: brokerId }, select: { brokerSharePct: true } });
+    const bPct = broker?.brokerSharePct ?? cfg.brokerSharePct;
+    if (bPct > 0) {
+      const share = commission.mul(bPct).div(100);
+      await prisma.walletTxn.create({
+        data: { userId: brokerId, type: 'BROKER_SHARE', amount: share, refId: listingId,
+          note: `نصيب الدلال (${bPct}% من العمولة)` },
+      });
+    }
+  }
+
+  // نصيب مشرف الدلالين من العمولة (موجب)
+  if (cfg.supervisorSharePct > 0) {
+    const sup = await prisma.user.findFirst({ where: { accountType: 'BROKERS_LEAD' }, select: { id: true } });
+    if (sup) {
+      const share = commission.mul(cfg.supervisorSharePct).div(100);
+      await prisma.walletTxn.create({
+        data: { userId: sup.id, type: 'SUPERVISOR_SHARE', amount: share, refId: listingId,
+          note: `نصيب مشرف الدلالين (${cfg.supervisorSharePct}% من العمولة)` },
+      });
+    }
+  }
 }
 
 // حذف إعلان (إدارة)

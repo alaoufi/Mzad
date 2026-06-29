@@ -12,6 +12,8 @@ interface Broker {
   phone: string;
   accountType?: string;
   brokerCategories?: string[];
+  brokerSharePct?: number | null;
+  active?: boolean;
 }
 
 export default function BrokersPage() {
@@ -38,6 +40,15 @@ export default function BrokersPage() {
     setEditing(null);
     try { await api(`/brokers/${id}`, { method: 'PATCH', body: JSON.stringify({ brokerCategories: ids }) }); load(); }
     catch (e: any) { alert(e.message); }
+  };
+  const patch = async (id: string, body: any) => {
+    try { await api(`/brokers/${id}`, { method: 'PATCH', body: JSON.stringify(body) }); load(); }
+    catch (e: any) { alert(e.message); }
+  };
+  const setShare = (b: Broker) => {
+    const v = prompt('نسبة الدلال من العمولة % (اتركها فارغة للنسبة العامة):', b.brokerSharePct != null ? String(b.brokerSharePct) : '');
+    if (v === null) return;
+    patch(b.id, { brokerSharePct: v.trim() === '' ? null : Number(v) });
   };
 
   if (!user) {
@@ -69,15 +80,26 @@ export default function BrokersPage() {
       ) : (
         <div className="space-y-2">
           {brokers.map((b) => (
-            <div key={b.id} className="card flex items-center justify-between gap-3 p-4">
-              <div className="min-w-0">
-                <div className="truncate font-bold">{b.name}</div>
-                <div className="text-xs text-gray-500">
-                  {b.phone} ·{' '}
-                  {b.brokerCategories?.length ? `${b.brokerCategories.length} تصنيف مُسند` : 'نطاق كامل (غير محدّد)'}
+            <div key={b.id} className={`card p-4 ${b.active === false ? 'opacity-60' : ''}`}>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="truncate font-bold">
+                    {b.name}{b.active === false && <span className="mr-1 text-xs text-red-500">(معطّل)</span>}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {b.phone} · {b.brokerCategories?.length ? `${b.brokerCategories.length} تصنيف مُسند` : 'نطاق كامل'}
+                    {b.brokerSharePct != null && ` · نصيبه ${b.brokerSharePct}%`}
+                  </div>
                 </div>
               </div>
-              <button onClick={() => setEditing(b)} className="btn-primary !min-h-0 shrink-0 !px-4 !py-2 !text-sm">🎯 النطاق</button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button onClick={() => setEditing(b)} className="rounded-xl bg-brand px-3 py-1.5 text-xs font-bold text-white">🎯 النطاق</button>
+                <button onClick={() => setShare(b)} className="rounded-xl bg-sand-100 px-3 py-1.5 text-xs font-bold text-gray-700">٪ نصيب الدلال</button>
+                <button onClick={() => patch(b.id, { active: !(b.active !== false) })}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-bold ${b.active === false ? 'bg-green-600 text-white' : 'bg-red-100 text-red-700'}`}>
+                  {b.active === false ? '▶ تفعيل' : '⏸ تعطيل'}
+                </button>
+              </div>
             </div>
           ))}
         </div>

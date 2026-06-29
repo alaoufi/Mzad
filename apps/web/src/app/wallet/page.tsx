@@ -16,7 +16,9 @@ interface Txn {
 
 const TXN_META: Record<string, { label: string; icon: string }> = {
   TOPUP: { label: 'شحن المحفظة', icon: '➕' },
-  COMMISSION: { label: 'عمولة المنصة', icon: '🧾' },
+  COMMISSION: { label: 'عمولة السوق', icon: '🧾' },
+  BROKER_SHARE: { label: 'نصيب الدلال', icon: '🧑‍⚖️' },
+  SUPERVISOR_SHARE: { label: 'نصيب مشرف الدلالين', icon: '🎖️' },
   DEPOSIT_HOLD: { label: 'حجز عربون', icon: '🔒' },
   DEPOSIT_RELEASE: { label: 'فكّ عربون', icon: '🔓' },
   PAYOUT: { label: 'تحويل', icon: '🏦' },
