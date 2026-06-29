@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
-import { themeFor, gradient, sceneBackground } from '@/lib/themes';
+import { resolveTheme, resolveIcon, gradient, sceneBackground } from '@/lib/themes';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
 
@@ -51,18 +51,24 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 
   const media = listing.media ?? [];
-  const species = listing.category?.parent?.name ?? listing.category?.name;
-  const theme = themeFor(species);
+  // سلسلة: سلالة ← لون ← نوع (من الأعمق للأعلى)
+  const cat = listing.category;
+  const chain = [cat, cat?.parent, cat?.parent?.parent].filter(Boolean);
+  const theme = resolveTheme(chain);
+  const emoji = resolveIcon(chain);
+  const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
 
   return (
     <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme) }}>
       {/* لافتة السوق حسب النوع */}
       <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
         style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 40px -18px ${theme.from}88` }}>
-        <span className="text-4xl animate-floaty">{theme.emoji}</span>
+        <span className="text-4xl animate-floaty">{emoji}</span>
         <div>
-          <div className="text-lg font-extrabold text-emboss-light">{theme.label}</div>
-          <div className="text-sm text-white/80">{theme.tagline}</div>
+          <div className="text-lg font-extrabold text-emboss-light">سوق {marketName}</div>
+          <div className="text-sm text-white/80">
+            {[cat?.parent?.parent?.name, cat?.parent?.name, cat?.name].filter(Boolean).join(' · ')}
+          </div>
         </div>
       </div>
 
@@ -158,7 +164,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                   key={h.id}
                   className={`chip ${h.value ? '!bg-green-100 !text-green-800' : '!bg-red-100 !text-red-800'}`}
                 >
-                  {h.value ? '✔' : '✕'} {HEALTH_LABELS[h.key] ?? h.key}
+                  {h.value ? '✔ سليم —' : '✕ غير سليم —'} {h.label ?? HEALTH_LABELS[h.key] ?? h.key}
                 </span>
               ))}
             </div>

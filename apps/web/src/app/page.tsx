@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { ListingCard } from '@/components/ListingCard';
-import { themeFor, gradient, sceneBackground, SUPPLIES_NAME } from '@/lib/themes';
+import { resolveTheme, resolveIcon, gradient, sceneBackground, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { AdBanner } from '@/components/AdBanner';
 
-interface Cat { id: string; name: string; icon?: string; children?: Cat[]; }
+interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[]; }
 type Mode = 'DIRECT' | 'AUCTION' | 'SUPPLIES';
 
 export default function HomePage() {
@@ -26,7 +26,12 @@ export default function HomePage() {
   const activeCategoryId =
     path.length ? path[path.length - 1].id : mode === 'SUPPLIES' ? suppliesRoot?.id ?? null : null;
 
-  const theme = themeFor(mode === 'SUPPLIES' ? SUPPLIES_NAME : path[0]?.name);
+  // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة
+  const chain: CatNode[] = mode === 'SUPPLIES'
+    ? [...[...path].reverse(), ...(suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : [])]
+    : [...path].reverse();
+  const theme = resolveTheme(chain);
+  const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐪';
 
   const load = () => {
     setLoading(true);
@@ -44,10 +49,14 @@ export default function HomePage() {
   useEffect(() => { setPath([]); }, [mode]);
   useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ }, [mode, activeCategoryId, tree.length]);
 
+  const deepest = path[path.length - 1];
   const title =
     mode === 'SUPPLIES'
-      ? `${theme.label}${path[0] ? ` — ${path[0].name}` : ''}`
-      : `${mode === 'DIRECT' ? 'عروض' : 'مزاد'} ${path[0]?.name ?? 'المواشي'}`;
+      ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
+      : `${mode === 'DIRECT' ? 'عروض' : 'مزاد'} ${deepest?.name ?? 'المواشي'}`;
+  const tagline = path.length
+    ? path.map((p) => p.name).join(' · ')
+    : mode === 'SUPPLIES' ? 'أعلاف · صيدليات بيطرية · مستلزمات' : 'إبل · غنم · ماعز · بقر · خيل';
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
@@ -57,7 +66,7 @@ export default function HomePage() {
       style={{ background: sceneBackground(theme) }}>
       {/* علامة مائية للنوع (إحساس المكان) */}
       <div className="pointer-events-none fixed left-0 top-24 -z-0 select-none text-[40vw] leading-none opacity-[0.04]">
-        {theme.emoji}
+        {emoji}
       </div>
 
       <div className="relative">
@@ -66,12 +75,12 @@ export default function HomePage() {
           style={{ backgroundImage: gradient(theme), boxShadow: `0 26px 52px -22px ${theme.from}aa` }}>
           {/* لمعة علوية وزخرفة */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40" />
-          <span className="pointer-events-none absolute -left-4 -bottom-6 select-none text-[8rem] leading-none opacity-15">{theme.emoji}</span>
+          <span className="pointer-events-none absolute -left-4 -bottom-6 select-none text-[8rem] leading-none opacity-15">{emoji}</span>
           <div className="relative">
             <h1 className="flex items-center gap-3 text-2xl font-extrabold text-emboss-light sm:text-3xl">
-              <span className="text-4xl drop-shadow animate-floaty">{theme.emoji}</span> {title}
+              <span className="text-4xl drop-shadow animate-floaty">{emoji}</span> {title}
             </h1>
-            <p className="mt-1 text-white/85">{theme.tagline}</p>
+            <p className="mt-1 text-white/85">{tagline}</p>
           </div>
         </div>
 
@@ -140,7 +149,7 @@ export default function HomePage() {
             </div>
           ) : listings.length === 0 ? (
             <div className="py-16 text-center text-gray-500">
-              <p className="text-6xl">{theme.emoji}</p>
+              <p className="text-6xl">{emoji}</p>
               <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
             </div>
           ) : (

@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       lng: dto.lng ?? null,
       hidePhone: !!dto.hidePhone,
       health: dto.health?.length
-        ? { create: dto.health.map((h: any) => ({ key: h.key, value: !!h.value, note: h.note ?? null })) }
+        ? { create: dto.health.map((h: any) => ({ key: h.key, label: h.label ?? null, value: !!h.value, note: h.note ?? null })) }
         : undefined,
       media: dto.media?.length
         ? { create: dto.media.map((m: any, i: number) => ({ url: m.url, type: m.type ?? 'IMAGE', order: i })) }

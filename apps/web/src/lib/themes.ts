@@ -1,69 +1,108 @@
-// هوية بصرية كاملة لكل نوع — لون، خلفية، تدرّج، وعلامة مائية
-// تجعل كل سوق "مكاناً مختلفاً".
-export interface SpeciesTheme {
-  emoji: string;
+// مكتبة ثيمات واسعة مصنّفة بأقسام لونية. كل تصنيف (نوع/لون/سلالة) يمكن أن
+// يُعيّن له ثيم من الإدارة فيتحوّل تصفّحه كأنه موقع مستقل بهويته.
+
+export interface Theme {
+  label: string;
+  family: string;
   from: string;
   to: string;
   accent: string;
-  bg: string;       // خلفية الصفحة
-  surface: string;  // لمسة لون للأسطح
-  glow: string;     // توهّج خفيف للعمق
-  label: string;
-  tagline: string;
+  bg: string;
+  surface: string;
+  glow: string;
 }
 
-export const SPECIES_THEMES: Record<string, SpeciesTheme> = {
-  'إبل': {
-    emoji: '🐪', from: '#6b4f2a', to: '#c79a3a', accent: '#a87b2e',
-    bg: '#f7efdf', surface: '#fffaf0', glow: 'rgba(199,154,58,0.18)',
-    label: 'سوق الإبل', tagline: 'مجاهيم · مغاتير · وضح · أصايل',
-  },
-  'خيل': {
-    emoji: '🐎', from: '#2a2a4a', to: '#7a66b0', accent: '#5b4b8a',
-    bg: '#eeebf7', surface: '#f8f6ff', glow: 'rgba(122,102,176,0.18)',
-    label: 'سوق الخيل', tagline: 'عربي أصيل · نسب وأصالة',
-  },
-  'غنم': {
-    emoji: '🐑', from: '#235c41', to: '#56b083', accent: '#2f7a57',
-    bg: '#e7f4ec', surface: '#f3fbf6', glow: 'rgba(86,176,131,0.18)',
-    label: 'سوق الغنم', tagline: 'نجدي · نعيمي · حري · سواكني',
-  },
-  'ماعز': {
-    emoji: '🐐', from: '#7a4521', to: '#cf8447', accent: '#a85f33',
-    bg: '#fbeee2', surface: '#fff8f1', glow: 'rgba(207,132,71,0.18)',
-    label: 'سوق الماعز', tagline: 'عارضي · شامي · حجازي',
-  },
-  'بقر': {
-    emoji: '🐄', from: '#454033', to: '#9a8a64', accent: '#6e6147',
-    bg: '#f4f1e8', surface: '#fdfcf7', glow: 'rgba(154,138,100,0.18)',
-    label: 'سوق البقر', tagline: 'هولشتاين · جيرسي · بلدي',
-  },
-  'مستلزمات الحلال': {
-    emoji: '🛒', from: '#0e5a6b', to: '#28a0a8', accent: '#127d86',
-    bg: '#e6f5f6', surface: '#f2fbfb', glow: 'rgba(40,160,168,0.18)',
-    label: 'سوق المستلزمات', tagline: 'أعلاف · صيدليات بيطرية · مستلزمات',
-  },
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100; l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = (x: number) => Math.round(255 * x).toString(16).padStart(2, '0');
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
+function make(label: string, family: string, h: number, s: number, l: number): Theme {
+  return {
+    label, family,
+    from: hslToHex(h, s, Math.max(15, l - 24)),
+    to: hslToHex(h, s, l),
+    accent: hslToHex(h, Math.min(s + 5, 92), Math.max(22, l - 8)),
+    bg: hslToHex(h, Math.round(s * 0.34), 96),
+    surface: hslToHex(h, Math.round(s * 0.24), 98),
+    glow: `hsla(${h}, ${s}%, ${l}%, 0.16)`,
+  };
+}
+
+// أقسام لونية، لكل قسم درجات متقاربة. لكل درجة تُولّد نسختان (عادية وغامقة).
+export const FAMILIES = [
+  'ذهبي وترابي', 'برتقالي وأحمر', 'وردي وبنفسجي', 'بنفسجي وأزرق',
+  'أزرق وسماوي', 'أخضر وفيروزي', 'محايد وداكن',
+];
+
+const FAMILY_BASES: Record<string, [string, number, number][]> = {
+  'ذهبي وترابي': [['ذهبي', 43, 66], ['عسلي', 38, 68], ['خردلي', 48, 60], ['كهرماني', 35, 72], ['نحاسي', 28, 60], ['رملي', 40, 48], ['قمحي', 45, 54], ['برونزي', 33, 52]],
+  'برتقالي وأحمر': [['يوسفي', 30, 80], ['يقطيني', 25, 74], ['غروب', 14, 76], ['مرجاني', 8, 72], ['قرمزي', 352, 66], ['ياقوتي', 345, 62], ['عنّابي', 358, 52], ['طوبي', 16, 60]],
+  'وردي وبنفسجي': [['وردي', 335, 58], ['زهري', 330, 60], ['فلامنجو', 348, 70], ['فوشيا', 305, 62], ['أرجواني وردي', 320, 58], ['توتي', 290, 48], ['عنبي', 280, 48], ['جمشت', 275, 46]],
+  'بنفسجي وأزرق': [['أرجواني ملكي', 262, 48], ['بنفسجي', 270, 52], ['خزامى', 255, 44], ['نيلي', 240, 48], ['كوبالت', 225, 62], ['كحلي', 222, 50], ['ياقوت أزرق', 218, 58], ['لازوردي', 214, 58]],
+  'أزرق وسماوي': [['سماء', 205, 66], ['محيط', 215, 56], ['سماوي', 192, 60], ['مائي', 185, 52], ['تركوازي', 172, 58], ['جينز', 210, 42], ['أزور', 200, 60], ['نيلي فاتح', 198, 55]],
+  'أخضر وفيروزي': [['فيروزي', 184, 56], ['أزرق مخضر', 178, 52], ['زمردي', 160, 56], ['يشمي', 165, 52], ['مرعى', 145, 46], ['غابة', 150, 50], ['نعناعي', 158, 46], ['زيتوني', 75, 46]],
+  'محايد وداكن': [['قهوة', 25, 35], ['شوكولاتة', 20, 42], ['موكا', 28, 26], ['بنّي رمادي', 30, 18], ['حجري', 40, 12], ['إردوازي', 215, 16], ['غرافيت', 220, 10], ['فحمي', 222, 9]],
 };
 
-export const DEFAULT_THEME: SpeciesTheme = {
-  emoji: '🐪', from: '#0a5c50', to: '#13a08c', accent: '#0f7b6c',
-  bg: '#f3f1ea', surface: '#ffffff', glow: 'rgba(19,160,140,0.16)',
-  label: 'سوق ومزادات المواشي', tagline: 'إبل · غنم · ماعز · بقر · خيل',
+// ثيمات ثابتة الأسماء (لافتراضات الأنواع)
+const NAMED: Record<string, Theme> = {
+  brand: make('الافتراضي', 'مميّزة', 168, 60, 38),
+  'sand-gold': make('رملي ذهبي', 'مميّزة', 40, 52, 50),
+  'royal-purple': make('أرجواني ملكي', 'مميّزة', 262, 46, 46),
+  'meadow-green': make('مرعى', 'مميّزة', 145, 46, 42),
+  terracotta: make('طيني', 'مميّزة', 18, 55, 48),
+  taupe: make('بنّي رمادي', 'مميّزة', 30, 18, 46),
+  'teal-supply': make('فيروزي', 'مميّزة', 184, 56, 42),
 };
 
+const generated: Record<string, Theme> = {};
+for (const family of FAMILIES) {
+  FAMILY_BASES[family].forEach(([label, h, s], i) => {
+    generated[`g_${h}_${s}_n`] = make(label, family, h, s, 50);
+    generated[`g_${h}_${s}_d`] = make(`${label} غامق`, family, h, s, 38);
+  });
+}
+
+export const THEMES: Record<string, Theme> = { ...NAMED, ...generated };
+
+export const THEME_LIST = Object.entries(THEMES).map(([key, t]) => ({ key, ...t }));
+
+export const DEFAULT_THEME: Theme = THEMES['brand'];
 export const SUPPLIES_NAME = 'مستلزمات الحلال';
 
-export function themeFor(speciesName?: string | null): SpeciesTheme {
-  if (speciesName && SPECIES_THEMES[speciesName]) return SPECIES_THEMES[speciesName];
-  return DEFAULT_THEME;
+const SPECIES_DEFAULT: Record<string, string> = {
+  'إبل': 'sand-gold', 'خيل': 'royal-purple', 'غنم': 'meadow-green',
+  'ماعز': 'terracotta', 'بقر': 'taupe', 'مستلزمات الحلال': 'teal-supply',
+};
+
+export function themeByKey(key?: string | null): Theme {
+  return (key && THEMES[key]) || DEFAULT_THEME;
+}
+export function themeForSpeciesName(name?: string | null): Theme {
+  return themeByKey(name ? SPECIES_DEFAULT[name] : undefined);
 }
 
-export function gradient(t: SpeciesTheme): string {
+export interface CatNode { name?: string; icon?: string | null; themeKey?: string | null }
+
+export function resolveTheme(chain: (CatNode | null | undefined)[]): Theme {
+  for (const c of chain) if (c?.themeKey && THEMES[c.themeKey]) return THEMES[c.themeKey];
+  const species = chain[chain.length - 1];
+  return themeForSpeciesName(species?.name);
+}
+export function resolveIcon(chain: (CatNode | null | undefined)[]): string {
+  for (const c of chain) if (c?.icon) return c.icon;
+  return '🐾';
+}
+
+export function gradient(t: Theme): string {
   return `linear-gradient(135deg, ${t.from}, ${t.to})`;
 }
-
-// خلفية المشهد ثلاثية الأبعاد (تدرّجات شعاعية ناعمة) لكل نوع
-export function sceneBackground(t: SpeciesTheme): string {
+export function sceneBackground(t: Theme): string {
   return [
     `radial-gradient(900px circle at 100% -5%, ${t.glow}, transparent 45%)`,
     `radial-gradient(700px circle at -10% 10%, ${t.glow}, transparent 40%)`,

@@ -13,13 +13,16 @@ interface Cat {
   children?: Cat[];
 }
 
-const HEALTH_ITEMS = [
-  { key: 'vaccinated', label: 'مُطعّم' },
-  { key: 'udder', label: 'الضرع سليم' },
-  { key: 'teeth', label: 'الأسنان سليمة' },
-  { key: 'abscess', label: 'لا يوجد خراجات' },
-  { key: 'mange', label: 'لا يوجد جرب' },
-  { key: 'limp', label: 'لا يوجد عرج' },
+interface HealthItem { id: string; label: string }
+
+// بنود افتراضية تُستخدم إن لم تُضِف الإدارة بنوداً بعد
+const FALLBACK_HEALTH: HealthItem[] = [
+  { id: 'vaccinated', label: 'مُطعّم' },
+  { id: 'udder', label: 'الضرع سليم' },
+  { id: 'teeth', label: 'الأسنان سليمة' },
+  { id: 'abscess', label: 'خالٍ من الخراجات' },
+  { id: 'mange', label: 'خالٍ من الجرب' },
+  { id: 'limp', label: 'خالٍ من العرج' },
 ];
 
 const STEPS = ['النوع', 'اللون', 'السلالة', 'العنوان', 'الصور', 'التفاصيل', 'الصحة', 'البيع'];
@@ -47,9 +50,13 @@ export default function SellPage() {
   const isBroker = user?.role === 'BROKER' || user?.role === 'ADMIN';
 
   const [auctionTypes, setAuctionTypes] = useState<{ id: string; name: string; icon?: string | null; commissionPct: number }[]>([]);
+  const [healthItems, setHealthItems] = useState<HealthItem[]>(FALLBACK_HEALTH);
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
+    api<{ items: HealthItem[] }>('/health-items')
+      .then((r) => { if (r.items?.length) setHealthItems(r.items); })
+      .catch(() => {});
   }, []);
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
@@ -79,7 +86,10 @@ export default function SellPage() {
   const submit = async () => {
     setBusy(true); setError('');
     try {
-      const health = Object.entries(form.health).map(([key, value]) => ({ key, value }));
+      const labelOf = (k: string) => healthItems.find((h) => h.id === k)?.label ?? k;
+      const health = Object.entries(form.health)
+        .filter(([, value]) => value !== undefined && value !== null)
+        .map(([key, value]) => ({ key, value, label: labelOf(key) }));
       const media = form.photos.map((url: string) => ({ url, type: 'IMAGE' }));
       const body: any = {
         title: form.title, description: form.description, categoryId: form.categoryId,
@@ -242,14 +252,27 @@ export default function SellPage() {
         {/* 6: الصحة */}
         {step === 6 && (
           <div className="space-y-2">
-            <p className="mb-3 text-gray-500">حدّد ما ينطبق (إفصاح صادق يرفع ثقتك)</p>
-            {HEALTH_ITEMS.map((h) => (
-              <label key={h.key} className="flex cursor-pointer items-center justify-between rounded-2xl border-2 border-sand-200 px-4 py-3">
-                <span className="text-lg font-medium">{h.label}</span>
-                <input type="checkbox" className="h-7 w-7 accent-brand" checked={!!form.health[h.key]}
-                  onChange={(e) => set('health', { ...form.health, [h.key]: e.target.checked })} />
-              </label>
-            ))}
+            <p className="mb-3 text-gray-500">حدّد لكل بند: <b className="text-green-700">سليم</b> أو <b className="text-red-600">غير سليم</b> (إفصاح صادق يرفع ثقتك)</p>
+            {healthItems.map((h) => {
+              const v = form.health[h.id];
+              return (
+                <div key={h.id} className="flex items-center justify-between gap-3 rounded-2xl border-2 border-sand-200 px-4 py-3">
+                  <span className="text-lg font-medium">{h.label}</span>
+                  <div className="flex shrink-0 gap-2">
+                    <button type="button"
+                      onClick={() => set('health', { ...form.health, [h.id]: true })}
+                      className={`rounded-xl px-3 py-2 text-sm font-bold transition ${v === true ? 'bg-green-600 text-white' : 'bg-green-50 text-green-700 ring-1 ring-green-200'}`}>
+                      ✔ سليم
+                    </button>
+                    <button type="button"
+                      onClick={() => set('health', { ...form.health, [h.id]: false })}
+                      className={`rounded-xl px-3 py-2 text-sm font-bold transition ${v === false ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 ring-1 ring-red-200'}`}>
+                      ✕ غير سليم
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

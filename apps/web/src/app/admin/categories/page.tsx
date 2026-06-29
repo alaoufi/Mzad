@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { THEME_LIST, FAMILIES, themeByKey, gradient } from '@/lib/themes';
 
 interface Cat {
   id: string;
   name: string;
   icon?: string;
   hidden?: boolean;
+  themeKey?: string | null;
   children?: Cat[];
 }
 
@@ -20,6 +22,7 @@ export default function AdminCategoriesPage() {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [themeFor, setThemeFor] = useState<Cat | null>(null);
 
   const load = () =>
     api<Cat[]>('/admin/categories').then(setTree).catch(() => {}).finally(() => setLoading(false));
@@ -59,6 +62,10 @@ export default function AdminCategoriesPage() {
   };
   const toggleHide = (c: Cat) =>
     run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !c.hidden }) }));
+  const setTheme = (catId: string, themeKey: string) => {
+    setThemeFor(null);
+    run(() => api(`/admin/categories/${catId}`, { method: 'PATCH', body: JSON.stringify({ themeKey }) }));
+  };
   const del = (c: Cat) => {
     if (!confirm(`حذف "${c.name}"؟`)) return;
     run(() => api(`/admin/categories/${c.id}`, { method: 'DELETE' }));
@@ -98,6 +105,7 @@ export default function AdminCategoriesPage() {
               <span className="flex-1 text-lg font-bold">
                 {sp.name}{sp.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
               </span>
+              <ThemeBtn c={sp} onClick={() => setThemeFor(sp)} />
               <Btn onClick={() => setIcon(sp)}>🖼️</Btn>
               <Btn onClick={() => rename(sp)}>✏️</Btn>
               <Btn onClick={() => toggleHide(sp)}>{sp.hidden ? '🙈' : '👁️'}</Btn>
@@ -113,6 +121,7 @@ export default function AdminCategoriesPage() {
                       <span className="flex-1 font-bold text-brand-dark">
                         {color.icon} {color.name}{color.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
                       </span>
+                      <ThemeBtn c={color} onClick={() => setThemeFor(color)} />
                       <Btn onClick={() => setIcon(color)}>🖼️</Btn>
                       <Btn onClick={() => rename(color)}>✏️</Btn>
                       <Btn onClick={() => toggleHide(color)}>{color.hidden ? '🙈' : '👁️'}</Btn>
@@ -125,6 +134,7 @@ export default function AdminCategoriesPage() {
                             <span className="flex-1">
                               {breed.icon} {breed.name}{breed.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
                             </span>
+                            <ThemeBtn c={breed} onClick={() => setThemeFor(breed)} />
                             <Btn onClick={() => setIcon(breed)}>🖼️</Btn>
                             <Btn onClick={() => rename(breed)}>✏️</Btn>
                             <Btn onClick={() => toggleHide(breed)}>{breed.hidden ? '🙈' : '👁️'}</Btn>
@@ -148,6 +158,44 @@ export default function AdminCategoriesPage() {
           </div>
         ))}
       </div>
+
+      {/* منتقي الثيمات */}
+      {themeFor && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center" onClick={() => setThemeFor(null)}>
+          <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-lg font-extrabold">🎨 ثيم: {themeFor.icon} {themeFor.name}</h3>
+              <button onClick={() => setThemeFor(null)} className="text-gray-400">✕</button>
+            </div>
+            <button onClick={() => setTheme(themeFor.id, '')}
+              className="mb-3 w-full rounded-xl border-2 border-dashed border-sand-300 py-2 text-sm font-bold text-gray-500">
+              بلا ثيم (افتراضي النوع)
+            </button>
+            {['مميّزة', ...FAMILIES].map((family) => {
+              const items = THEME_LIST.filter((t) => t.family === family);
+              if (!items.length) return null;
+              return (
+                <div key={family} className="mb-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundImage: gradient(items[0]) }} />
+                    <h4 className="text-sm font-extrabold text-gray-700">{family}</h4>
+                    <span className="text-xs text-gray-400">({items.length})</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {items.map((t) => (
+                      <button key={t.key} onClick={() => setTheme(themeFor.id, t.key)}
+                        className={`overflow-hidden rounded-2xl ring-2 transition ${themeFor.themeKey === t.key ? 'ring-brand' : 'ring-transparent'}`}>
+                        <div className="h-12 w-full" style={{ backgroundImage: gradient(t) }} />
+                        <div className="bg-white py-1 text-[11px] font-bold text-gray-600">{t.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -156,6 +204,15 @@ function Btn({ children, onClick }: { children: React.ReactNode; onClick: () => 
   return (
     <button onClick={onClick} className="rounded-lg bg-white px-2 py-1 text-sm ring-1 ring-sand-200 hover:bg-sand-50">
       {children}
+    </button>
+  );
+}
+
+function ThemeBtn({ c, onClick }: { c: { themeKey?: string | null }; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-lg ring-1 ring-sand-200"
+      title="الثيم">
+      {c.themeKey ? <span className="h-full w-full" style={{ backgroundImage: gradient(themeByKey(c.themeKey)) }} /> : <span className="text-sm">🎨</span>}
     </button>
   );
 }

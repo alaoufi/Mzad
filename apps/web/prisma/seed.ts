@@ -142,11 +142,23 @@ async function ensureSupplies() {
   console.log('✅ تمت إضافة سوق المستلزمات.');
 }
 
+async function ensureHealthItems() {
+  const count = await prisma.healthItem.count();
+  if (count > 0) { console.log('ℹ️ بنود الحالة الصحية موجودة — تخطّي.'); return; }
+  console.log('🩺 إضافة بنود الحالة الصحية الافتراضية...');
+  const defaults = ['مُطعّم', 'الضرع سليم', 'الأسنان سليمة', 'خالٍ من الخراجات', 'خالٍ من الجرب', 'خالٍ من العرج'];
+  for (let i = 0; i < defaults.length; i++) {
+    await prisma.healthItem.create({ data: { label: defaults[i], order: i + 1 } });
+  }
+  console.log('✅ تمت إضافة بنود الحالة الصحية.');
+}
+
 async function main() {
   const hasTypes = await prisma.category.count({ where: { level: 'TYPE' } });
   if (hasTypes === 0) await fullRebuild();
   else console.log('ℹ️ التصنيف الثلاثي موجود — تخطّي إعادة البناء.');
   await ensureSupplies();
+  await ensureHealthItems();
 }
 
 main()

@@ -76,6 +76,7 @@ model Category {
   name     String
   level    CategoryLevel
   icon     String?
+  themeKey String?
   hidden   Boolean       @default(false)
   parentId String?
   parent   Category?     @relation("CategoryTree", fields: [parentId], references: [id])
@@ -143,10 +144,22 @@ model HealthAttribute {
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId String
   key       String  // vaccinated / udder / abscess / mange / teeth / limp ...
-  value     Boolean
+  label     String? // نص البند وقت الإدخال (سليم/غير سليم)
+  value     Boolean // true = سليم، false = غير سليم
   note      String?
 
   @@index([listingId])
+}
+
+// بنود الحالة الصحية (تُدار من الإدارة: إضافة/تعديل/حذف)
+model HealthItem {
+  id        String   @id @default(uuid())
+  label     String
+  order     Int      @default(0)
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([hidden, order])
 }
 
 enum MediaType {
