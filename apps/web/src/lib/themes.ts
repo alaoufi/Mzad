@@ -22,15 +22,18 @@ function hslToHex(h: number, s: number, l: number): string {
 }
 
 function make(label: string, family: string, h: number, s: number, l: number): Theme {
+  // تشبّع مكبوح ودرجات وسطى مريحة للعين — لا قاتمة ولا باهتة
+  const sat = Math.min(s, 68);
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
   return {
     label, family,
-    from: hslToHex(h, s, Math.max(15, l - 24)),
-    to: hslToHex(h, s, l),
-    accent: hslToHex(h, Math.min(s + 5, 92), Math.max(22, l - 8)),
-    // خلفية وأسطح ملوّنة بوضوح (لا بيضاء) ليكون التغيّر جذرياً عند تبديل النوع
-    bg: hslToHex(h, Math.min(Math.round(s * 0.6), 60), 90),
-    surface: hslToHex(h, Math.min(Math.round(s * 0.45), 48), 96),
-    glow: `hsla(${h}, ${s}%, ${l}%, 0.16)`,
+    from: hslToHex(h, sat, clamp(l - 10, 32, 58)),
+    to: hslToHex(h, sat, clamp(l + 3, 42, 62)),
+    accent: hslToHex(h, Math.min(sat + 4, 70), clamp(l - 5, 34, 58)),
+    // خلفية وأسطح فاتحة جداً وهادئة — تلوين خفيف مريح
+    bg: hslToHex(h, Math.min(Math.round(sat * 0.34), 32), 96),
+    surface: hslToHex(h, Math.min(Math.round(sat * 0.22), 22), 98),
+    glow: `hsla(${h}, ${sat}%, ${l}%, 0.12)`,
   };
 }
 
@@ -104,12 +107,11 @@ export function gradient(t: Theme): string {
   return `linear-gradient(135deg, ${t.from}, ${t.to})`;
 }
 
-// خلفية المشهد — تغيّر جذري بألوان النوع: حقل لوني قوي تطفو فوقه البطاقات البيضاء
+// خلفية المشهد — تلوين هادئ مريح بلون النوع (نفحات خفيفة فوق قاعدة فاتحة)
 export function sceneBackground(t: Theme): string {
   return [
-    `radial-gradient(1300px circle at 100% -12%, ${t.accent}, transparent 58%)`,
-    `radial-gradient(1100px circle at -12% 4%, ${t.to}d9, transparent 54%)`,
-    `radial-gradient(1100px circle at 50% 128%, ${t.from}b3, transparent 60%)`,
+    `radial-gradient(1200px circle at 100% -14%, ${t.accent}33, transparent 58%)`,
+    `radial-gradient(1000px circle at -10% 2%, ${t.to}24, transparent 54%)`,
     `linear-gradient(180deg, ${t.bg}, ${t.surface})`,
   ].join(', ');
 }

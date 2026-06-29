@@ -35,6 +35,7 @@ model User {
   city            String?
   region          String?
   trustScore      Float          @default(0)
+  interests       String[]       @default([]) // معرّفات التصنيفات التي يهتم بها (أي مستوى)
   createdAt       DateTime       @default(now())
 
   listings        Listing[]

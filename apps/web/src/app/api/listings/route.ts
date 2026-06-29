@@ -48,7 +48,18 @@ export async function GET(req: NextRequest) {
   const hiddenIds = new Set<string>();
   for (const c of allCats) if (c.hidden) for (const id of subtree(c.id)) hiddenIds.add(id);
 
-  const categoryFilter: Prisma.ListingWhereInput = categoryId ? { categoryId: { in: subtree(categoryId) } } : {};
+  // فلترة بعدّة تصنيفات (اهتمامات المستخدم) — اتحاد الأشجار الفرعية
+  const categoryIdsParam = sp.get('categoryIds');
+  const categoryIds = categoryIdsParam ? categoryIdsParam.split(',').filter(Boolean) : [];
+
+  let categoryFilter: Prisma.ListingWhereInput = {};
+  if (categoryId) {
+    categoryFilter = { categoryId: { in: subtree(categoryId) } };
+  } else if (categoryIds.length) {
+    const union = new Set<string>();
+    for (const id of categoryIds) for (const s of subtree(id)) union.add(s);
+    categoryFilter = { categoryId: { in: [...union] } };
+  }
   const excludeIds = new Set<string>(exclude ? subtree(exclude) : []);
   for (const id of hiddenIds) excludeIds.add(id);
   const excludeFilter: Prisma.ListingWhereInput = excludeIds.size ? { NOT: { categoryId: { in: [...excludeIds] } } } : {};

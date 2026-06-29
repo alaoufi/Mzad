@@ -115,7 +115,20 @@ export default function AdminCategoriesPage() {
       <p className="text-sm text-gray-500">النوع ← اللون/الصنف ← السلالة. تحكّم كامل بالشجرة.</p>
       {error && <div className="rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 
-      <button onClick={() => openAdd(null, 'SPECIES')} className="btn-primary w-full">＋ إضافة نوع جديد</button>
+      <div className="flex gap-2">
+        <button onClick={() => openAdd(null, 'SPECIES')} className="btn-primary flex-1">＋ إضافة نوع جديد</button>
+        <button
+          onClick={() => {
+            if (!confirm('⚠️ سيحذف هذا كل التصنيفات والإعلانات الحالية ويعيد بناء الشجرة الافتراضية (إبل/غنم/خيل + المستلزمات). متابعة؟')) return;
+            run(async () => {
+              const r = await api<{ species: number; types: number; breeds: number }>('/admin/rebuild-catalog', { method: 'POST' });
+              alert(`✅ تمت إعادة البناء: ${r.species} أنواع، ${r.types} أصناف، ${r.breeds} سلالات.`);
+            });
+          }}
+          className="btn-outline !min-h-0 shrink-0 !border-red-300 !px-3 !text-red-600">
+          ♻️ إعادة بناء
+        </button>
+      </div>
 
       <div className="space-y-3">
         {tree.map((sp) => (

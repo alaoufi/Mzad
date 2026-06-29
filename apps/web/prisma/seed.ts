@@ -3,24 +3,29 @@ import { PrismaClient, Prisma } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // تصنيف ثلاثي: النوع (SPECIES) ← اللون/الصنف (TYPE) ← السلالة (BREED)
-const CATALOG: Record<string, { icon: string; groups: Record<string, string[]> }> = {
+// تصنيف ثلاثي حسب المتعارف عليه:
+//  إبل → اللون → سلالة | غنم → (نجدي/حري/ماعز) → سلالة | خيل → اللون → سلالة
+const CATALOG: Record<string, { icon: string; groups: Record<string, { icon?: string; breeds: string[] }> }> = {
   'إبل': { icon: '🐪', groups: {
-    'مجاهيم': ['مجاهيم أصايل', 'مجاهيم شعل'], 'مغاتير': ['وضح', 'ملاحيم'],
-    'صُفر': ['صفر صافية', 'شُقُح'], 'حُمر': ['حُمر صافية', 'صُهب'],
-    'شُعل': ['شُعل'], 'زُرق': ['زُرق'],
-  } },
-  'خيل': { icon: '🐎', groups: {
-    'عربي أصيل': ['كحيلان', 'صقلاوي', 'عبيان', 'دهمان', 'هدبان'], 'واهو': ['واهو'], 'شعبي': ['شعبي'],
+    'وضح': { breeds: ['غير معروف'] },
+    'شقح': { breeds: ['غير معروف'] },
+    'صفر': { breeds: ['غير معروف'] },
+    'شعل': { breeds: ['غير معروف'] },
+    'مجاهيم': { breeds: ['غير معروف'] },
+    'أخرى': { breeds: ['غير معروف'] },
   } },
   'غنم': { icon: '🐑', groups: {
-    'نجدي': ['نجدي أسود', 'نجدي أبيض'], 'نعيمي': ['نعيمي'], 'حري': ['حري'],
-    'سواكني': ['سواكني'], 'عواسي': ['عواسي'], 'بربري': ['بربري'],
+    'نجدي': { icon: '🐑', breeds: ['أصل', 'مهجن'] },
+    'حري': { icon: '🐑', breeds: ['أصل', 'مهجن'] },
+    'ماعز': { icon: '🐐', breeds: ['عارضي', 'بورقوت', 'مهجن'] },
   } },
-  'ماعز': { icon: '🐐', groups: {
-    'عارضي': ['عارضي أسود', 'عارضي ملوّن'], 'شامي': ['شامي'], 'حجازي': ['حجازي'], 'تهامي': ['تهامي'],
-  } },
-  'بقر': { icon: '🐄', groups: {
-    'هولشتاين': ['هولشتاين'], 'جيرسي': ['جيرسي'], 'بلدي': ['بلدي', 'دمشقي'],
+  'خيل': { icon: '🐎', groups: {
+    'أدهم': { breeds: ['عربي أصيل', 'هجين'] },
+    'أشقر': { breeds: ['عربي أصيل', 'هجين'] },
+    'كميت': { breeds: ['عربي أصيل', 'هجين'] },
+    'أشهب': { breeds: ['عربي أصيل', 'هجين'] },
+    'أحمر': { breeds: ['عربي أصيل', 'هجين'] },
+    'أخرى': { breeds: ['عربي أصيل', 'هجين'] },
   } },
 };
 
@@ -49,11 +54,11 @@ async function fullRebuild() {
   const breedIds: Record<string, string> = {};
   for (const [species, { icon, groups }] of Object.entries(CATALOG)) {
     const sp = await prisma.category.create({ data: { name: species, level: 'SPECIES', icon } });
-    for (const [color, breeds] of Object.entries(groups)) {
-      const col = await prisma.category.create({ data: { name: color, level: 'TYPE', parentId: sp.id } });
+    for (const [type, { icon: tIcon, breeds }] of Object.entries(groups)) {
+      const col = await prisma.category.create({ data: { name: type, level: 'TYPE', parentId: sp.id, icon: tIcon ?? null } });
       for (const breed of breeds) {
         const br = await prisma.category.create({ data: { name: breed, level: 'BREED', parentId: col.id } });
-        breedIds[`${species}/${color}/${breed}`] = br.id;
+        breedIds[`${species}/${type}/${breed}`] = br.id;
       }
     }
   }
@@ -63,14 +68,14 @@ async function fullRebuild() {
   const buyer = await ensureUser('966500000003', { name: 'فهد العتيبي', isPhoneVerified: true, city: 'الرياض', region: 'الرياض', trustScore: 4.5 });
 
   await prisma.listing.create({ data: {
-    sellerId: seller.id, categoryId: breedIds['غنم/نجدي/نجدي أسود'], title: 'خروف نجدي أسود ممتاز',
+    sellerId: seller.id, categoryId: breedIds['غنم/نجدي/أصل'], title: 'خروف نجدي أسود ممتاز',
     description: 'خروف نجدي، صحته ممتازة، مطعّم بالكامل.', count: 1, sex: 'MALE', approxWeightKg: 55,
     saleType: 'DIRECT', price: new Prisma.Decimal(1800), city: 'بريدة', region: 'القصيم', lat: 26.359, lng: 43.973, status: 'ACTIVE',
     health: { create: [{ key: 'vaccinated', value: true }, { key: 'teeth', value: true }] },
     media: { create: [{ url: img('photo-1484557985045-edf25e08da73'), type: 'IMAGE' }] },
   } });
   await prisma.listing.create({ data: {
-    sellerId: seller.id, categoryId: breedIds['ماعز/عارضي/عارضي أسود'], title: 'تيس عارضي أصيل',
+    sellerId: seller.id, categoryId: breedIds['غنم/ماعز/عارضي'], title: 'تيس عارضي أصيل',
     description: 'تيس عارضي لون أسود، نشيط، مناسب للتربية.', count: 1, sex: 'MALE', approxWeightKg: 40,
     saleType: 'DIRECT', price: new Prisma.Decimal(2500), city: 'عنيزة', region: 'القصيم', status: 'ACTIVE',
     health: { create: [{ key: 'vaccinated', value: true }] },
@@ -78,7 +83,7 @@ async function fullRebuild() {
   } });
 
   const auctionListing = await prisma.listing.create({ data: {
-    sellerId: seller.id, categoryId: breedIds['إبل/مجاهيم/مجاهيم أصايل'], title: 'ناقة مجاهيم أصايل — مزاد مفتوح',
+    sellerId: seller.id, categoryId: breedIds['إبل/مجاهيم/غير معروف'], title: 'ناقة مجاهيم أصايل — مزاد مفتوح',
     description: 'ناقة مجاهيم أصيلة، منتجة، خالية من العيوب.', count: 1, sex: 'FEMALE', approxWeightKg: 450,
     productionStatus: 'منتجة', saleType: 'AUCTION', city: 'الرياض', region: 'الرياض', lat: 24.713, lng: 46.675, status: 'ACTIVE',
     health: { create: [{ key: 'vaccinated', value: true }, { key: 'udder', value: true }, { key: 'mange', value: false }, { key: 'abscess', value: false }] },
@@ -95,7 +100,7 @@ async function fullRebuild() {
   await prisma.auction.update({ where: { id: auction.id }, data: { highestBidId: b2.id } });
 
   const horseListing = await prisma.listing.create({ data: {
-    sellerId: seller.id, categoryId: breedIds['خيل/عربي أصيل/كحيلان'], title: 'مهرة عربية أصيلة (كحيلان) — مزاد',
+    sellerId: seller.id, categoryId: breedIds['خيل/أدهم/عربي أصيل'], title: 'مهرة عربية أصيلة (كحيلان) — مزاد',
     description: 'مهرة عربية أصيلة بنسب موثّق، صحة ممتازة.', count: 1, sex: 'FEMALE', saleType: 'AUCTION',
     city: 'الدرعية', region: 'الرياض', status: 'ACTIVE',
     health: { create: [{ key: 'vaccinated', value: true }] },
