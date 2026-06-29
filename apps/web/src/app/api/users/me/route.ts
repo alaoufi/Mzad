@@ -43,3 +43,29 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+
+// تحديث الملف الشخصي + طلب توثيق الهوية
+export async function PATCH(req: NextRequest) {
+  const auth = getUser(req);
+  if (!auth) return json({ message: 'غير مصرّح' }, 401);
+
+  const { name, city, region, requestVerification } = await req.json();
+  const data: any = {};
+  if (typeof name === 'string' && name.trim()) data.name = name.trim();
+  if (city !== undefined) data.city = city || null;
+  if (region !== undefined) data.region = region || null;
+
+  if (requestVerification) {
+    const current = await prisma.user.findUnique({
+      where: { id: auth.sub },
+      select: { identityStatus: true },
+    });
+    if (current?.identityStatus === 'VERIFIED') {
+      return json({ message: 'حسابك موثّق بالفعل' }, 400);
+    }
+    data.identityStatus = 'PENDING';
+  }
+
+  await prisma.user.update({ where: { id: auth.sub }, data });
+  return json({ ok: true });
+}

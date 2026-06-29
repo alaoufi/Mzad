@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     category: { select: { name: true, parent: { select: { name: true } } } },
   } as const;
 
-  const [users, listings, activeListings, pending, auctions, bids, reports, recent, pendingList, usersList, openReports] =
+  const [users, listings, activeListings, pending, auctions, bids, reports, recent, pendingList, usersList, openReports, verifications] =
     await Promise.all([
       prisma.user.count(),
       prisma.listing.count(),
@@ -34,16 +34,23 @@ export async function GET(req: NextRequest) {
       prisma.user.findMany({
         orderBy: { createdAt: 'desc' },
         take: 50,
-        select: { id: true, name: true, phone: true, role: true, accountType: true, trustScore: true, city: true },
+        select: { id: true, name: true, phone: true, role: true, accountType: true, trustScore: true, city: true, identityStatus: true },
       }),
       prisma.report.findMany({ where: { status: 'OPEN' }, orderBy: { createdAt: 'desc' }, take: 20 }),
+      prisma.user.findMany({
+        where: { identityStatus: 'PENDING' },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: { id: true, name: true, phone: true, city: true, region: true, accountType: true },
+      }),
     ]);
 
   return json({
-    stats: { users, listings, activeListings, pending, auctions, bids, reports },
+    stats: { users, listings, activeListings, pending, auctions, bids, reports, verifications: verifications.length },
     recent,
     pendingList,
     usersList,
     openReports,
+    verifications,
   });
 }

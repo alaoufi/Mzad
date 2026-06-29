@@ -8,11 +8,12 @@ import { useAuth } from '@/lib/auth';
 import { ACCOUNT_TYPES, accountTypeDef } from '@/lib/roles';
 
 interface AdminData {
-  stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number };
+  stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number; verifications: number };
   recent: any[];
   pendingList: any[];
   usersList: any[];
   openReports: any[];
+  verifications: any[];
 }
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'نشط', DRAFT: 'بانتظار الموافقة', SOLD: 'مُباع', CLOSED: 'مخفي' };
@@ -23,7 +24,7 @@ export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'pending' | 'listings' | 'users'>('pending');
+  const [tab, setTab] = useState<'pending' | 'verify' | 'listings' | 'users'>('pending');
   const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
 
   const load = () =>
@@ -54,6 +55,10 @@ export default function AdminPage() {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ accountType }) }); load(); }
     catch (e: any) { alert(e.message); }
   };
+  const setIdentity = async (id: string, identityStatus: string) => {
+    try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ identityStatus }) }); load(); }
+    catch (e: any) { alert(e.message); }
+  };
 
   if (!user) {
     return (
@@ -82,6 +87,7 @@ export default function AdminPage() {
     { label: 'المستخدمون', value: data.stats.users, icon: '👥' },
     { label: 'الإعلانات', value: data.stats.listings, icon: '📋' },
     { label: 'بانتظار الموافقة', value: data.stats.pending, icon: '⏳' },
+    { label: 'طلبات التوثيق', value: data.stats.verifications, icon: '🛡️' },
     { label: 'المزادات', value: data.stats.auctions, icon: '🔨' },
     { label: 'المزايدات', value: data.stats.bids, icon: '💰' },
     { label: 'البلاغات', value: data.stats.reports, icon: '🚩' },
@@ -134,6 +140,7 @@ export default function AdminPage() {
       <div className="flex gap-2">
         {[
           ['pending', `بانتظار الموافقة (${data.stats.pending})`],
+          ['verify', `التوثيق (${data.stats.verifications})`],
           ['listings', 'كل الإعلانات'],
           ['users', 'المستخدمون'],
         ].map(([k, label]) => (
@@ -164,6 +171,34 @@ export default function AdminPage() {
                     <button onClick={() => setStatus(l.id, 'ACTIVE')}
                       className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-bold text-white">✔ موافقة</button>
                     <button onClick={() => setStatus(l.id, 'CLOSED')}
+                      className="flex-1 rounded-xl bg-gray-200 py-2 text-sm font-bold text-gray-700">رفض</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* طلبات التوثيق */}
+      {tab === 'verify' && (
+        <div className="card p-4">
+          <h2 className="mb-3 text-lg font-bold">🛡️ طلبات توثيق الهوية</h2>
+          {data.verifications.length === 0 ? (
+            <p className="py-6 text-center text-gray-400">لا توجد طلبات توثيق معلّقة 🎉</p>
+          ) : (
+            <div className="space-y-2">
+              {data.verifications.map((u) => (
+                <div key={u.id} className="rounded-2xl bg-sand-50 p-3">
+                  <div className="font-bold">{u.name}</div>
+                  <div className="text-xs text-gray-500">
+                    {u.phone}{(u.city || u.region) && ` · ${[u.city, u.region].filter(Boolean).join('، ')}`}
+                    {' · '}{accountTypeDef(u.accountType).emoji} {accountTypeDef(u.accountType).label}
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button onClick={() => setIdentity(u.id, 'VERIFIED')}
+                      className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-bold text-white">✔ توثيق</button>
+                    <button onClick={() => setIdentity(u.id, 'NONE')}
                       className="flex-1 rounded-xl bg-gray-200 py-2 text-sm font-bold text-gray-700">رفض</button>
                   </div>
                 </div>
@@ -211,7 +246,9 @@ export default function AdminPage() {
             {data.usersList.map((u) => (
               <div key={u.id} className="flex items-center gap-3 rounded-2xl bg-sand-50 p-3">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">{u.name}</div>
+                  <div className="truncate font-bold">
+                    {u.name}{u.identityStatus === 'VERIFIED' && <span className="mr-1 text-green-600" title="موثّق">✔</span>}
+                  </div>
                   <div className="text-xs text-gray-500">
                     {u.phone} · {accountTypeDef(u.accountType).emoji} {accountTypeDef(u.accountType).label}
                   </div>

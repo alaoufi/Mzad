@@ -27,6 +27,9 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+
+  const loadProfile = () => api<Profile>('/users/me').then(setProfile).catch(() => {});
 
   useEffect(() => {
     if (!user) {
@@ -34,12 +37,22 @@ export default function AccountPage() {
       return;
     }
     Promise.all([
-      api<Profile>('/users/me').then(setProfile).catch(() => {}),
+      loadProfile(),
       api<{ items: ListingSummary[] }>('/listings/mine')
         .then((r) => setListings(r.items))
         .catch(() => {}),
     ]).finally(() => setLoading(false));
   }, [user]);
+
+  const requestVerification = async () => {
+    if (!confirm('سيُراجع فريق المنصة هويتك لمنحك شارة «موثّق». هل تريد إرسال الطلب؟')) return;
+    setVerifying(true);
+    try {
+      await api('/users/me', { method: 'PATCH', body: JSON.stringify({ requestVerification: true }) });
+      await loadProfile();
+    } catch (e: any) { alert(e.message); }
+    finally { setVerifying(false); }
+  };
 
   if (!user) {
     return (
@@ -85,6 +98,43 @@ export default function AccountPage() {
         <Stat label="مطابقة الوصف"
           value={profile?.ratings.avgDescMatch ? `${Math.round((profile.ratings.avgDescMatch / 5) * 100)}%` : '—'} />
       </div>
+
+      {/* بطاقة التوثيق */}
+      {profile && (
+        <div className="card p-4">
+          {profile.identityStatus === 'VERIFIED' ? (
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">🛡️</span>
+              <div>
+                <div className="font-bold text-green-700">✔ هويتك موثّقة</div>
+                <div className="text-sm text-gray-500">تظهر شارة «موثّق» على إعلاناتك وترفع ثقة المشترين.</div>
+              </div>
+            </div>
+          ) : profile.identityStatus === 'PENDING' ? (
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">⏳</span>
+              <div>
+                <div className="font-bold text-amber-700">طلب التوثيق قيد المراجعة</div>
+                <div className="text-sm text-gray-500">سيصلك إشعار عند اعتماد هويتك من الإدارة.</div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🛡️</span>
+                <div>
+                  <div className="font-bold">وثّق هويتك</div>
+                  <div className="text-sm text-gray-500">احصل على شارة «موثّق» وزد ثقة المشترين بك.</div>
+                </div>
+              </div>
+              <button onClick={requestVerification} disabled={verifying}
+                className="btn-primary !min-h-0 !px-4 !py-2 !text-sm disabled:opacity-50">
+                {verifying ? '...' : 'اطلب التوثيق'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* روابط سريعة */}
       <div className="grid grid-cols-2 gap-3">
