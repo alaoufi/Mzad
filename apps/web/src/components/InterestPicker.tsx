@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '@/lib/api';
 
@@ -33,13 +33,49 @@ export function InterestPicker({
     api<Cat[]>('/categories').then(setTree).catch(() => {});
   }, []);
 
-  const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
-  const flip = (id: string) =>
-    setSel((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  // فهرسة الأب والأبناء — لفرض اختيار مستوى واحد لكل فرع (صرامة)
+  const byId = useMemo(() => {
+    const m = new Map<string, Cat>();
+    const walk = (n: Cat) => { m.set(n.id, n); n.children?.forEach(walk); };
+    tree.forEach(walk);
+    return m;
+  }, [tree]);
+  const parentOf = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    const walk = (n: Cat, p?: string) => { m.set(n.id, p); n.children?.forEach((c) => walk(c, n.id)); };
+    tree.forEach((t) => walk(t, undefined));
+    return m;
+  }, [tree]);
+  const descendantsOf = (id: string): string[] => {
+    const out: string[] = [];
+    const walk = (n?: Cat) => n?.children?.forEach((k) => { out.push(k.id); walk(k); });
+    walk(byId.get(id));
+    return out;
+  };
+  const ancestorSelected = (id: string): boolean => {
+    let p = parentOf.get(id);
+    while (p) { if (sel.has(p)) return true; p = parentOf.get(p); }
+    return false;
+  };
+  const descendantSelected = (id: string): boolean => descendantsOf(id).some((d) => sel.has(d));
 
-  const Box = ({ id }: { id: string }) => (
-    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 text-sm ${sel.has(id) ? 'border-brand bg-brand text-white' : 'border-sand-300'}`}>
-      {sel.has(id) ? '✓' : ''}
+  const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
+  // عند الاختيار: نزيل أي أصل مختار (يُقفل الأعلى) وأي أبناء محدّدين (الأصل يشمل كل ما تحته)
+  const flip = (id: string) =>
+    setSel((s) => {
+      const n = new Set(s);
+      if (n.has(id)) { n.delete(id); return n; }
+      let p = parentOf.get(id);
+      while (p) { n.delete(p); p = parentOf.get(p); }
+      for (const d of descendantsOf(id)) n.delete(d);
+      n.add(id);
+      return n;
+    });
+
+  const Box = ({ id, covered }: { id: string; covered?: boolean }) => (
+    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 text-sm ${
+      sel.has(id) ? 'border-brand bg-brand text-white' : covered ? 'border-brand/40 bg-brand/10 text-brand' : 'border-sand-300'}`}>
+      {sel.has(id) ? '✓' : covered ? '•' : ''}
     </span>
   );
 
@@ -55,24 +91,34 @@ export function InterestPicker({
         <p className="mb-4 text-sm text-gray-500">{subtitle}</p>
 
         <div className="space-y-2">
-          {tree.map((sp) => (
+          {tree.map((sp) => {
+            const spLocked = descendantSelected(sp.id);
+            return (
             <div key={sp.id} className="rounded-2xl border border-sand-200">
               <div className="flex items-center gap-2 p-2.5">
-                <button onClick={() => flip(sp.id)} className="flex flex-1 items-center gap-2 text-right">
+                <button onClick={() => flip(sp.id)} disabled={spLocked}
+                  className="flex flex-1 items-center gap-2 text-right disabled:opacity-60">
                   <Box id={sp.id} />
                   <span className="text-xl">{sp.icon}</span>
                   <span className="font-bold">{sp.name}</span>
+                  {spLocked && <span className="text-[10px] font-bold text-amber-600">محدّد فرعياً</span>}
                 </button>
                 {sp.children && sp.children.length > 0 && (
                   <button onClick={() => toggle(sp.id)} className="px-2 text-gray-400">{open[sp.id] ? '▾' : '▸'}</button>
                 )}
               </div>
-              {open[sp.id] && sp.children?.map((t) => (
+              {open[sp.id] && sp.children?.map((t) => {
+                const tCovered = ancestorSelected(t.id);
+                const tLocked = descendantSelected(t.id);
+                return (
                 <div key={t.id} className="border-t border-sand-100 ps-4">
                   <div className="flex items-center gap-2 p-2">
-                    <button onClick={() => flip(t.id)} className="flex flex-1 items-center gap-2 text-right">
-                      <Box id={t.id} />
+                    <button onClick={() => flip(t.id)} disabled={tCovered || tLocked}
+                      className="flex flex-1 items-center gap-2 text-right disabled:opacity-60">
+                      <Box id={t.id} covered={tCovered} />
                       <span>{t.icon} {t.name}</span>
+                      {tCovered && <span className="text-[10px] font-bold text-brand">مشمول</span>}
+                      {!tCovered && tLocked && <span className="text-[10px] font-bold text-amber-600">محدّد فرعياً</span>}
                     </button>
                     {t.children && t.children.length > 0 && (
                       <button onClick={() => toggle(t.id)} className="px-2 text-xs text-gray-400">{open[t.id] ? '▾' : '▸'}</button>
@@ -80,18 +126,21 @@ export function InterestPicker({
                   </div>
                   {open[t.id] && (
                     <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-                      {t.children?.map((b) => (
-                        <button key={b.id} onClick={() => flip(b.id)}
-                          className={`rounded-full px-3 py-1 text-sm font-bold transition ${sel.has(b.id) ? 'bg-brand text-white' : 'bg-sand-100 text-gray-600'}`}>
-                          {sel.has(b.id) ? '✓ ' : ''}{b.name}
+                      {t.children?.map((b) => {
+                        const bCovered = ancestorSelected(b.id);
+                        return (
+                        <button key={b.id} onClick={() => flip(b.id)} disabled={bCovered}
+                          className={`rounded-full px-3 py-1 text-sm font-bold transition disabled:opacity-60 ${
+                            sel.has(b.id) ? 'bg-brand text-white' : bCovered ? 'bg-brand/10 text-brand' : 'bg-sand-100 text-gray-600'}`}>
+                          {sel.has(b.id) ? '✓ ' : bCovered ? '• ' : ''}{b.name}
                         </button>
-                      ))}
+                      )})}
                     </div>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
-          ))}
+          )})}
         </div>
 
         <div className="mt-5 flex gap-2">
