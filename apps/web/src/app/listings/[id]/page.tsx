@@ -90,6 +90,13 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       uiToast(listing.archived ? 'أُعيد الإعلان للعرض' : 'نُقل الإعلان للأرشيف', 'success'); load();
     } catch (e: any) { uiToast(e.message, 'error'); }
   };
+  const adminToggleHide = async () => {
+    const next = listing.status === 'CLOSED' ? 'ACTIVE' : 'CLOSED';
+    try {
+      await api(`/admin/listings/${params.id}`, { method: 'PATCH', body: JSON.stringify({ status: next }) });
+      uiToast(next === 'CLOSED' ? 'أُخفي الإعلان' : 'أُظهر الإعلان', 'success'); load();
+    } catch (e: any) { uiToast(e.message, 'error'); }
+  };
 
   const convert = async (to: 'DIRECT' | 'AUCTION' | 'ONSOOM') => {
     try {
@@ -122,6 +129,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
   // صلاحيات التعديل والأرشفة
   const isOwner = !!user && user.id === listing.seller?.id;
+  const isAdmin = user?.role === 'ADMIN';
   const isStaff = user?.role === 'ADMIN' || user?.role === 'BROKER';
   const within2h = !!listing.createdAt && Date.now() - new Date(listing.createdAt).getTime() < 2 * 60 * 60 * 1000;
   const canEditFields = isStaff || (isOwner && within2h);
@@ -147,20 +155,34 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      {/* شريط إدارة الإعلان (تعديل/أرشفة) */}
+      {/* شريط إدارة الإعلان (تعديل/إخفاء/أرشفة) */}
       {(canEditFields || canArchive) && (
-        <div className="card mb-4 flex flex-wrap items-center gap-2 p-3">
-          {listing.archived && <span className="chip !bg-gray-200 !text-gray-700">🗄️ مؤرشف</span>}
-          {canEditFields && (
-            <button onClick={openEdit} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm">✏️ تعديل الإعلان</button>
-          )}
-          {canArchive && (
-            <button onClick={toggleArchive} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">
-              {listing.archived ? '♻️ استرجاع للعرض' : '🗄️ نقل للأرشيف'}
-            </button>
-          )}
+        <div className="card mb-4 p-3">
+          <div className="mb-2 text-xs font-bold text-gray-500">⚙️ إدارة الإعلان</div>
+          <div className="flex flex-wrap items-center gap-2">
+            {listing.archived && <span className="chip !bg-gray-200 !text-gray-700">🗄️ مؤرشف</span>}
+            {listing.status === 'CLOSED' && <span className="chip !bg-amber-100 !text-amber-700">🙈 مخفي</span>}
+            {canEditFields && (
+              <button onClick={openEdit} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm">✏️ تعديل</button>
+            )}
+            {isAdmin && (
+              <button onClick={adminToggleHide} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">
+                {listing.status === 'CLOSED' ? '👁️ إظهار' : '🙈 إخفاء'}
+              </button>
+            )}
+            {canArchive && (
+              <button onClick={toggleArchive} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">
+                {listing.archived ? '♻️ استرجاع' : '🗄️ أرشفة'}
+              </button>
+            )}
+            {isAdmin && (
+              <button onClick={() => router.push(`/admin/conversations/${listing.id}`)} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">
+                📨 المحادثات
+              </button>
+            )}
+          </div>
           {isOwner && !within2h && !isStaff && (
-            <span className="text-xs text-gray-400">انتهت مهلة التعديل (ساعتان من النشر) — تواصل مع الدلال أو الإدارة.</span>
+            <p className="mt-2 text-xs text-gray-400">انتهت مهلة التعديل (ساعتان من النشر) — يمكنك الأرشفة، أو التواصل مع الإدارة للتعديل.</p>
           )}
         </div>
       )}

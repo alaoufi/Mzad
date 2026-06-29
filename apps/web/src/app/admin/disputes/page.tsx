@@ -97,7 +97,10 @@ export default function AdminDisputesPage() {
                   فتحه: {d.openedBy?.name ?? '—'} ({d.openedBy?.phone ?? '—'})
                 </div>
                 {d.listing && (
-                  <Link href={`/listings/${d.listing.id}`} className="mt-1 block font-bold hover:text-brand">📋 {d.listing.title}</Link>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Link href={`/listings/${d.listing.id}`} className="font-bold hover:text-brand">📋 {d.listing.title}</Link>
+                    <Link href={`/admin/conversations/${d.listing.id}`} className="rounded-lg bg-sand-100 px-2 py-0.5 text-xs font-bold text-brand-dark">📨 المحادثات</Link>
+                  </div>
                 )}
                 <p className="mt-1 font-bold">{d.reason}</p>
                 {d.detail && <p className="mt-1 text-sm text-gray-600">{d.detail}</p>}

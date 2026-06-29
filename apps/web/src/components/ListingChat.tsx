@@ -54,7 +54,8 @@ export function ListingChat({ listingId }: { listingId: string }) {
 
   return (
     <div className="card p-4">
-      <h2 className="mb-3 text-lg font-bold">💬 أسئلة واستفسارات</h2>
+      <h2 className="text-lg font-bold">💬 محادثة عامة</h2>
+      <p className="mb-3 text-xs text-gray-400">تظهر للجميع — للتفاهم العام. لإرسال جوال أو رقم حساب استخدم «مراسلة خاصة» أعلى الصفحة.</p>
 
       <div className="mb-3 max-h-72 space-y-2 overflow-y-auto">
         {messages.length === 0 ? (
