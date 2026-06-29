@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
 import { isOpenEnd } from '@/lib/auction';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const auction = await prisma.auction.findUnique({
     where: { id: params.id },
     include: {
-      listing: { select: { id: true, title: true, city: true, region: true } },
+      listing: { select: { id: true, title: true, city: true, region: true, sellerId: true } },
       type: { select: { name: true, icon: true, commissionPct: true, requiresDeposit: true } },
       bids: {
         orderBy: { createdAt: 'desc' },
@@ -56,6 +57,16 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (status === 'LIVE' && !isOpenEnd(auction.endAt) && new Date(auction.endAt).getTime() <= now) {
     status = 'ENDED';
     await prisma.auction.update({ where: { id: auction.id }, data: { status: 'ENDED' } });
+    // إشعار الفائز والبائع مرة واحدة عند الانتهاء
+    const win = auction.bids[0];
+    const link = `/listings/${auction.listing.id}`;
+    if (win) {
+      const amt = Number(win.amount).toLocaleString('ar-SA');
+      await notify(win.bidder.id, 'AUCTION_WON', `🎉 فزت بمزاد «${auction.listing.title}» بمبلغ ${amt} ﷼`, link);
+      await notify(auction.listing.sellerId, 'AUCTION_ENDED', `🔨 انتهى مزاد إعلانك «${auction.listing.title}» بفوز ${win.bidder.name} بمبلغ ${amt} ﷼`, link);
+    } else {
+      await notify(auction.listing.sellerId, 'AUCTION_ENDED', `🔨 انتهى مزاد إعلانك «${auction.listing.title}» دون مزايدات`, link);
+    }
   }
 
   const highest = auction.bids[0];
