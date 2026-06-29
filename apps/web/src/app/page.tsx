@@ -94,9 +94,6 @@ export default function HomePage() {
     mode === 'SUPPLIES'
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
       : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${deepest?.name ?? (useInterests ? 'تهمّك' : 'المواشي')}`;
-  const tagline = path.length
-    ? path.map((p) => p.name).join(' · ')
-    : mode === 'SUPPLIES' ? 'أعلاف · صيدليات بيطرية · مستلزمات' : 'إبل · غنم · خيل';
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
@@ -115,28 +112,19 @@ export default function HomePage() {
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme), ...themeVars(theme) }}>
-      <div className="pointer-events-none absolute left-0 top-24 -z-0 select-none text-[30vw] leading-none opacity-[0.04]">
-        {emoji === '🐾' ? '🐪' : emoji}
-      </div>
-
       <div className="relative">
-        {/* الهيرو */}
-        <div className="relative mb-4 overflow-hidden rounded-4xl p-5 text-white shadow-lg transition-all duration-500"
-          style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 44px -24px ${theme.from}aa` }}>
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/40" />
-          <span className="pointer-events-none absolute -left-3 -bottom-5 select-none text-[7rem] leading-none opacity-15">{emoji === '🐾' ? '🐪' : emoji}</span>
-          <div className="relative flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-extrabold text-emboss-light sm:text-3xl">{title}</h1>
-              <p className="mt-1 text-sm text-white/85">{tagline}</p>
-            </div>
-            {user && interests.length > 0 && mode !== 'SUPPLIES' && (
-              <button onClick={() => setShowPicker(true)}
-                className="shrink-0 rounded-2xl bg-white/20 px-3 py-2 text-xs font-bold ring-1 ring-white/25">
-                ✎ اهتماماتي
-              </button>
-            )}
-          </div>
+        {/* سطر سياق مدمج بدل الهيرو الكبير */}
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h1 className="flex items-center gap-2 text-xl font-extrabold">
+            <span className="text-2xl">{emoji === '🐾' ? '🐪' : emoji}</span>
+            <span style={{ color: 'var(--th-accent, #0f7b6c)' }}>{title}</span>
+          </h1>
+          {user && interests.length > 0 && mode !== 'SUPPLIES' && (
+            <button onClick={() => setShowPicker(true)}
+              className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-brand ring-1 ring-sand-200">
+              ✎ اهتماماتي
+            </button>
+          )}
         </div>
 
         {mode === 'SUPPLIES' ? (
