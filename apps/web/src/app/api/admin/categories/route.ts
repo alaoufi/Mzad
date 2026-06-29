@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
-  const { name, level, parentId, icon } = await req.json();
+  const { name, level, parentId, icon, themeKey } = await req.json();
   if (!name?.trim()) return json({ message: 'الاسم مطلوب' }, 400);
   if (!['SPECIES', 'TYPE', 'BREED'].includes(level)) return json({ message: 'مستوى غير صحيح' }, 400);
   if (level !== 'SPECIES' && !parentId) return json({ message: 'يجب تحديد التصنيف الأب' }, 400);
 
   const created = await prisma.category.create({
-    data: { name: name.trim(), level, parentId: parentId ?? null, icon: icon ?? null },
+    data: { name: name.trim(), level, parentId: parentId ?? null, icon: icon || null, themeKey: themeKey || null },
   });
   return json({ id: created.id }, 201);
 }

@@ -50,8 +50,13 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+  let disputes = 0;
+  try {
+    disputes = await prisma.dispute.count({ where: { status: { in: ['OPEN', 'REVIEWING'] } } });
+  } catch { /* الجدول قد لا يكون مهيّأً بعد */ }
+
   return json({
-    stats: { users, listings, activeListings, pending, auctions, bids, reports, verifications: verifications.length },
+    stats: { users, listings, activeListings, pending, auctions, bids, reports, verifications: verifications.length, disputes },
     recent,
     pendingList,
     usersList,

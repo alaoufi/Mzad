@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { ACCOUNT_TYPES, accountTypeDef } from '@/lib/roles';
 
 interface AdminData {
-  stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number; verifications: number };
+  stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number; verifications: number; disputes: number };
   recent: any[];
   pendingList: any[];
   usersList: any[];
@@ -98,28 +98,38 @@ export default function AdminPage() {
     { label: 'البلاغات', value: data.stats.reports, icon: '🚩' },
   ];
 
+  const services = [
+    { label: 'التصنيفات', icon: '🗂️', href: '/admin/categories' },
+    { label: 'الحالة الصحية', icon: '🩺', href: '/admin/health' },
+    { label: 'النزاعات', icon: '⚖️', href: '/admin/disputes', badge: data.stats.disputes },
+    { label: 'التسويق', icon: '📣', href: '/admin/marketing' },
+  ];
+
   return (
-    <div className="animate-fadeup space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-engrave">🛡️ لوحة الإدارة</h1>
-        <div className="flex gap-2">
-          <button onClick={() => router.push('/admin/categories')}
-            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">🗂️ التصنيفات</button>
-          <button onClick={() => router.push('/admin/health')}
-            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">🩺 الحالة الصحية</button>
-          <button onClick={() => router.push('/admin/disputes')}
-            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">⚖️ النزاعات</button>
-          <button onClick={() => router.push('/admin/marketing')}
-            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">📣 التسويق</button>
-        </div>
+    <div className="animate-fadeup space-y-4">
+      <h1 className="text-2xl font-extrabold text-engrave">🛡️ لوحة الإدارة</h1>
+
+      {/* خدمات الإدارة — مربّعات مدمجة */}
+      <div className="grid grid-cols-4 gap-2">
+        {services.map((s) => (
+          <button key={s.href} onClick={() => router.push(s.href)}
+            className="card float-box relative flex flex-col items-center justify-center gap-1 p-2.5 text-center transition active:scale-95">
+            {!!s.badge && s.badge > 0 && (
+              <span className="absolute left-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{s.badge}</span>
+            )}
+            <span className="text-xl">{s.icon}</span>
+            <span className="text-[11px] font-bold leading-tight text-gray-700">{s.label}</span>
+          </button>
+        ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      {/* الإحصائيات — مربّعات مدمجة */}
+      <div className="grid grid-cols-4 gap-2">
         {cards.map((c) => (
-          <div key={c.label} className="card float-box p-4 text-center">
-            <div className="text-2xl">{c.icon}</div>
-            <div className="mt-1 text-2xl font-extrabold text-brand-dark text-emboss">{c.value}</div>
-            <div className="text-xs text-gray-500">{c.label}</div>
+          <div key={c.label} className="card float-box p-2 text-center">
+            <div className="text-base">{c.icon}</div>
+            <div className="text-lg font-extrabold text-brand-dark text-emboss">{c.value}</div>
+            <div className="text-[10px] leading-tight text-gray-500">{c.label}</div>
           </div>
         ))}
       </div>
