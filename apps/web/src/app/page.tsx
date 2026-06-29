@@ -270,11 +270,12 @@ export default function HomePage() {
 
         {/* المستوى 1 (الرأس) — مصفّى حسب اهتمامك */}
         <Row label={levelLabel(mode, 0)}>
-          <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>
-            {useInterestNav ? 'كل ما يهمّني' : 'الكل'}
-          </Chip>
+          {!useInterestNav && (
+            <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
+          )}
           {topList.filter((c) => relevant(c.id)).map((c) => (
-            <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
+            <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent}
+              onClick={() => (path[0]?.id === c.id ? reset(0) : pick(0, c))}>
               {c.icon} {c.name}
             </Chip>
           ))}
