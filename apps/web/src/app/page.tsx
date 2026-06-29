@@ -48,10 +48,19 @@ export default function HomePage() {
   const suppliesRoot = useMemo(() => tree.find((s) => s.name === SUPPLIES_NAME), [tree]);
 
   const topList = mode === 'SUPPLIES' ? suppliesRoot?.children ?? [] : animals;
-  const activeCategoryId =
-    path.length ? path[path.length - 1].id : mode === 'SUPPLIES' ? suppliesRoot?.id ?? null : null;
 
-  const useInterests = mode !== 'SUPPLIES' && interestActive && interests.length > 0 && path.length === 0;
+  // تقسيم الاهتمامات: ما يخصّ المستلزمات وما يخصّ المواشي
+  const suppliesIds = useMemo(() => {
+    const ids = new Set<string>();
+    const walk = (c?: Cat) => { if (!c) return; ids.add(c.id); c.children?.forEach(walk); };
+    if (suppliesRoot) walk(suppliesRoot);
+    return ids;
+  }, [suppliesRoot]);
+  const animalInterests = useMemo(() => interests.filter((id) => !suppliesIds.has(id)), [interests, suppliesIds]);
+  const supplyInterests = useMemo(() => interests.filter((id) => suppliesIds.has(id)), [interests, suppliesIds]);
+  const marketInterests = mode === 'SUPPLIES' ? supplyInterests : animalInterests;
+
+  const useInterests = interestActive && path.length === 0 && marketInterests.length > 0;
 
   // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة
   const chain: CatNode[] = mode === 'SUPPLIES'
@@ -65,9 +74,10 @@ export default function HomePage() {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
-    if (activeCategoryId) params.set('categoryId', activeCategoryId);
-    else if (useInterests) params.set('categoryIds', interests.join(','));
-    else if (mode !== 'SUPPLIES' && suppliesRoot) params.set('exclude', suppliesRoot.id);
+    if (path.length) params.set('categoryId', path[path.length - 1].id);
+    else if (useInterests) params.set('categoryIds', marketInterests.join(','));
+    else if (mode === 'SUPPLIES') { if (suppliesRoot) params.set('categoryId', suppliesRoot.id); }
+    else if (suppliesRoot) params.set('exclude', suppliesRoot.id);
     if (q) params.set('q', q);
     api<{ items: ListingSummary[] }>(`/listings?${params}`)
       .then((r) => setListings(r.items))
@@ -77,7 +87,7 @@ export default function HomePage() {
 
   useEffect(() => { setPath([]); }, [mode]);
   useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ },
-    [mode, activeCategoryId, tree.length, useInterests, interests.join(',')]);
+    [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id]);
 
   const deepest = path[path.length - 1];
   const title =
@@ -151,23 +161,23 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-
-            {/* مبدّل الاهتمامات */}
-            {user && interests.length > 0 && (
-              <div className="mb-3 flex gap-2">
-                <button onClick={() => setInterestActive(true)}
-                  className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
-                  style={interestActive ? { backgroundColor: theme.accent } : undefined}>
-                  ⭐ ما يهمّني
-                </button>
-                <button onClick={() => setInterestActive(false)}
-                  className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${!interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
-                  style={!interestActive ? { backgroundColor: theme.accent } : undefined}>
-                  🌐 كل الأنواع
-                </button>
-              </div>
-            )}
           </>
+        )}
+
+        {/* مبدّل الاهتمامات — يعمل في العروض والمزادات والمستلزمات */}
+        {user && marketInterests.length > 0 && (
+          <div className="mb-3 flex gap-2">
+            <button onClick={() => setInterestActive(true)}
+              className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
+              style={interestActive ? { backgroundColor: theme.accent } : undefined}>
+              ⭐ ما يهمّني
+            </button>
+            <button onClick={() => setInterestActive(false)}
+              className={`flex-1 rounded-2xl py-2 text-sm font-bold transition ${!interestActive ? 'text-white' : 'bg-white text-gray-500 ring-1 ring-sand-200'}`}
+              style={!interestActive ? { backgroundColor: theme.accent } : undefined}>
+              {mode === 'SUPPLIES' ? '🛒 كل المستلزمات' : '🌐 كل الأنواع'}
+            </button>
+          </div>
         )}
 
         {/* بحث */}

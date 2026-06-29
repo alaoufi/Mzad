@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -37,6 +38,8 @@ export default function AdminCategoriesPage() {
   const [addCtx, setAddCtx] = useState<{ parentId: string | null; level: Level } | null>(null);
   const [draft, setDraft] = useState<Draft>({ name: '', icon: '', themeKey: '', hidden: false });
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const load = () =>
     api<Cat[]>('/admin/categories').then(setTree).catch(() => {}).finally(() => setLoading(false));
@@ -189,8 +192,8 @@ export default function AdminCategoriesPage() {
       </div>
 
       {/* نافذة التعديل/الإضافة الموحّدة */}
-      {(editFor || addCtx) && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center" onClick={closeModal}>
+      {(editFor || addCtx) && mounted && createPortal(
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-3" onClick={closeModal}>
           <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-extrabold">
@@ -272,7 +275,8 @@ export default function AdminCategoriesPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

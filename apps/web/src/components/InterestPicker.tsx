@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '@/lib/api';
-import { SUPPLIES_NAME } from '@/lib/themes';
 
 interface Cat { id: string; name: string; icon?: string; children?: Cat[] }
 
@@ -10,7 +10,7 @@ interface Cat { id: string; name: string; icon?: string; children?: Cat[] }
 export function InterestPicker({
   initial,
   title = 'ما الذي يهمّك؟',
-  subtitle = 'اختر ما تحب متابعته — نوعاً كاملاً أو لوناً أو سلالة محدّدة. تظهر لك إعلاناته فقط، ويمكنك تعديلها لاحقاً من ملفك.',
+  subtitle = 'اختر ما تحب متابعته — نوعاً أو لوناً أو سلالة، وكذلك من المستلزمات. تظهر لك في العروض والمزادات والمستلزمات اهتماماتك فقط، ويمكنك تعديلها لاحقاً من ملفك.',
   onSave,
   onClose,
   onSkip,
@@ -26,9 +26,11 @@ export function InterestPicker({
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [sel, setSel] = useState<Set<string>>(new Set(initial));
   const [saving, setSaving] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
-    api<Cat[]>('/categories').then((t) => setTree(t.filter((s) => s.name !== SUPPLIES_NAME))).catch(() => {});
+    api<Cat[]>('/categories').then(setTree).catch(() => {});
   }, []);
 
   const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
@@ -41,9 +43,11 @@ export function InterestPicker({
     </span>
   );
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 p-3 sm:items-center" onClick={onClose}>
-      <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-3" onClick={onClose}>
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-1 flex items-center justify-between">
           <h3 className="text-xl font-extrabold text-engrave">{title}</h3>
           <button onClick={onClose} className="text-2xl leading-none text-gray-400">×</button>
@@ -98,6 +102,7 @@ export function InterestPicker({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
