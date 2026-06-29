@@ -20,6 +20,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
   const [endAt, setEndAt] = useState('');
   const [startAt, setStartAt] = useState('');
   const [status, setStatus] = useState('LIVE');
+  const [type, setType] = useState<{ name: string; commissionPct: number; requiresDeposit: boolean } | null>(null);
   const [bids, setBids] = useState<BidRow[]>([]);
   const [amount, setAmount] = useState(0);
   const [msg, setMsg] = useState('');
@@ -38,6 +39,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
     setEndAt(s.endAt);
     if (s.startAt) setStartAt(s.startAt);
     if (s.status) setStatus(s.status);
+    if (s.type !== undefined) setType(s.type);
     setBids((s.bids ?? []).map((b: any) => ({ bidderName: b.bidder?.name ?? 'مزايد', amount: Number(b.amount) })));
     if (!touched.current) setAmount(hb + Number(s.minIncrement));
     if (hb > lastHighest.current && lastHighest.current !== 0) {
@@ -99,6 +101,14 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
           {open ? 'يبدأ من' : 'سعر البداية'} {startPrice.toLocaleString('ar-SA')} · أقل زيادة {minIncrement.toLocaleString('ar-SA')} ﷼
         </div>
       </div>
+
+      {type && (
+        <div className="mb-3 flex flex-wrap gap-2 text-sm">
+          <span className="chip">🏷️ نوع المزاد: {type.name}</span>
+          {type.commissionPct > 0 && <span className="chip">عمولة {type.commissionPct}%</span>}
+          {type.requiresDeposit && <span className="chip">يتطلب عربوناً</span>}
+        </div>
+      )}
 
       {msg && <div className="mb-3 rounded-2xl bg-amber-50 p-3 text-center text-amber-800">{msg}</div>}
 

@@ -36,6 +36,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     where: { id: params.id },
     include: {
       listing: { select: { id: true, title: true, city: true, region: true } },
+      type: { select: { name: true, commissionPct: true, requiresDeposit: true } },
       bids: {
         orderBy: { createdAt: 'desc' },
         take: 15,

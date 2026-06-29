@@ -40,13 +40,17 @@ export default function SellPage() {
     categoryId: '',
     title: '', description: '', photos: [] as string[],
     count: 1, sex: 'MIXED', approxWeightKg: '', city: '', region: '',
-    saleType: 'DIRECT', price: '', startPrice: '', minIncrement: 500, durationHours: 24, startAt: '',
+    saleType: 'DIRECT', price: '', startPrice: '', minIncrement: 500, durationHours: 24, startAt: '', typeId: '',
     health: {} as Record<string, boolean>,
   });
 
   const isBroker = user?.role === 'BROKER' || user?.role === 'ADMIN';
 
-  useEffect(() => { api<Cat[]>('/categories').then(setTree).catch(() => {}); }, []);
+  const [auctionTypes, setAuctionTypes] = useState<{ id: string; name: string; commissionPct: number }[]>([]);
+  useEffect(() => {
+    api<Cat[]>('/categories').then(setTree).catch(() => {});
+    api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
+  }, []);
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
 
   const addPhotos = async (files: FileList | null) => {
@@ -94,6 +98,7 @@ export default function SellPage() {
           startPrice: Number(form.startPrice), minIncrement: Number(form.minIncrement),
           durationHours: Number(form.durationHours),
           ...(isBroker && form.startAt ? { startAt: form.startAt } : {}),
+          ...(form.typeId ? { typeId: form.typeId } : {}),
         };
       }
       const created = await api<{ id: string }>('/listings', { method: 'POST', body: JSON.stringify(body) });
@@ -277,6 +282,16 @@ export default function SellPage() {
 
             {form.saleType === 'AUCTION' && (
               <div className="space-y-3">
+                {auctionTypes.length > 0 && (
+                  <div><label className="mb-2 block font-bold">نوع المزاد</label>
+                    <select className="input" value={form.typeId} onChange={(e) => set('typeId', e.target.value)}>
+                      <option value="">— اختر نوعاً (اختياري) —</option>
+                      {auctionTypes.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}{t.commissionPct ? ` (عمولة ${t.commissionPct}%)` : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div><label className="mb-2 block font-bold">سعر البداية (ريال)</label>
                   <input type="number" className="input text-2xl" value={form.startPrice} onChange={(e) => set('startPrice', e.target.value)} /></div>
                 <div className="grid grid-cols-2 gap-3">

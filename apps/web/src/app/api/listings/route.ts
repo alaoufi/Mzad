@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
       data: {
         listingId: listing.id,
         brokerId: isBroker ? user.sub : null,
+        typeId: dto.auction.typeId || null,
         startPrice: new Prisma.Decimal(dto.auction.startPrice),
         minIncrement: new Prisma.Decimal(dto.auction.minIncrement ?? 100),
         reservePrice: dto.auction.reservePrice != null ? new Prisma.Decimal(dto.auction.reservePrice) : null,

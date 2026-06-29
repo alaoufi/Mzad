@@ -188,6 +188,8 @@ model Auction {
   antiSnipingSec Int          @default(60)
   status        AuctionStatus @default(SCHEDULED)
   highestBidId  String?
+  typeId        String?
+  type          AuctionType?  @relation(fields: [typeId], references: [id])
   createdAt     DateTime      @default(now())
 
   bids Bid[]
@@ -286,13 +288,14 @@ model Report {
 // ───────────────────────── أنواع المزادات (تُدار من الإدارة) ─────────────────────────
 
 model AuctionType {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   name            String
   description     String?
-  commissionPct   Float    @default(0)
-  requiresDeposit Boolean  @default(false)
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now())
+  commissionPct   Float     @default(0)
+  requiresDeposit Boolean   @default(false)
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  auctions        Auction[]
 }
 
 // ───────────────────────── الإعلانات والمساحات الإعلانية ─────────────────────────

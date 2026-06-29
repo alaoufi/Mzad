@@ -46,8 +46,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   await prisma.auction.upsert({
     where: { listingId: listing.id },
-    create: { listingId: listing.id, startPrice, minIncrement, startAt: now, endAt, status: 'LIVE' },
-    update: { endAt, status: 'LIVE', ...(body.startPrice != null ? { startPrice } : {}), ...(body.minIncrement != null ? { minIncrement } : {}) },
+    create: { listingId: listing.id, startPrice, minIncrement, startAt: now, endAt, status: 'LIVE', typeId: body.typeId || null },
+    update: {
+      endAt, status: 'LIVE',
+      ...(body.startPrice != null ? { startPrice } : {}),
+      ...(body.minIncrement != null ? { minIncrement } : {}),
+      ...(body.typeId !== undefined ? { typeId: body.typeId || null } : {}),
+    },
   });
 
   // المزاد المؤقّت saleType=AUCTION (تبويب المزادات)، وعلى السوم يبقى DIRECT (تبويب العروض)

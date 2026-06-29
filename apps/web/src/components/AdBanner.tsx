@@ -23,9 +23,14 @@ const DEMO = {
 export function AdBanner({ placement = 'HOME_TOP', onClick }: { placement?: string; onClick?: () => void }) {
   const [ad, setAd] = useState<Ad | null>(null);
 
+  const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
-    api<{ ad: Ad | null }>(`/ads?placement=${placement}`).then((r) => setAd(r.ad)).catch(() => {});
+    api<{ ad: Ad | null }>(`/ads?placement=${placement}`).then((r) => setAd(r.ad)).catch(() => {}).finally(() => setLoaded(true));
   }, [placement]);
+
+  // المواضع غير الرئيسية لا تعرض إلا إعلاناً حقيقياً (لا نموذج)
+  if (loaded && !ad && placement !== 'HOME_TOP') return null;
 
   const wrapClass =
     'relative mb-4 flex w-full items-center gap-4 overflow-hidden rounded-3xl p-4 text-right text-white shadow-lg transition active:scale-[0.99]';

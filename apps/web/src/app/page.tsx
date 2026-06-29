@@ -70,8 +70,12 @@ export default function HomePage() {
           <p className="mt-1 text-white/85">{theme.tagline}</p>
         </div>
 
-        {/* مساحة إعلانية (HOME_TOP) */}
-        {mode !== 'SUPPLIES' && <AdBanner placement="HOME_TOP" onClick={() => setMode('SUPPLIES')} />}
+        {/* مساحة إعلانية حسب السوق */}
+        {mode !== 'SUPPLIES' ? (
+          <AdBanner placement="HOME_TOP" onClick={() => setMode('SUPPLIES')} />
+        ) : (
+          <AdBanner placement="SUPPLIES_TOP" />
+        )}
 
         {/* الأسواق الثلاثة */}
         <div className="float-box mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/85 p-1 ring-1 ring-black/5 backdrop-blur">
