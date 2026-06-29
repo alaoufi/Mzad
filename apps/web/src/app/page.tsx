@@ -219,18 +219,12 @@ export default function HomePage() {
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme), ...themeVars(theme) }}>
       <div className="relative">
-        {/* سطر سياق مدمج بدل الهيرو الكبير */}
-        <div className="mb-3 flex items-center justify-between gap-2">
+        {/* سطر سياق مدمج بدل الهيرو الكبير — تعديل الاهتمامات من الملف الشخصي فقط */}
+        <div className="mb-3 flex items-center gap-2">
           <h1 className="flex items-center gap-2 text-xl font-extrabold">
             <span className="text-2xl">{emoji === '🐾' ? '🐪' : emoji}</span>
             <span style={{ color: 'var(--th-accent, #0f7b6c)' }}>{title}</span>
           </h1>
-          {user && interests.length > 0 && mode !== 'SUPPLIES' && (
-            <button onClick={() => setShowPicker(true)}
-              className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-brand ring-1 ring-sand-200">
-              ✎ اهتماماتي
-            </button>
-          )}
         </div>
 
         {mode === 'SUPPLIES' ? (
