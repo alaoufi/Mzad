@@ -153,10 +153,15 @@ export default function HomePage() {
     [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
 
   const deepest = path[path.length - 1];
+  // اسم القسم في العنوان: التصنيف المفتوح، أو اسم الاهتمام الوحيد، أو «ما يهمّك» عند تعدّده
+  const sectionName = deepest?.name
+    ?? (useInterests
+      ? (interestRootCats.length === 1 ? interestRootCats[0].name : 'ما يهمّك')
+      : 'المواشي');
   const title =
     mode === 'SUPPLIES'
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
-      : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${deepest?.name ?? (useInterests ? 'تهمّك' : 'المواشي')}`;
+      : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${sectionName}`;
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
