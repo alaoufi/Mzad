@@ -28,7 +28,15 @@ export default function HomePage() {
   const [showPicker, setShowPicker] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
-  useEffect(() => { api<Cat[]>('/categories').then(setTree).catch(() => {}); }, []);
+  // وضع الدخول (عام/متخصص) — بوابة اختيار النوع أول دخول
+  const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
+  const [gateDismissed, setGateDismissed] = useState(true);
+
+  useEffect(() => {
+    api<Cat[]>('/categories').then(setTree).catch(() => {});
+    api<{ entryMode: 'GENERAL' | 'SPECIALIZED' }>('/settings').then((r) => setEntryMode(r.entryMode)).catch(() => {});
+    if (typeof window !== 'undefined') setGateDismissed(sessionStorage.getItem('mzad_gate') === '1');
+  }, []);
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
@@ -130,6 +138,49 @@ export default function HomePage() {
     if (typeof window !== 'undefined') localStorage.setItem('mazad_interest_skip', '1');
     setShowPicker(false);
   };
+
+  const enterSpecies = (s: Cat) => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('mzad_gate', '1');
+    setGateDismissed(true);
+    setPath([s]);
+  };
+  const dismissGate = () => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('mzad_gate', '1');
+    setGateDismissed(true);
+  };
+
+  // بوابة الدخول المتخصص: يختار الزائر النوع أول دخول (لغير المسجّلين أو بلا اهتمامات)
+  const showGate = entryMode === 'SPECIALIZED' && !gateDismissed && mode !== 'SUPPLIES'
+    && path.length === 0 && interests.length === 0 && animals.length > 0;
+  if (showGate) {
+    return (
+      <div className="-mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
+        style={{ background: sceneBackground(resolveTheme([])), ...themeVars(resolveTheme([])) }}>
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-6xl">🐾</p>
+          <h1 className="mt-3 text-2xl font-extrabold text-engrave sm:text-3xl">أهلاً بك في مزاد</h1>
+          <p className="mt-2 text-gray-500">اختر ما يهمّك لتتصفّحه — كل نوع بهويته الخاصة.</p>
+          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {animals.map((s) => {
+              const t = resolveTheme([{ name: s.name, themeKey: s.themeKey ?? null }]);
+              return (
+                <button key={s.id} onClick={() => enterSpecies(s)}
+                  className="group relative overflow-hidden rounded-3xl p-6 text-white shadow-lift transition active:scale-95"
+                  style={{ backgroundImage: gradient(t), boxShadow: `0 20px 40px -20px ${t.from}aa` }}>
+                  <span className="block text-5xl drop-shadow">{s.icon ?? '🐾'}</span>
+                  <span className="mt-2 block text-xl font-extrabold text-emboss-light">{s.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={dismissGate}
+            className="mt-6 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-gray-600 ring-1 ring-sand-200">
+            🌐 أو تصفّح كل الأنواع
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
