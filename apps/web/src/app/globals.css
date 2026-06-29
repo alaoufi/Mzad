@@ -39,9 +39,12 @@
   .btn-outline {
     @apply btn border border-sand-200 text-brand-dark bg-white hover:border-brand hover:bg-sand-50;
   }
-  /* بطاقات أنيقة بإحساس عمق — بلا backdrop-blur لتفادي بطء التمرير على الجوال */
+  /* بطاقات أنيقة بإحساس عمق — بلا backdrop-blur لتفادي بطء التمرير على الجوال.
+     تتلوّن تلقائياً داخل الأقسام المُثيّمة عبر متغيّرات CSS مع رجوع للأبيض. */
   .card {
-    @apply bg-white rounded-3xl overflow-hidden ring-1 ring-black/[0.04] shadow-soft;
+    @apply rounded-3xl overflow-hidden ring-1 shadow-soft;
+    background-color: var(--card-bg, #ffffff);
+    --tw-ring-color: var(--card-ring, rgba(0, 0, 0, 0.04));
   }
   .card-3d {
     @apply card transition-all duration-300;

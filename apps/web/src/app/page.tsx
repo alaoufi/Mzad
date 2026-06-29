@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { ListingCard } from '@/components/ListingCard';
-import { resolveTheme, resolveIcon, gradient, sceneBackground, SUPPLIES_NAME, CatNode } from '@/lib/themes';
+import { resolveTheme, resolveIcon, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { AdBanner } from '@/components/AdBanner';
 
 interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[]; }
@@ -70,7 +70,7 @@ export default function HomePage() {
   if (showGate && animals.length > 0) {
     return (
       <div className="-mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
-        style={{ background: sceneBackground(resolveTheme([])) }}>
+        style={{ background: sceneBackground(resolveTheme([])), ...themeVars(resolveTheme([])) }}>
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-6xl">🐾</p>
           <h1 className="mt-3 text-2xl font-extrabold text-engrave sm:text-3xl">أهلاً بك في مزاد</h1>
@@ -102,7 +102,7 @@ export default function HomePage() {
 
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
-      style={{ background: sceneBackground(theme) }}>
+      style={{ background: sceneBackground(theme), ...themeVars(theme) }}>
       {/* علامة مائية للنوع (إحساس المكان) — مطلقة لا ثابتة لتفادي إعادة الرسم عند التمرير */}
       <div className="pointer-events-none absolute left-0 top-24 -z-0 select-none text-[30vw] leading-none opacity-[0.04]">
         {emoji}
@@ -214,7 +214,7 @@ export default function HomePage() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-2">
-      <div className="mb-1 text-xs font-bold text-gray-500">{label}</div>
+      <div className="mb-1 text-xs font-extrabold" style={{ color: 'var(--th-accent, #6b7280)' }}>{label}</div>
       <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">{children}</div>
     </div>
   );

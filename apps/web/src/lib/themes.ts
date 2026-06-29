@@ -27,8 +27,9 @@ function make(label: string, family: string, h: number, s: number, l: number): T
     from: hslToHex(h, s, Math.max(15, l - 24)),
     to: hslToHex(h, s, l),
     accent: hslToHex(h, Math.min(s + 5, 92), Math.max(22, l - 8)),
-    bg: hslToHex(h, Math.round(s * 0.34), 96),
-    surface: hslToHex(h, Math.round(s * 0.24), 98),
+    // خلفية وأسطح ملوّنة بوضوح (لا بيضاء) ليكون التغيّر جذرياً عند تبديل النوع
+    bg: hslToHex(h, Math.min(Math.round(s * 0.6), 60), 90),
+    surface: hslToHex(h, Math.min(Math.round(s * 0.45), 48), 96),
     glow: `hsla(${h}, ${s}%, ${l}%, 0.16)`,
   };
 }
@@ -102,10 +103,25 @@ export function resolveIcon(chain: (CatNode | null | undefined)[]): string {
 export function gradient(t: Theme): string {
   return `linear-gradient(135deg, ${t.from}, ${t.to})`;
 }
+
+// خلفية المشهد — تغيّر جذري بألوان النوع: تدرّج قاعدي ملوّن + نفحات لونية قوية
 export function sceneBackground(t: Theme): string {
   return [
-    `radial-gradient(900px circle at 100% -5%, ${t.glow}, transparent 45%)`,
-    `radial-gradient(700px circle at -10% 10%, ${t.glow}, transparent 40%)`,
-    `linear-gradient(180deg, ${t.bg}, ${t.bg})`,
+    `radial-gradient(1100px circle at 100% -8%, ${t.accent}59, transparent 50%)`,
+    `radial-gradient(820px circle at -8% 14%, ${t.to}4d, transparent 46%)`,
+    `radial-gradient(900px circle at 50% 118%, ${t.from}3d, transparent 55%)`,
+    `linear-gradient(180deg, ${t.bg}, ${t.surface})`,
   ].join(', ');
+}
+
+// متغيّرات CSS تُمرَّر للحاوية فتتلوّن البطاقات والحدود تبعاً للنوع
+export function themeVars(t: Theme): Record<string, string> {
+  return {
+    '--card-bg': `${t.surface}f2`,
+    '--card-ring': `${t.accent}2e`,
+    '--th-from': t.from,
+    '--th-to': t.to,
+    '--th-accent': t.accent,
+    '--th-ink': t.from,
+  };
 }

@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
-import { resolveTheme, resolveIcon, gradient, sceneBackground } from '@/lib/themes';
+import { resolveTheme, resolveIcon, gradient, sceneBackground, themeVars } from '@/lib/themes';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
 import { HijriDate } from '@/components/HijriDate';
@@ -60,7 +60,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
 
   return (
-    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme) }}>
+    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme), ...themeVars(theme) }}>
       {/* لافتة السوق حسب النوع */}
       <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
         style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 40px -18px ${theme.from}88` }}>
