@@ -64,7 +64,7 @@ export default function BrokerPage() {
   return (
     <div className="animate-fadeup space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold">🧑‍⚖️ لوحة الدلال</h1>
+        <h1 className="text-2xl font-extrabold text-engrave">🧑‍⚖️ لوحة الدلال</h1>
         <button onClick={() => router.push('/sell')} className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">＋ مزاد جديد</button>
       </div>
       <p className="text-sm text-gray-500">جدول مزاداتك بموعد بداية، وابدأها أو ألغها. تتحوّل تلقائياً: مجدول ← مباشر ← منتهٍ.</p>

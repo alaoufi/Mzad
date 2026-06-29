@@ -125,7 +125,7 @@ export default function SellPage() {
         {STEPS.map((_, i) => <div key={i} className={`h-2 flex-1 rounded-full ${i <= step ? 'bg-brand' : 'bg-sand-200'}`} />)}
       </div>
       <p className="mb-1 text-sm text-gray-400">خطوة {step + 1} من {STEPS.length}</p>
-      <h1 className="mb-6 text-2xl font-extrabold">{TITLES[step]}</h1>
+      <h1 className="mb-6 text-2xl font-extrabold text-engrave">{TITLES[step]}</h1>
 
       {error && <div className="mb-4 rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 

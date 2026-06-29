@@ -42,7 +42,7 @@ export default function MessagesPage() {
 
   return (
     <div className="animate-fadeup">
-      <h1 className="mb-4 text-2xl font-extrabold">رسائلي</h1>
+      <h1 className="mb-4 text-2xl font-extrabold text-engrave">رسائلي</h1>
       {loading ? (
         <p className="py-8 text-center text-gray-500">جارٍ التحميل...</p>
       ) : convs.length === 0 ? (

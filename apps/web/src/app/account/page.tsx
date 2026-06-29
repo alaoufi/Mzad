@@ -59,43 +59,32 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* بطاقة الملف الشخصي */}
-      <div className="card p-6">
+    <div className="space-y-5 animate-fadeup">
+      {/* بطاقة الملف الشخصي — هوية بصرية */}
+      <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-6 text-white shadow-xl"
+        style={{ boxShadow: '0 24px 48px -22px rgba(10,92,80,0.5)' }}>
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand text-2xl text-white">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 text-2xl font-extrabold backdrop-blur">
             {(profile?.name ?? user.name).charAt(0)}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-extrabold">{profile?.name ?? user.name}</h1>
+            <h1 className="text-2xl font-extrabold text-emboss-light">{profile?.name ?? user.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
-              <span className="chip">{ROLE_LABEL[profile?.role ?? 'USER']}</span>
+              <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">{ROLE_LABEL[profile?.role ?? 'USER']}</span>
               {profile?.identityStatus === 'VERIFIED' && (
-                <span className="chip !bg-green-100 !text-green-800">✔ موثّق بالهوية</span>
-              )}
-              {profile?.isPhoneVerified && (
-                <span className="chip">📱 جوال موثّق</span>
+                <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">✔ موثّق بالهوية</span>
               )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* إحصائيات الثقة */}
-        <div className="mt-5 grid grid-cols-3 gap-3 text-center">
-          <Stat label="إعلاناتي" value={profile?._count.listings ?? 0} />
-          <Stat
-            label="التقييم"
-            value={profile?.ratings.count ? `${profile.ratings.avgRating.toFixed(1)} ⭐` : '—'}
-          />
-          <Stat
-            label="مطابقة الوصف"
-            value={
-              profile?.ratings.avgDescMatch
-                ? `${Math.round((profile.ratings.avgDescMatch / 5) * 100)}%`
-                : '—'
-            }
-          />
-        </div>
+      {/* إحصائيات الثقة — مربّعات طائرة */}
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <Stat label="إعلاناتي" value={profile?._count.listings ?? 0} />
+        <Stat label="التقييم" value={profile?.ratings.count ? `${profile.ratings.avgRating.toFixed(1)} ⭐` : '—'} />
+        <Stat label="مطابقة الوصف"
+          value={profile?.ratings.avgDescMatch ? `${Math.round((profile.ratings.avgDescMatch / 5) * 100)}%` : '—'} />
       </div>
 
       {/* روابط اللوحات */}
@@ -153,9 +142,9 @@ export default function AccountPage() {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl bg-sand-50 p-3">
-      <div className="text-xl font-extrabold text-brand-dark">{value}</div>
-      <div className="text-sm text-gray-500">{label}</div>
+    <div className="card float-box p-3">
+      <div className="text-xl font-extrabold text-brand-dark text-emboss">{value}</div>
+      <div className="mt-0.5 text-xs text-gray-500">{label}</div>
     </div>
   );
 }

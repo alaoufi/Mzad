@@ -82,7 +82,7 @@ export default function AdminPage() {
   return (
     <div className="animate-fadeup space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold">🛡️ لوحة الإدارة</h1>
+        <h1 className="text-2xl font-extrabold text-engrave">🛡️ لوحة الإدارة</h1>
         <div className="flex gap-2">
           <button onClick={() => router.push('/admin/categories')}
             className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">🗂️ التصنيفات</button>
@@ -93,9 +93,9 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-3 gap-3">
         {cards.map((c) => (
-          <div key={c.label} className="card p-4 text-center">
+          <div key={c.label} className="card float-box p-4 text-center">
             <div className="text-2xl">{c.icon}</div>
-            <div className="mt-1 text-2xl font-extrabold text-brand-dark">{c.value}</div>
+            <div className="mt-1 text-2xl font-extrabold text-brand-dark text-emboss">{c.value}</div>
             <div className="text-xs text-gray-500">{c.label}</div>
           </div>
         ))}
