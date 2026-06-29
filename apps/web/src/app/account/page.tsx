@@ -179,9 +179,15 @@ export default function AccountPage() {
         </button>
       </div>
 
-      <button className="card float-box flex w-full items-center justify-center gap-2 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
-        ⚖️ نزاعاتي
-      </button>
+      <div className="grid grid-cols-2 gap-3">
+        <button className="card float-box flex items-center justify-center gap-2 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
+          ⚖️ نزاعاتي
+        </button>
+        <a href="https://wa.me/9665000000" target="_blank" rel="noopener noreferrer"
+          className="card float-box flex items-center justify-center gap-2 p-3 text-sm font-bold text-green-700">
+          💬 الدعم الفني
+        </a>
+      </div>
 
       {editInterests && (
         <InterestPicker
