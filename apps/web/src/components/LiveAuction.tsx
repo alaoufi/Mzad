@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { isOpenEnd } from '@/lib/auction';
 import { Countdown } from './Countdown';
+import { HijriDate } from './HijriDate';
 
 interface BidRow { bidderName: string; amount: number; }
 
@@ -90,7 +91,10 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
         ) : open ? (
           <span className="chip">مزايدة مفتوحة بلا وقت</span>
         ) : endAt ? (
-          <div className="rounded-xl bg-sand-100 px-3 py-2">ينتهي خلال <Countdown endAt={endAt} /></div>
+          <div className="rounded-xl bg-sand-100 px-3 py-2 text-center">
+            ينتهي خلال <Countdown endAt={endAt} />
+            <div className="text-[11px] font-normal text-gray-400"><HijriDate value={endAt} withTime /></div>
+          </div>
         ) : null}
       </div>
 
@@ -117,6 +121,9 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
       ) : scheduled ? (
         <div className="rounded-2xl bg-blue-50 p-4 text-center font-bold text-blue-700">
           🗓️ يبدأ المزاد خلال {startAt ? <Countdown endAt={startAt} /> : '—'}
+          {startAt && (
+            <div className="mt-1 text-xs font-normal text-blue-600/80"><HijriDate value={startAt} withTime /></div>
+          )}
         </div>
       ) : !ended ? (
         <>

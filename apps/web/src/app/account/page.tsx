@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
+import { HijriDate } from '@/components/HijriDate';
 import { accountTypeDef } from '@/lib/roles';
 
 interface Profile {
@@ -16,6 +17,7 @@ interface Profile {
   isPhoneVerified: boolean;
   identityStatus: string;
   trustScore: number;
+  createdAt?: string;
   _count: { listings: number; reviewsReceived: number };
   ratings: { avgRating: number; avgDescMatch: number; count: number };
 }
@@ -87,6 +89,9 @@ export default function AccountPage() {
                 <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">✔ موثّق بالهوية</span>
               )}
             </div>
+            {profile?.createdAt && (
+              <div className="mt-1 text-xs text-white/70">عضو منذ: <HijriDate value={profile.createdAt} short /></div>
+            )}
           </div>
         </div>
       </div>

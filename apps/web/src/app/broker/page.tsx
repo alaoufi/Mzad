@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { Countdown } from '@/components/Countdown';
+import { HijriDate } from '@/components/HijriDate';
 import { isOpenEnd } from '@/lib/auction';
 
 interface BAuction {
@@ -97,6 +98,9 @@ export default function BrokerPage() {
                       {a.status === 'SCHEDULED' && <span>يبدأ خلال <Countdown endAt={a.startAt} /></span>}
                       {a.status === 'LIVE' && !open && <span>ينتهي خلال <Countdown endAt={a.endAt} /></span>}
                     </div>
+                    {a.status === 'SCHEDULED' && (
+                      <div className="mt-0.5 text-[11px] text-gray-400">🗓️ <HijriDate value={a.startAt} withTime /></div>
+                    )}
                   </div>
                 </div>
                 {(a.status === 'SCHEDULED' || a.status === 'LIVE') && (

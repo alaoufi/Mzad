@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { HijriDate } from '@/components/HijriDate';
 
 interface Txn {
   id: string;
@@ -108,7 +109,7 @@ export default function WalletPage() {
                   <div className="min-w-0 flex-1">
                     <div className="font-bold">{meta.label}</div>
                     <div className="truncate text-xs text-gray-500">
-                      {t.note ?? ''} · {new Date(t.createdAt).toLocaleDateString('ar-SA')}
+                      {t.note ?? ''} · <HijriDate value={t.createdAt} short />
                     </div>
                   </div>
                   <div className={`shrink-0 font-extrabold ${amt < 0 ? 'text-red-600' : 'text-green-600'}`}>

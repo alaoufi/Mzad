@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { compressImage } from '@/lib/image';
+import { HijriDate } from '@/components/HijriDate';
 
 interface Cat {
   id: string;
@@ -327,6 +328,9 @@ export default function SellPage() {
                   <div>
                     <label className="mb-2 block font-bold">🗓️ موعد بداية المزاد (للدلال — اختياري)</label>
                     <input type="datetime-local" className="input" value={form.startAt} onChange={(e) => set('startAt', e.target.value)} />
+                    {form.startAt && (
+                      <p className="mt-1 text-sm font-bold text-brand-dark">🗓️ <HijriDate value={form.startAt} withTime /></p>
+                    )}
                     <p className="mt-1 text-sm text-gray-500">اتركه فارغاً ليبدأ فوراً، أو حدّد موعداً مستقبلياً ليُجدول.</p>
                   </div>
                 )}

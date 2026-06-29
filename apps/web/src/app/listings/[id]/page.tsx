@@ -9,6 +9,7 @@ import { SellerReviews } from '@/components/SellerReviews';
 import { resolveTheme, resolveIcon, gradient, sceneBackground } from '@/lib/themes';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
+import { HijriDate } from '@/components/HijriDate';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -119,6 +120,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           <div>
             <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
             <p className="mt-1 text-gray-500">📍 {listing.city} — {listing.region}</p>
+            {listing.createdAt && (
+              <p className="mt-1 text-xs text-gray-400">🗓️ نُشر: <HijriDate value={listing.createdAt} /></p>
+            )}
           </div>
           <HeartButton id={listing.id} className="shrink-0 !h-11 !w-11 !text-2xl ring-1 ring-sand-200" />
         </div>
