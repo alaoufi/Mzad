@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { ListingCard } from '@/components/ListingCard';
+import { themeFor, gradient } from '@/lib/themes';
 
 interface Category {
   id: string;
@@ -38,13 +39,23 @@ export default function HomePage() {
   }, [activeCat]);
 
   const auctionsCount = listings.filter((l) => l.saleType === 'AUCTION').length;
+  const activeSpecies = categories.find((c) => c.id === activeCat)?.name;
+  const theme = themeFor(activeSpecies);
 
   return (
-    <div className="animate-fadeup">
-      {/* بطاقة ترحيب */}
-      <div className="mb-5 overflow-hidden rounded-3xl bg-gradient-to-l from-brand-dark to-brand-light p-6 text-white shadow-lg shadow-brand/20">
-        <h1 className="text-2xl font-extrabold sm:text-3xl">سوق ومزادات المواشي 🐪</h1>
-        <p className="mt-1 text-white/85">إبل · غنم · ماعز · بقر · خيل — بيع وشراء بمصداقية</p>
+    <div
+      className="-mx-4 -my-6 min-h-screen px-4 py-6 transition-colors duration-500 animate-fadeup"
+      style={{ backgroundColor: theme.bg }}
+    >
+      {/* بطاقة ترحيب تتغيّر حسب نوع السوق */}
+      <div
+        className="mb-5 overflow-hidden rounded-3xl p-6 text-white shadow-lg transition-all duration-500"
+        style={{ backgroundImage: gradient(theme) }}
+      >
+        <h1 className="flex items-center gap-2 text-2xl font-extrabold sm:text-3xl">
+          <span className="text-4xl">{theme.emoji}</span> {theme.label}
+        </h1>
+        <p className="mt-1 text-white/85">{theme.tagline}</p>
       </div>
 
       {/* البحث */}
@@ -66,12 +77,14 @@ export default function HomePage() {
       {/* التصنيفات */}
       <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto pb-1">
         <button onClick={() => setActiveCat(null)}
-          className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${!activeCat ? '!bg-brand !text-white' : ''}`}>
+          className="chip whitespace-nowrap !px-4 !py-2 !text-base"
+          style={!activeCat ? { backgroundColor: theme.accent, color: '#fff' } : undefined}>
           الكل
         </button>
         {categories.map((c) => (
           <button key={c.id} onClick={() => setActiveCat(c.id)}
-            className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${activeCat === c.id ? '!bg-brand !text-white' : ''}`}>
+            className="chip whitespace-nowrap !px-4 !py-2 !text-base"
+            style={activeCat === c.id ? { backgroundColor: themeFor(c.name).accent, color: '#fff' } : undefined}>
             {c.icon} {c.name}
           </button>
         ))}

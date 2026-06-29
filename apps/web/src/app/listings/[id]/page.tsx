@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
+import { themeFor, gradient } from '@/lib/themes';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -28,9 +29,28 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 
   const media = listing.media ?? [];
+  const species = listing.category?.parent?.name ?? listing.category?.name;
+  const theme = themeFor(species);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ backgroundColor: theme.bg }}>
+      {/* لافتة السوق حسب النوع */}
+      <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
+        style={{ backgroundImage: gradient(theme) }}>
+        <span className="text-4xl">{theme.emoji}</span>
+        <div>
+          <div className="text-lg font-extrabold">{theme.label}</div>
+          <div className="text-sm text-white/80">{theme.tagline}</div>
+        </div>
+      </div>
+
+      {listing.status === 'DRAFT' && (
+        <div className="mb-4 rounded-2xl bg-amber-50 p-3 text-center font-bold text-amber-800">
+          ⏳ إعلانك بانتظار موافقة الإدارة قبل ظهوره للجميع
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
       {/* الميديا */}
       <div>
         <div className="card aspect-[4/3] bg-sand-100">
@@ -155,6 +175,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         >
           🚩 إبلاغ عن الإعلان
         </button>
+      </div>
       </div>
     </div>
   );

@@ -70,10 +70,14 @@ export async function POST(req: NextRequest) {
     return json({ message: 'بيانات ناقصة' }, 400);
   }
 
+  // الإدارة تحدد ما يدخل: إعلانات الإدارة/الدلال تُنشر مباشرة، وغيرها تنتظر الموافقة
+  const autoApprove = user.role === 'ADMIN' || user.role === 'BROKER';
+
   const listing = await prisma.listing.create({
     data: {
       sellerId: user.sub,
       categoryId: dto.categoryId,
+      status: autoApprove ? 'ACTIVE' : 'DRAFT',
       title: dto.title,
       description: dto.description ?? '',
       count: Number(dto.count) || 1,
