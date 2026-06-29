@@ -223,7 +223,7 @@ export default function HomePage() {
 
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
-      style={{ background: sceneBackground(theme, motif), ...themeVars(theme) }}>
+      style={{ background: sceneBackground(theme, motif), ...themeVars(theme, motif) }}>
       {/* بصمة شكلية للنوع — صورة ظلّية خافتة تعزّز هوية القسم */}
       <div aria-hidden className="pointer-events-none absolute -left-8 top-20 select-none text-[200px] leading-none opacity-[0.05] blur-[1px]">
         {emoji === '🐾' ? '🐪' : emoji}

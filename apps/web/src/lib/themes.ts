@@ -173,8 +173,24 @@ export function sceneBackground(t: Theme, motif: string = 'bloom'): string {
   ].join(', ');
 }
 
+// لغة شكل المكوّنات حسب النمط — تتبدّل استدارة البطاقات والرقائق والأزرار
+// فتبدو مكوّنات الصفحة نفسها مختلفة حسب الصنف (حادّة للقمم/الشبكة، دائرية للتلال…)
+const SHAPES: Record<string, { card: string; chip: string; btn: string }> = {
+  dunes:  { card: '1.75rem', chip: '9999px', btn: '1.25rem' },
+  hills:  { card: '2rem',    chip: '9999px', btn: '1.5rem'  },
+  peaks:  { card: '0.55rem', chip: '0.5rem', btn: '0.5rem'  },
+  waves:  { card: '1.5rem',  chip: '9999px', btn: '1.1rem'  },
+  motion: { card: '1rem',    chip: '0.6rem', btn: '0.7rem'  },
+  spots:  { card: '1.6rem',  chip: '9999px', btn: '1.25rem' },
+  scales: { card: '1.25rem', chip: '1rem',   btn: '0.9rem'  },
+  grid:   { card: '0.7rem',  chip: '0.5rem', btn: '0.5rem'  },
+  bloom:  { card: '1.5rem',  chip: '9999px', btn: '1rem'    },
+};
+
 // متغيّرات CSS تُمرَّر للحاوية: بطاقات بيضاء ناصعة تبرز فوق الحقل اللوني + حدود بلون النوع
-export function themeVars(t: Theme): Record<string, string> {
+// + لغة شكل المكوّنات (استدارة) حسب النمط
+export function themeVars(t: Theme, motif: string = 'bloom'): Record<string, string> {
+  const s = SHAPES[motif] ?? SHAPES.bloom;
   return {
     '--card-bg': '#ffffff',
     '--card-ring': `${t.accent}33`,
@@ -182,5 +198,8 @@ export function themeVars(t: Theme): Record<string, string> {
     '--th-to': t.to,
     '--th-accent': t.accent,
     '--th-ink': t.from,
+    '--card-radius': s.card,
+    '--chip-radius': s.chip,
+    '--btn-radius': s.btn,
   };
 }

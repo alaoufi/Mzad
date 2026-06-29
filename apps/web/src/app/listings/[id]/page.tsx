@@ -137,7 +137,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const canArchive = isOwner || isStaff;
 
   return (
-    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif), ...themeVars(theme) }}>
+    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif), ...themeVars(theme, motif) }}>
       {/* لافتة السوق حسب النوع */}
       <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
         style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 40px -18px ${theme.from}88` }}>
