@@ -331,8 +331,16 @@ export default function HomePage() {
               <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
+            <div className={`grid ${LAYOUTS[motif]?.gap ?? 'gap-3'} ${LAYOUTS[motif]?.grid ?? LAYOUTS.bloom.grid}`}>
+              {listings.map((l, i) =>
+                LAYOUTS[motif]?.featured && i === 0 && !path.length ? (
+                  <div key={l.id} className="col-span-2">
+                    <ListingCard listing={l} featured />
+                  </div>
+                ) : (
+                  <ListingCard key={l.id} listing={l} />
+                )
+              )}
             </div>
           )}
         </div>
@@ -350,6 +358,19 @@ export default function HomePage() {
     </div>
   );
 }
+
+// تخطيط النتائج حسب النمط — كثافة الشبكة وبطاقة مميّزة متصدّرة تتغيّر بحسب الصنف
+const LAYOUTS: Record<string, { grid: string; gap: string; featured: boolean }> = {
+  dunes:  { grid: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', gap: 'gap-3', featured: true },
+  hills:  { grid: 'grid-cols-2 lg:grid-cols-3',                gap: 'gap-4', featured: false },
+  peaks:  { grid: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', gap: 'gap-2', featured: false },
+  waves:  { grid: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', gap: 'gap-3', featured: false },
+  motion: { grid: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', gap: 'gap-3', featured: true },
+  spots:  { grid: 'grid-cols-2 lg:grid-cols-3',                gap: 'gap-4', featured: false },
+  scales: { grid: 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-5', gap: 'gap-2', featured: false },
+  grid:   { grid: 'grid-cols-3 sm:grid-cols-4 lg:grid-cols-5', gap: 'gap-2', featured: false },
+  bloom:  { grid: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', gap: 'gap-3', featured: false },
+};
 
 function levelLabel(mode: Mode, depth: number): string {
   if (mode === 'SUPPLIES') return ['الفئة', 'الصنف', 'النوع'][depth] ?? `مستوى ${depth + 1}`;
