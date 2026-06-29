@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.next/
+out/
+build/
+
+# env
+.env
+.env.local
+*.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# local dev artifacts
+.pgdata/
+.prisma-engines/
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/
+
+# expo
+apps/mobile/.expo/

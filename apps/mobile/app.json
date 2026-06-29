@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "مزاد",
+    "slug": "mazad",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "mazad",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#0f7b6c"
+    },
+    "ios": { "supportsTablet": true, "bundleIdentifier": "sa.mazad.app" },
+    "android": { "package": "sa.mazad.app" },
+    "extra": {
+      "apiUrl": "http://localhost:4000/api"
+    }
+  }
+}

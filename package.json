@@ -1,0 +1,19 @@
+{
+  "name": "mazad",
+  "version": "0.1.0",
+  "private": true,
+  "description": "منصة مزاد — سوق ومزادات المواشي الرقمي",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./apps/api\" --filter \"./apps/web\" dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "prisma", "@nestjs/core", "esbuild"]
+  },
+  "packageManager": "pnpm@10.0.0"
+}

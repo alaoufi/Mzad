@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    direction: rtl;
+  }
+  body {
+    @apply bg-sand-50 text-gray-900 antialiased;
+    font-family: 'Tajawal', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  /* أزرار ضخمة — اختبار الجد */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-4 text-lg font-bold transition active:scale-95 min-h-[56px];
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-dark shadow-lg;
+  }
+  .btn-gold {
+    @apply btn bg-gold text-white hover:opacity-90 shadow-lg;
+  }
+  .btn-outline {
+    @apply btn border-2 border-brand text-brand bg-white hover:bg-sand-50;
+  }
+  .card {
+    @apply bg-white rounded-3xl shadow-sm border border-sand-200 overflow-hidden;
+  }
+  .input {
+    @apply w-full rounded-2xl border-2 border-sand-200 px-4 py-4 text-lg focus:border-brand focus:outline-none;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-sand-100 px-3 py-1 text-sm font-medium text-brand-dark;
+  }
+}
