@@ -151,15 +151,23 @@ export default function HomePage() {
           <>
             <AdBanner placement="HOME_TOP" />
 
-            {/* المبدّل الرئيسي: عروض / مزادات */}
-            <div className="mb-3 grid grid-cols-2 gap-2 rounded-3xl bg-white/80 p-1.5 ring-1 ring-black/[0.04]">
-              {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
-                <button key={m} onClick={() => setMode(m)}
-                  className={`rounded-2xl py-3 text-sm font-bold transition sm:text-base ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
-                  style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
-                  {label}
+            {/* المبدّل الرئيسي: عروض / مزادات + مدخل المستلزمات الصغير */}
+            <div className="mb-3 flex items-center gap-2">
+              <div className="grid flex-1 grid-cols-2 gap-2 rounded-3xl bg-white/80 p-1.5 ring-1 ring-black/[0.04]">
+                {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
+                  <button key={m} onClick={() => setMode(m)}
+                    className={`rounded-2xl py-3 text-sm font-bold transition sm:text-base ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
+                    style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {suppliesRoot && (
+                <button onClick={() => setMode('SUPPLIES')} title="سوق المستلزمات"
+                  className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm ring-1 ring-sand-200">
+                  🛒
                 </button>
-              ))}
+              )}
             </div>
           </>
         )}
@@ -228,18 +236,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* المستلزمات — مدخل ثانوي (ليس سوقاً رئيسياً) */}
-        {mode !== 'SUPPLIES' && suppliesRoot && (
-          <button onClick={() => setMode('SUPPLIES')}
-            className="mt-6 flex w-full items-center gap-3 rounded-3xl bg-white p-4 text-right shadow-sm ring-1 ring-sand-200 transition active:scale-[0.99]">
-            <span className="text-3xl">🛒</span>
-            <span className="flex-1">
-              <span className="block font-bold text-gray-800">سوق المستلزمات</span>
-              <span className="block text-xs text-gray-500">أعلاف · صيدليات بيطرية · أدوات ومعدّات</span>
-            </span>
-            <span className="text-gray-300">‹</span>
-          </button>
-        )}
       </div>
 
       {showPicker && (

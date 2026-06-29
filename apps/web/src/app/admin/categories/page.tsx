@@ -20,10 +20,58 @@ interface Cat {
 const ICON_SUGGESTIONS = ['🐪', '🐫', '🐐', '🐑', '🐏', '🐄', '🐂', '🐎', '🐴', '🐔', '🦅', '🐓', '🛒', '💊', '🌾', '🧴', '🥛', '🍖', '🏷️', '⭐'];
 
 interface Draft { name: string; icon: string; themeKey: string; hidden: boolean }
+const depthLabel = (d: number) => (d === 0 ? 'النوع (الرأس)' : `المستوى ${d + 1}`);
 
-function depthLabel(depth: number) {
-  if (depth === 0) return 'النوع (الرأس)';
-  return `المستوى ${depth + 1}`;
+interface NodeCtx {
+  childrenOf: Map<string | null, Cat[]>;
+  open: Record<string, boolean>;
+  toggle: (id: string) => void;
+  move: (c: Cat, dir: -1 | 1) => void;
+  toggleHide: (c: Cat) => void;
+  openEdit: (c: Cat) => void;
+  openAdd: (parentId: string | null, depth: number) => void;
+  del: (c: Cat) => void;
+}
+
+// عقدة شجرة بأي عمق — مكوّن مستقل (لا يُعاد إنشاؤه فيتجنّب إعادة التركيب البطيئة)
+function NodeRow({ cat, depth, ctx }: { cat: Cat; depth: number; ctx: NodeCtx }) {
+  const kids = ctx.childrenOf.get(cat.id) ?? [];
+  const sibs = ctx.childrenOf.get(cat.parentId ?? null) ?? [];
+  const idx = sibs.findIndex((s) => s.id === cat.id);
+  const isOpen = ctx.open[cat.id];
+  return (
+    <div className="rounded-2xl border border-sand-200 bg-white" style={{ marginInlineStart: depth ? 12 : 0 }}>
+      <div className={`flex items-center gap-1.5 p-2 ${cat.hidden ? 'opacity-50' : ''}`}>
+        <button onClick={() => ctx.toggle(cat.id)} className="w-5 text-base text-gray-400" disabled={!kids.length}>
+          {kids.length ? (isOpen ? '▾' : '▸') : '•'}
+        </button>
+        {cat.icon && <span className="text-lg">{cat.icon}</span>}
+        <span className={`flex-1 truncate ${depth === 0 ? 'text-base font-extrabold' : depth === 1 ? 'font-bold text-brand-dark' : ''}`}>
+          {cat.name}{cat.hidden && <span className="mr-1 text-[10px] text-red-500">(مخفي)</span>}
+        </span>
+        {cat.themeKey && (
+          <span className="h-6 w-6 shrink-0 overflow-hidden rounded-md ring-1 ring-sand-200" title="ثيم"
+            style={{ backgroundImage: gradient(themeByKey(cat.themeKey)) }} />
+        )}
+        <button onClick={() => ctx.move(cat, -1)} disabled={idx === 0}
+          className="flex h-8 w-7 items-center justify-center rounded-lg bg-sand-100 text-gray-600 disabled:opacity-30">▲</button>
+        <button onClick={() => ctx.move(cat, 1)} disabled={idx === sibs.length - 1}
+          className="flex h-8 w-7 items-center justify-center rounded-lg bg-sand-100 text-gray-600 disabled:opacity-30">▼</button>
+        <IconBtn onClick={() => ctx.toggleHide(cat)}>{cat.hidden ? '🙈' : '👁️'}</IconBtn>
+        <IconBtn onClick={() => ctx.openEdit(cat)}>✏️</IconBtn>
+        <IconBtn onClick={() => ctx.del(cat)}>🗑️</IconBtn>
+      </div>
+      {isOpen && (
+        <div className="space-y-1.5 px-2 pb-2">
+          {kids.map((k) => <NodeRow key={k.id} cat={k} depth={depth + 1} ctx={ctx} />)}
+          <button onClick={() => ctx.openAdd(cat.id, depth + 1)}
+            className="w-full rounded-xl border-2 border-dashed border-sand-300 py-2 text-xs font-bold text-gray-500 hover:border-brand hover:text-brand">
+            ＋ إضافة تصنيف فرعي تحت «{cat.name}»
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function AdminCategoriesPage() {
@@ -50,7 +98,6 @@ export default function AdminCategoriesPage() {
     load();
   }, [user]);
 
-  // أبناء كل عقدة (مرتّبين) + عمق كل عقدة
   const childrenOf = useMemo(() => {
     const m = new Map<string | null, Cat[]>();
     for (const c of flat) {
@@ -61,6 +108,7 @@ export default function AdminCategoriesPage() {
     for (const arr of m.values()) arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
     return m;
   }, [flat]);
+
   const depthOf = (cat: Cat): number => {
     let d = 0, p = cat.parentId;
     const byId = new Map(flat.map((c) => [c.id, c]));
@@ -110,15 +158,21 @@ export default function AdminCategoriesPage() {
   };
   const toggleHide = (c: Cat) =>
     run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !c.hidden }) }));
+
+  // إعادة ترتيب: نعيد ترقيم كل الإخوة تسلسلياً (يعمل حتى لو كانت كلها order=0)
   const move = (c: Cat, dir: -1 | 1) => {
-    const sibs = childrenOf.get(c.parentId ?? null) ?? [];
+    const sibs = [...(childrenOf.get(c.parentId ?? null) ?? [])];
     const i = sibs.findIndex((s) => s.id === c.id);
     const j = i + dir;
     if (j < 0 || j >= sibs.length) return;
-    const a = sibs[i], b = sibs[j];
+    const [moved] = sibs.splice(i, 1);
+    sibs.splice(j, 0, moved);
     run(async () => {
-      await api(`/admin/categories/${a.id}`, { method: 'PATCH', body: JSON.stringify({ order: b.order ?? 0 }) });
-      await api(`/admin/categories/${b.id}`, { method: 'PATCH', body: JSON.stringify({ order: a.order ?? 0 }) });
+      for (let k = 0; k < sibs.length; k++) {
+        if ((sibs[k].order ?? -1) !== k) {
+          await api(`/admin/categories/${sibs[k].id}`, { method: 'PATCH', body: JSON.stringify({ order: k }) });
+        }
+      }
     });
   };
 
@@ -137,47 +191,7 @@ export default function AdminCategoriesPage() {
 
   const roots = childrenOf.get(null) ?? [];
   const modalDepth = editFor ? depthOf(editFor) : addParent?.depth ?? 0;
-
-  // عقدة شجرة بأي عمق
-  const Node = ({ cat, depth }: { cat: Cat; depth: number }) => {
-    const kids = childrenOf.get(cat.id) ?? [];
-    const sibs = childrenOf.get(cat.parentId ?? null) ?? [];
-    const idx = sibs.findIndex((s) => s.id === cat.id);
-    const isOpen = open[cat.id];
-    return (
-      <div className="rounded-2xl border border-sand-200 bg-white" style={{ marginInlineStart: depth ? 12 : 0 }}>
-        <div className={`flex items-center gap-1.5 p-2 ${cat.hidden ? 'opacity-50' : ''}`}>
-          <button onClick={() => toggle(cat.id)} className="w-5 text-gray-400" disabled={!kids.length}>
-            {kids.length ? (isOpen ? '▾' : '▸') : '•'}
-          </button>
-          {cat.icon && <span className="text-lg">{cat.icon}</span>}
-          <span className={`flex-1 truncate ${depth === 0 ? 'text-base font-extrabold' : depth === 1 ? 'font-bold text-brand-dark' : ''}`}>
-            {cat.name}{cat.hidden && <span className="mr-1 text-[10px] text-red-500">(مخفي)</span>}
-          </span>
-          {cat.themeKey && (
-            <span className="h-6 w-6 shrink-0 overflow-hidden rounded-md ring-1 ring-sand-200" title="ثيم"
-              style={{ backgroundImage: gradient(themeByKey(cat.themeKey)) }} />
-          )}
-          <div className="flex flex-col">
-            <button onClick={() => move(cat, -1)} disabled={idx === 0} className="text-[10px] leading-3 text-gray-400 disabled:opacity-30">▲</button>
-            <button onClick={() => move(cat, 1)} disabled={idx === sibs.length - 1} className="text-[10px] leading-3 text-gray-400 disabled:opacity-30">▼</button>
-          </div>
-          <IconBtn onClick={() => toggleHide(cat)}>{cat.hidden ? '🙈' : '👁️'}</IconBtn>
-          <IconBtn onClick={() => openEdit(cat)}>✏️</IconBtn>
-          <IconBtn onClick={() => del(cat)}>🗑️</IconBtn>
-        </div>
-        {isOpen && (
-          <div className="space-y-1.5 px-2 pb-2">
-            {kids.map((k) => <Node key={k.id} cat={k} depth={depth + 1} />)}
-            <button onClick={() => openAdd(cat.id, depth + 1)}
-              className="w-full rounded-xl border-2 border-dashed border-sand-300 py-1.5 text-xs font-bold text-gray-500 hover:border-brand hover:text-brand">
-              ＋ إضافة تصنيف فرعي تحت «{cat.name}»
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const ctx: NodeCtx = { childrenOf, open, toggle, move, toggleHide, openEdit, openAdd, del };
 
   return (
     <div className="animate-fadeup space-y-4">
@@ -186,7 +200,7 @@ export default function AdminCategoriesPage() {
         <button onClick={() => router.push('/admin')} className="text-sm font-bold text-brand">← اللوحة</button>
       </div>
       <p className="text-sm text-gray-500">
-        أضف رأساً (نوعاً)، ثم تحته أي عدد من المستويات بأي عمق — لكل عنصر اسمه وأيقونته وثيمه. تحكّم كامل: تعديل · ترتيب · إظهار/إخفاء · حذف.
+        أضف رأساً (نوعاً)، ثم تحته أي عدد من المستويات بأي عمق — لكل عنصر اسمه وأيقونته وثيمه. تعديل · ترتيب (▲▼) · إظهار/إخفاء · حذف.
       </p>
       {error && <div className="rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 
@@ -206,11 +220,10 @@ export default function AdminCategoriesPage() {
       </div>
 
       <div className="space-y-2">
-        {roots.map((r) => <Node key={r.id} cat={r} depth={0} />)}
+        {roots.map((r) => <NodeRow key={r.id} cat={r} depth={0} ctx={ctx} />)}
         {roots.length === 0 && <p className="py-8 text-center text-gray-400">لا توجد تصنيفات — أضف أول نوع.</p>}
       </div>
 
-      {/* نافذة التعديل/الإضافة الموحّدة */}
       {(editFor || addParent) && mounted && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-3" onClick={closeModal}>
           <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -290,7 +303,7 @@ export default function AdminCategoriesPage() {
 
 function IconBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="rounded-lg bg-white px-1.5 py-1 text-sm ring-1 ring-sand-200 hover:bg-sand-50">
+    <button onClick={onClick} className="flex h-8 items-center rounded-lg bg-white px-1.5 text-sm ring-1 ring-sand-200 hover:bg-sand-50">
       {children}
     </button>
   );
