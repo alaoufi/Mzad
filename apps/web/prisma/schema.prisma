@@ -36,6 +36,7 @@ model User {
   region          String?
   trustScore      Float          @default(0)
   interests       String[]       @default([]) // معرّفات التصنيفات التي يهتم بها (أي مستوى)
+  brokerCategories String[]      @default([]) // نطاق الدلال: التصنيفات المُسندة إليه
   createdAt       DateTime       @default(now())
 
   listings        Listing[]

@@ -36,6 +36,7 @@ model User {
   region          String?
   trustScore      Float          @default(0)
   interests       String[]       @default([])
+  brokerCategories String[]      @default([])
   createdAt       DateTime       @default(now())
 
   listings        Listing[]

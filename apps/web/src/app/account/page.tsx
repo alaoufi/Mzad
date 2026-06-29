@@ -204,6 +204,11 @@ export default function AccountPage() {
           🧑‍⚖️ لوحة الدلال
         </button>
       )}
+      {(profile?.accountType === 'BROKERS_LEAD' || profile?.role === 'ADMIN') && (
+        <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/brokers')}>
+          🎖️ إدارة الدلالين ونطاقاتهم
+        </button>
+      )}
       {profile?.role === 'ADMIN' && (
         <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/admin')}>
           🛡️ لوحة الإدارة

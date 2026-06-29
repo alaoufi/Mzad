@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
 import { OPEN_END_ISO } from '@/lib/auction';
+import { isInBrokerScope } from '@/lib/category-scope';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const allowed = listing.sellerId === auth.sub || auth.role === 'BROKER' || auth.role === 'ADMIN';
   if (!allowed) return json({ message: 'غير مصرّح بتحويل هذا الإعلان' }, 403);
+
+  // الدلال (وليس المالك ولا الإدارة) مقيّد بنطاقه المُسند
+  if (auth.role === 'BROKER' && listing.sellerId !== auth.sub) {
+    const me = await prisma.user.findUnique({ where: { id: auth.sub }, select: { brokerCategories: true } });
+    if (!(await isInBrokerScope(listing.categoryId, me?.brokerCategories ?? []))) {
+      return json({ message: 'هذا التصنيف خارج نطاقك المُسند كدلال' }, 403);
+    }
+  }
 
   const body = await req.json();
   const to = body.to as 'DIRECT' | 'AUCTION' | 'ONSOOM';
