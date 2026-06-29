@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { ListingCard } from '@/components/ListingCard';
 import { resolveTheme, resolveIcon, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
+import { usePageTheme } from '@/lib/theme-context';
 import { AdBanner } from '@/components/AdBanner';
 
 interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[]; }
@@ -36,6 +37,7 @@ export default function HomePage() {
     : [...path].reverse();
   const theme = resolveTheme(chain);
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐪';
+  usePageTheme(theme); // يلوّن ترويسة الموقع والشريط السفلي بلون النوع
 
   const load = () => {
     setLoading(true);

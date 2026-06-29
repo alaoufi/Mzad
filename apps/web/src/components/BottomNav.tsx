@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useActiveTheme } from '@/lib/theme-context';
 
 const ITEMS = [
   { href: '/', label: 'الرئيسية', icon: '🏠' },
@@ -13,6 +14,7 @@ const ITEMS = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { theme } = useActiveTheme();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 sm:hidden">
@@ -30,8 +32,10 @@ export function BottomNav() {
             );
           }
           return (
-            <Link key={item.href} href={item.href} className={`navitem ${active ? 'navitem-active' : ''}`}>
-              <span className={`flex h-8 w-12 items-center justify-center rounded-full text-xl transition-all ${active ? 'bg-brand/10' : ''}`}>
+            <Link key={item.href} href={item.href} className="navitem"
+              style={active ? { color: theme.accent } : undefined}>
+              <span className="flex h-8 w-12 items-center justify-center rounded-full text-xl transition-all"
+                style={active ? { backgroundColor: `${theme.accent}1f` } : undefined}>
                 {item.icon}
               </span>
               {item.label}

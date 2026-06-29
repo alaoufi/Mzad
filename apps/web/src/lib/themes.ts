@@ -104,21 +104,21 @@ export function gradient(t: Theme): string {
   return `linear-gradient(135deg, ${t.from}, ${t.to})`;
 }
 
-// خلفية المشهد — تغيّر جذري بألوان النوع: تدرّج قاعدي ملوّن + نفحات لونية قوية
+// خلفية المشهد — تغيّر جذري بألوان النوع: حقل لوني قوي تطفو فوقه البطاقات البيضاء
 export function sceneBackground(t: Theme): string {
   return [
-    `radial-gradient(1100px circle at 100% -8%, ${t.accent}59, transparent 50%)`,
-    `radial-gradient(820px circle at -8% 14%, ${t.to}4d, transparent 46%)`,
-    `radial-gradient(900px circle at 50% 118%, ${t.from}3d, transparent 55%)`,
+    `radial-gradient(1300px circle at 100% -12%, ${t.accent}, transparent 58%)`,
+    `radial-gradient(1100px circle at -12% 4%, ${t.to}d9, transparent 54%)`,
+    `radial-gradient(1100px circle at 50% 128%, ${t.from}b3, transparent 60%)`,
     `linear-gradient(180deg, ${t.bg}, ${t.surface})`,
   ].join(', ');
 }
 
-// متغيّرات CSS تُمرَّر للحاوية فتتلوّن البطاقات والحدود تبعاً للنوع
+// متغيّرات CSS تُمرَّر للحاوية: بطاقات بيضاء ناصعة تبرز فوق الحقل اللوني + حدود بلون النوع
 export function themeVars(t: Theme): Record<string, string> {
   return {
-    '--card-bg': `${t.surface}f2`,
-    '--card-ring': `${t.accent}2e`,
+    '--card-bg': '#ffffff',
+    '--card-ring': `${t.accent}33`,
     '--th-from': t.from,
     '--th-to': t.to,
     '--th-accent': t.accent,

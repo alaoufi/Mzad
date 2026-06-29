@@ -2,13 +2,16 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
+import { useActiveTheme } from '@/lib/theme-context';
+import { gradient } from '@/lib/themes';
 
 export function Header() {
   const { user } = useAuth();
+  const { theme } = useActiveTheme();
 
   return (
-    <header className="sticky top-0 z-40 text-white shadow-lg shadow-brand/20"
-      style={{ backgroundImage: 'linear-gradient(120deg, #0a5246, #0f7b6c 60%, #1aa893)' }}>
+    <header className="sticky top-0 z-40 text-white shadow-lg transition-all duration-500"
+      style={{ backgroundImage: `linear-gradient(120deg, ${theme.from}, ${theme.to})` }}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold text-emboss-light">
           <span className="text-3xl drop-shadow">🐪</span>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth';
 import { FavoritesProvider } from '@/lib/favorites';
+import { ActiveThemeProvider } from '@/lib/theme-context';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { SupportButton } from '@/components/SupportButton';
@@ -23,10 +24,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <FavoritesProvider>
-            <Header />
-            <main className="mx-auto max-w-5xl px-4 py-6 pb-28">{children}</main>
-            <SupportButton />
-            <BottomNav />
+            <ActiveThemeProvider>
+              <Header />
+              <main className="mx-auto max-w-5xl px-4 py-6 pb-28">{children}</main>
+              <SupportButton />
+              <BottomNav />
+            </ActiveThemeProvider>
           </FavoritesProvider>
         </AuthProvider>
       </body>

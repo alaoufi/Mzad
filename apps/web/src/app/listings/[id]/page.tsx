@@ -7,6 +7,7 @@ import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
 import { resolveTheme, resolveIcon, gradient, sceneBackground, themeVars } from '@/lib/themes';
+import { usePageTheme } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
 import { HijriDate } from '@/components/HijriDate';
@@ -48,14 +49,16 @@ export default function ListingPage({ params }: { params: { id: string } }) {
     } catch (e: any) { alert(e.message); }
   };
 
+  // سلسلة: سلالة ← لون ← نوع (من الأعمق للأعلى) — تُحسب قبل أي return لأن الخطّاف يجب أن يعمل دائماً
+  const cat = listing?.category;
+  const chain = [cat, cat?.parent, cat?.parent?.parent].filter(Boolean);
+  const theme = resolveTheme(chain);
+  usePageTheme(theme); // يلوّن ترويسة الموقع والشريط السفلي بلون نوع الإعلان
+
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
   if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 
   const media = listing.media ?? [];
-  // سلسلة: سلالة ← لون ← نوع (من الأعمق للأعلى)
-  const cat = listing.category;
-  const chain = [cat, cat?.parent, cat?.parent?.parent].filter(Boolean);
-  const theme = resolveTheme(chain);
   const emoji = resolveIcon(chain);
   const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
 
