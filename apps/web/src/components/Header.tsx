@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useActiveTheme } from '@/lib/theme-context';
 import { gradient } from '@/lib/themes';
@@ -8,15 +9,26 @@ import { gradient } from '@/lib/themes';
 export function Header() {
   const { user } = useAuth();
   const { theme } = useActiveTheme();
+  const router = useRouter();
+  const pathname = usePathname();
+  const isHome = pathname === '/';
 
   return (
     <header className="sticky top-0 z-40 text-white shadow-lg transition-all duration-500"
       style={{ backgroundImage: `linear-gradient(120deg, ${theme.from}, ${theme.to})` }}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold text-emboss-light">
-          <span className="text-3xl drop-shadow">🐪</span>
-          <span>مزاد</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {!isHome && (
+            <button onClick={() => router.back()} aria-label="رجوع"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-xl ring-1 ring-white/25 active:scale-95">
+              →
+            </button>
+          )}
+          <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold text-emboss-light">
+            <span className="text-3xl drop-shadow">🐪</span>
+            <span>مزاد</span>
+          </Link>
+        </div>
 
         <nav className="flex items-center gap-2">
           <Link href="/sell"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -36,6 +36,11 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'pending' | 'verify' | 'listings' | 'users'>('pending');
+  const contentRef = useRef<HTMLDivElement>(null);
+  const goTab = (t: 'pending' | 'verify' | 'listings' | 'users') => {
+    setTab(t);
+    setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  };
   const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
   const [comm, setComm] = useState({ marketCommissionPct: 0, brokerSharePct: 0, supervisorSharePct: 0, commissionNote: '' });
   const [savingComm, setSavingComm] = useState(false);
@@ -120,10 +125,10 @@ export default function AdminPage() {
     if (typeof document !== 'undefined') document.getElementById('reports-section')?.scrollIntoView({ behavior: 'smooth' });
   };
   const cards: { label: string; value: number; icon: string; act?: () => void }[] = [
-    { label: 'المستخدمون', value: data.stats.users, icon: '👥', act: () => setTab('users') },
-    { label: 'الإعلانات', value: data.stats.listings, icon: '📋', act: () => setTab('listings') },
-    { label: 'بانتظار الموافقة', value: data.stats.pending, icon: '⏳', act: () => setTab('pending') },
-    { label: 'طلبات التوثيق', value: data.stats.verifications, icon: '🛡️', act: () => setTab('verify') },
+    { label: 'المستخدمون', value: data.stats.users, icon: '👥', act: () => goTab('users') },
+    { label: 'الإعلانات', value: data.stats.listings, icon: '📋', act: () => goTab('listings') },
+    { label: 'بانتظار الموافقة', value: data.stats.pending, icon: '⏳', act: () => goTab('pending') },
+    { label: 'طلبات التوثيق', value: data.stats.verifications, icon: '🛡️', act: () => goTab('verify') },
     { label: 'المزادات', value: data.stats.auctions, icon: '🔨', act: () => router.push('/broker') },
     { label: 'المزايدات', value: data.stats.bids, icon: '💰' },
     { label: 'البلاغات', value: data.stats.reports, icon: '🚩', act: goReports },
@@ -216,15 +221,15 @@ export default function AdminPage() {
       </div>
 
       {/* تبويبات */}
-      <div className="flex gap-2">
+      <div ref={contentRef} className="grid grid-cols-2 gap-2 scroll-mt-3 sm:flex">
         {[
           ['pending', `بانتظار الموافقة (${data.stats.pending})`],
           ['verify', `التوثيق (${data.stats.verifications})`],
           ['listings', 'كل الإعلانات'],
           ['users', 'المستخدمون'],
         ].map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k as any)}
-            className={`flex-1 rounded-2xl py-3 text-sm font-bold transition ${
+          <button key={k} onClick={() => goTab(k as any)}
+            className={`rounded-2xl py-2.5 text-sm font-bold transition sm:flex-1 ${
               tab === k ? 'bg-brand text-white' : 'bg-white ring-1 ring-sand-200 text-gray-600'
             }`}>
             {label}
