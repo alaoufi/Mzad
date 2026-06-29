@@ -90,7 +90,7 @@ export default function HomePage() {
             })}
           </div>
           <button onClick={() => setMode('SUPPLIES')}
-            className="mt-5 rounded-2xl bg-white/70 px-5 py-3 text-sm font-bold text-gray-600 ring-1 ring-sand-200 backdrop-blur">
+            className="mt-5 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-gray-600 ring-1 ring-sand-200">
             🛒 أو تصفّح سوق المستلزمات
           </button>
         </div>
@@ -101,10 +101,10 @@ export default function HomePage() {
   const inSpecialized = entryMode === 'SPECIALIZED' && mode !== 'SUPPLIES';
 
   return (
-    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 transition-all duration-500 animate-fadeup"
+    <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme) }}>
-      {/* علامة مائية للنوع (إحساس المكان) */}
-      <div className="pointer-events-none fixed left-0 top-24 -z-0 select-none text-[40vw] leading-none opacity-[0.04]">
+      {/* علامة مائية للنوع (إحساس المكان) — مطلقة لا ثابتة لتفادي إعادة الرسم عند التمرير */}
+      <div className="pointer-events-none absolute left-0 top-24 -z-0 select-none text-[30vw] leading-none opacity-[0.04]">
         {emoji}
       </div>
 

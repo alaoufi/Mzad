@@ -54,7 +54,7 @@ export function AdBanner({ placement = 'HOME_TOP', onClick }: { placement?: stri
           <div className="text-lg font-extrabold">{ad.title}</div>
           {ad.advertiser && <div className="text-sm text-white/85">{ad.advertiser}</div>}
         </div>
-        <span className="rounded-xl bg-white/20 px-3 py-2 text-sm font-bold backdrop-blur">عرض ←</span>
+        <span className="rounded-xl bg-white/25 px-3 py-2 text-sm font-bold">عرض ←</span>
       </>
     );
     if (ad.link?.startsWith('http')) {
@@ -72,7 +72,7 @@ export function AdBanner({ placement = 'HOME_TOP', onClick }: { placement?: stri
         <div className="text-lg font-extrabold">{DEMO.title}</div>
         <div className="text-sm text-white/85">{DEMO.sub}</div>
       </div>
-      <span className="rounded-xl bg-white/20 px-3 py-2 text-sm font-bold backdrop-blur">تصفّح ←</span>
+      <span className="rounded-xl bg-white/25 px-3 py-2 text-sm font-bold">تصفّح ←</span>
     </>
   );
   if (onClick) return <button type="button" onClick={onClick} className={wrapClass} style={style}>{demoInner}</button>;

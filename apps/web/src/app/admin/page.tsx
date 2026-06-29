@@ -88,14 +88,17 @@ export default function AdminPage() {
   }
   if (!data) return null;
 
-  const cards = [
-    { label: 'المستخدمون', value: data.stats.users, icon: '👥' },
-    { label: 'الإعلانات', value: data.stats.listings, icon: '📋' },
-    { label: 'بانتظار الموافقة', value: data.stats.pending, icon: '⏳' },
-    { label: 'طلبات التوثيق', value: data.stats.verifications, icon: '🛡️' },
-    { label: 'المزادات', value: data.stats.auctions, icon: '🔨' },
+  const goReports = () => {
+    if (typeof document !== 'undefined') document.getElementById('reports-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+  const cards: { label: string; value: number; icon: string; act?: () => void }[] = [
+    { label: 'المستخدمون', value: data.stats.users, icon: '👥', act: () => setTab('users') },
+    { label: 'الإعلانات', value: data.stats.listings, icon: '📋', act: () => setTab('listings') },
+    { label: 'بانتظار الموافقة', value: data.stats.pending, icon: '⏳', act: () => setTab('pending') },
+    { label: 'طلبات التوثيق', value: data.stats.verifications, icon: '🛡️', act: () => setTab('verify') },
+    { label: 'المزادات', value: data.stats.auctions, icon: '🔨', act: () => router.push('/broker') },
     { label: 'المزايدات', value: data.stats.bids, icon: '💰' },
-    { label: 'البلاغات', value: data.stats.reports, icon: '🚩' },
+    { label: 'البلاغات', value: data.stats.reports, icon: '🚩', act: goReports },
   ];
 
   const services = [
@@ -123,15 +126,22 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* الإحصائيات — مربّعات مدمجة */}
+      {/* الإحصائيات — مربّعات مدمجة قابلة للنقر */}
       <div className="grid grid-cols-4 gap-2">
-        {cards.map((c) => (
-          <div key={c.label} className="card float-box p-2 text-center">
-            <div className="text-base">{c.icon}</div>
-            <div className="text-lg font-extrabold text-brand-dark text-emboss">{c.value}</div>
-            <div className="text-[10px] leading-tight text-gray-500">{c.label}</div>
-          </div>
-        ))}
+        {cards.map((c) => {
+          const inner = (
+            <>
+              <div className="text-base">{c.icon}</div>
+              <div className="text-lg font-extrabold text-brand-dark text-emboss">{c.value}</div>
+              <div className="text-[10px] leading-tight text-gray-500">{c.label}</div>
+            </>
+          );
+          return c.act ? (
+            <button key={c.label} onClick={c.act} className="card float-box p-2 text-center transition active:scale-95">{inner}</button>
+          ) : (
+            <div key={c.label} className="card float-box p-2 text-center">{inner}</div>
+          );
+        })}
       </div>
 
       {/* وضع الدخول: عام أو متخصص */}
@@ -284,7 +294,7 @@ export default function AdminPage() {
 
       {/* البلاغات */}
       {data.openReports.length > 0 && (
-        <div className="card p-4">
+        <div id="reports-section" className="card p-4 scroll-mt-4">
           <h2 className="mb-3 text-lg font-bold">🚩 بلاغات مفتوحة ({data.openReports.length})</h2>
           <ul className="space-y-2">
             {data.openReports.map((r) => (

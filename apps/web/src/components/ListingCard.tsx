@@ -31,7 +31,7 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
         )}
         <HeartButton id={listing.id} className="absolute left-1.5 top-1.5 !h-8 !w-8 !text-base" />
         {listing.seller?.identityStatus === 'VERIFIED' && (
-          <span className="absolute left-11 top-2 rounded-full bg-white/85 px-1.5 py-0.5 text-[10px] font-bold text-brand backdrop-blur">
+          <span className="absolute left-11 top-2 rounded-full bg-white px-1.5 py-0.5 text-[10px] font-bold text-brand shadow-sm">
             ✔ موثّق
           </span>
         )}

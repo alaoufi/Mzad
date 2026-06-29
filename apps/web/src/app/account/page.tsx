@@ -76,7 +76,7 @@ export default function AccountPage() {
       <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-6 text-white shadow-xl"
         style={{ boxShadow: '0 24px 48px -22px rgba(10,92,80,0.5)' }}>
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/20 text-2xl font-extrabold backdrop-blur">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/25 text-2xl font-extrabold">
             {(profile?.name ?? user.name).charAt(0)}
           </div>
           <div className="flex-1">

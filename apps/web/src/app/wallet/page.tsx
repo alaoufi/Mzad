@@ -79,7 +79,7 @@ export default function WalletPage() {
           {balance.toLocaleString('ar-SA')} <span className="text-2xl">﷼</span>
         </div>
         <button onClick={topup} disabled={busy}
-          className="mt-4 rounded-2xl bg-white/20 px-5 py-2.5 text-sm font-bold backdrop-blur transition hover:bg-white/30 disabled:opacity-50">
+          className="mt-4 rounded-2xl bg-white/25 px-5 py-2.5 text-sm font-bold transition hover:bg-white/30 disabled:opacity-50">
           {busy ? '...' : '➕ شحن المحفظة'}
         </button>
       </div>
