@@ -33,3 +33,7 @@ apps/api/prisma/*.db-journal
 
 # expo
 apps/mobile/.expo/
+
+# prisma engine partial downloads
+*/partial
+**/[0-9a-f][0-9a-f]*/partial

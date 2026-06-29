@@ -1,9 +1,9 @@
 // عميل بسيط للتعامل مع الواجهة الخلفية
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
-export const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL ?? 'http://localhost:4000';
+// افتراضياً يستخدم مسارات API الداخلية في Next.js (نفس الأصل).
+// لاستخدام الواجهة الخلفية NestJS المنفصلة، اضبط NEXT_PUBLIC_API_URL=http://localhost:4000/api
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? '/api';
+export const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? '';
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
