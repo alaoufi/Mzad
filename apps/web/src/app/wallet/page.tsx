@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -46,11 +47,11 @@ export default function WalletPage() {
   }, [user]);
 
   const topup = async () => {
-    const amount = Number(prompt('مبلغ الشحن (ريال):', '500') || 0);
+    const amount = Number(await uiPrompt('مبلغ الشحن (ريال):', '500') || 0);
     if (!amount || amount <= 0) return;
     setBusy(true);
     try { await api('/wallet/topup', { method: 'POST', body: JSON.stringify({ amount }) }); await load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
     finally { setBusy(false); }
   };
 

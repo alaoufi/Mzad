@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -39,7 +40,7 @@ export default function AccountPage() {
   const saveInterests = async (ids: string[]) => {
     setEditInterests(false);
     try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); await loadProfile(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
 
   useEffect(() => {
@@ -56,12 +57,12 @@ export default function AccountPage() {
   }, [user]);
 
   const requestVerification = async () => {
-    if (!confirm('سيُراجع فريق المنصة هويتك لمنحك شارة «موثّق». هل تريد إرسال الطلب؟')) return;
+    if (!await uiConfirm('سيُراجع فريق المنصة هويتك لمنحك شارة «موثّق». هل تريد إرسال الطلب؟')) return;
     setVerifying(true);
     try {
       await api('/users/me', { method: 'PATCH', body: JSON.stringify({ requestVerification: true }) });
       await loadProfile();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { uiToast(e.message); }
     finally { setVerifying(false); }
   };
 

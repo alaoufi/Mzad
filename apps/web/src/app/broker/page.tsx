@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -35,9 +36,9 @@ export default function BrokerPage() {
   useEffect(() => { if (!user) { setLoading(false); return; } load(); }, [user]);
 
   const act = async (id: string, action: string) => {
-    if (action === 'cancel' && !confirm('إلغاء هذا المزاد؟')) return;
+    if (action === 'cancel' && !await uiConfirm('إلغاء هذا المزاد؟')) return;
     try { await api(`/auctions/${id}`, { method: 'PATCH', body: JSON.stringify({ action }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
 
   if (!user) {

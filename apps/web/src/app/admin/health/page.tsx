@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -33,23 +34,23 @@ export default function AdminHealthPage() {
 
   const run = async (fn: () => Promise<any>) => {
     setError('');
-    try { await fn(); load(); } catch (e: any) { setError(e.message); alert(e.message); }
+    try { await fn(); load(); } catch (e: any) { setError(e.message); uiToast(e.message); }
   };
 
-  const add = () => {
-    const label = prompt('نص البند الجديد (مثل: مُطعّم، الأسنان سليمة):');
+  const add = async () => {
+    const label = await uiPrompt('نص البند الجديد (مثل: مُطعّم، الأسنان سليمة):');
     if (!label?.trim()) return;
     run(() => api('/admin/health-items', { method: 'POST', body: JSON.stringify({ label }) }));
   };
-  const rename = (it: Item) => {
-    const label = prompt('النص الجديد:', it.label);
+  const rename = async (it: Item) => {
+    const label = await uiPrompt('النص الجديد:', it.label);
     if (label === null || !label.trim()) return;
     run(() => api(`/admin/health-items/${it.id}`, { method: 'PATCH', body: JSON.stringify({ label }) }));
   };
   const toggleHide = (it: Item) =>
     run(() => api(`/admin/health-items/${it.id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !it.hidden }) }));
-  const del = (it: Item) => {
-    if (!confirm(`حذف البند "${it.label}"؟`)) return;
+  const del = async (it: Item) => {
+    if (!await uiConfirm(`حذف البند "${it.label}"؟`)) return;
     run(() => api(`/admin/health-items/${it.id}`, { method: 'DELETE' }));
   };
   const move = (idx: number, dir: -1 | 1) => {

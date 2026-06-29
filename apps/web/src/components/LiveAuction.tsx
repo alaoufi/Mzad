@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { isOpenEnd } from '@/lib/auction';
@@ -73,9 +74,9 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
   };
 
   const close = async () => {
-    if (!confirm('إنهاء وقبول أعلى مبلغ؟')) return;
+    if (!await uiConfirm('إنهاء وقبول أعلى مبلغ؟')) return;
     try { await api(`/auctions/${auctionId}/close`, { method: 'POST' }); setStatus('ENDED'); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
 
   const scheduled = status === 'SCHEDULED';

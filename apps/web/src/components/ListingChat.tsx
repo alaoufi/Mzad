@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
@@ -45,7 +46,7 @@ export function ListingChat({ listingId }: { listingId: string }) {
       setText('');
       load();
     } catch (e: any) {
-      alert(e.message);
+      uiToast(e.message);
     } finally {
       setBusy(false);
     }

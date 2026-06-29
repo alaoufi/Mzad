@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -119,7 +120,7 @@ export default function AdminCategoriesPage() {
   const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
   const run = async (fn: () => Promise<any>) => {
     setError('');
-    try { await fn(); load(); } catch (e: any) { setError(e.message); alert(e.message); }
+    try { await fn(); load(); } catch (e: any) { setError(e.message); uiToast(e.message); }
   };
 
   const openEdit = (c: Cat) => {
@@ -136,7 +137,7 @@ export default function AdminCategoriesPage() {
   const closeModal = () => { setEditFor(null); setAddParent(null); };
 
   const save = async () => {
-    if (!draft.name.trim()) { alert('الاسم مطلوب'); return; }
+    if (!draft.name.trim()) { uiToast('الاسم مطلوب'); return; }
     setSaving(true);
     try {
       if (editFor) {
@@ -148,12 +149,12 @@ export default function AdminCategoriesPage() {
       }
       closeModal();
       load();
-    } catch (e: any) { setError(e.message); alert(e.message); }
+    } catch (e: any) { setError(e.message); uiToast(e.message); }
     finally { setSaving(false); }
   };
 
-  const del = (c: Cat) => {
-    if (!confirm(`حذف "${c.name}"؟ (يجب ألا يكون له فروع أو إعلانات)`)) return;
+  const del = async (c: Cat) => {
+    if (!await uiConfirm(`حذف "${c.name}"؟ (يجب ألا يكون له فروع أو إعلانات)`)) return;
     run(() => api(`/admin/categories/${c.id}`, { method: 'DELETE' }));
   };
   const toggleHide = (c: Cat) =>
@@ -207,11 +208,11 @@ export default function AdminCategoriesPage() {
       <div className="flex gap-2">
         <button onClick={() => openAdd(null, 0)} className="btn-primary flex-1">＋ إضافة نوع رئيسي</button>
         <button
-          onClick={() => {
-            if (!confirm('⚠️ سيحذف هذا كل التصنيفات والإعلانات الحالية ويعيد بناء الشجرة الافتراضية. متابعة؟')) return;
+          onClick={async () => {
+            if (!(await uiConfirm('⚠️ سيحذف هذا كل التصنيفات والإعلانات الحالية ويعيد بناء الشجرة الافتراضية. متابعة؟', { danger: true, confirmText: 'إعادة بناء' }))) return;
             run(async () => {
               const r = await api<{ species: number; types: number; breeds: number }>('/admin/rebuild-catalog', { method: 'POST' });
-              alert(`✅ تمت إعادة البناء: ${r.species} أنواع، ${r.types} أصناف، ${r.breeds} سلالات.`);
+              uiToast(`✅ تمت إعادة البناء: ${r.species} أنواع، ${r.types} أصناف، ${r.breeds} سلالات.`);
             });
           }}
           className="btn-outline !min-h-0 shrink-0 !border-red-300 !px-3 !text-red-600">

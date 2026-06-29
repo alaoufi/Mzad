@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -39,14 +40,14 @@ export default function BrokersPage() {
   const saveScope = async (id: string, ids: string[]) => {
     setEditing(null);
     try { await api(`/brokers/${id}`, { method: 'PATCH', body: JSON.stringify({ brokerCategories: ids }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const patch = async (id: string, body: any) => {
     try { await api(`/brokers/${id}`, { method: 'PATCH', body: JSON.stringify(body) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
-  const setShare = (b: Broker) => {
-    const v = prompt('نسبة الدلال من العمولة % (اتركها فارغة للنسبة العامة):', b.brokerSharePct != null ? String(b.brokerSharePct) : '');
+  const setShare = async (b: Broker) => {
+    const v = await uiPrompt('نسبة الدلال من العمولة % (اتركها فارغة للنسبة العامة):', b.brokerSharePct != null ? String(b.brokerSharePct) : '');
     if (v === null) return;
     patch(b.id, { brokerSharePct: v.trim() === '' ? null : Number(v) });
   };

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
@@ -37,16 +38,16 @@ export default function ListingPage({ params }: { params: { id: string } }) {
     try {
       const body: any = { to };
       if (to === 'AUCTION') {
-        body.startPrice = Number(prompt('سعر بداية المزاد (ريال):', '1000') || 0);
-        body.durationHours = Number(prompt('مدة المزاد بالساعات:', '24') || 24);
+        body.startPrice = Number(await uiPrompt('سعر بداية المزاد (ريال):', '1000') || 0);
+        body.durationHours = Number(await uiPrompt('مدة المزاد بالساعات:', '24') || 24);
       } else if (to === 'ONSOOM') {
-        body.startPrice = Number(prompt('أقل مبلغ للمساومة (ريال):', '0') || 0);
+        body.startPrice = Number(await uiPrompt('أقل مبلغ للمساومة (ريال):', '0') || 0);
       } else if (to === 'DIRECT') {
-        body.price = Number(prompt('السعر الثابت (ريال):', '0') || 0);
+        body.price = Number(await uiPrompt('السعر الثابت (ريال):', '0') || 0);
       }
       await api(`/listings/${params.id}/convert`, { method: 'POST', body: JSON.stringify(body) });
       load();
-    } catch (e: any) { alert(e.message); }
+    } catch (e: any) { uiToast(e.message); }
   };
 
   // سلسلة: سلالة ← لون ← نوع (من الأعمق للأعلى) — تُحسب قبل أي return لأن الخطّاف يجب أن يعمل دائماً
@@ -236,13 +237,13 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
           <button
             onClick={async () => {
-              if (!user) { alert('سجّل الدخول أولاً للإبلاغ'); return; }
-              const reason = prompt('سبب الإبلاغ عن هذا الإعلان:');
+              if (!user) { uiToast('سجّل الدخول أولاً للإبلاغ'); return; }
+              const reason = await uiPrompt('سبب الإبلاغ عن هذا الإعلان:');
               if (!reason?.trim()) return;
               try {
                 await api('/reports', { method: 'POST', body: JSON.stringify({ targetType: 'listing', targetId: listing.id, reason }) });
-                alert('🚩 شكراً، سيراجع فريق الأمان البلاغ');
-              } catch (e: any) { alert(e.message); }
+                uiToast('🚩 شكراً، سيراجع فريق الأمان البلاغ');
+              } catch (e: any) { uiToast(e.message); }
             }}
           >
             🚩 إبلاغ عن الإعلان
@@ -250,14 +251,14 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           <span className="text-gray-300">·</span>
           <button
             onClick={async () => {
-              if (!user) { alert('سجّل الدخول أولاً'); return; }
-              const reason = prompt('سبب فتح نزاع على هذه الصفقة:');
+              if (!user) { uiToast('سجّل الدخول أولاً'); return; }
+              const reason = await uiPrompt('سبب فتح نزاع على هذه الصفقة:');
               if (!reason?.trim()) return;
-              const detail = prompt('تفاصيل إضافية (اختياري):') || '';
+              const detail = await uiPrompt('تفاصيل إضافية (اختياري):') || '';
               try {
                 await api('/disputes', { method: 'POST', body: JSON.stringify({ listingId: listing.id, reason, detail }) });
-                alert('⚖️ تم فتح النزاع، ستراجعه الإدارة. تابعه من «نزاعاتي».');
-              } catch (e: any) { alert(e.message); }
+                uiToast('⚖️ تم فتح النزاع، ستراجعه الإدارة. تابعه من «نزاعاتي».');
+              } catch (e: any) { uiToast(e.message); }
             }}
           >
             ⚖️ فتح نزاع على الصفقة

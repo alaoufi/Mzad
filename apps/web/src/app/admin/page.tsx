@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -64,38 +65,38 @@ export default function AdminPage() {
   const changeEntryMode = async (m: 'GENERAL' | 'SPECIALIZED') => {
     setEntryMode(m);
     try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ entryMode: m }) }); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const saveCommission = async () => {
     setSavingComm(true);
-    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify(comm) }); alert('✅ حُفظت إعدادات العمولة'); }
-    catch (e: any) { alert(e.message); }
+    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify(comm) }); uiToast('✅ حُفظت إعدادات العمولة'); }
+    catch (e: any) { uiToast(e.message); }
     finally { setSavingComm(false); }
   };
 
   const setStatus = async (id: string, status: string) => {
     try { await api(`/admin/listings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const remove = async (id: string) => {
-    if (!confirm('حذف هذا الإعلان نهائياً؟')) return;
-    try { await api(`/admin/listings/${id}`, { method: 'DELETE' }); load(); } catch (e: any) { alert(e.message); }
+    if (!await uiConfirm('حذف هذا الإعلان نهائياً؟')) return;
+    try { await api(`/admin/listings/${id}`, { method: 'DELETE' }); load(); } catch (e: any) { uiToast(e.message); }
   };
   const setRole = async (id: string, accountType: string) => {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ accountType }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const setIdentity = async (id: string, identityStatus: string) => {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ identityStatus }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const setActive = async (id: string, active: boolean) => {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const setReportStatus = async (id: string, status: string) => {
     try { await api(`/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
 
   if (!user) {

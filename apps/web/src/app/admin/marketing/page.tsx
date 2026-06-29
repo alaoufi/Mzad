@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -29,26 +30,26 @@ export default function MarketingPage() {
   };
   useEffect(() => { if (!user) { setLoading(false); return; } load(); }, [user]);
 
-  const run = async (fn: () => Promise<any>) => { try { await fn(); load(); } catch (e: any) { alert(e.message); } };
+  const run = async (fn: () => Promise<any>) => { try { await fn(); load(); } catch (e: any) { uiToast(e.message); } };
 
-  const addType = () => {
-    const name = prompt('اسم نوع المزاد (مثل: مزاد فوري):'); if (!name?.trim()) return;
-    const icon = prompt('أيقونة (رمز تعبيري، اختياري مثل ⚡):', '') || '';
-    const commissionPct = Number(prompt('نسبة العمولة %:', '2.5') || 0);
-    const requiresDeposit = confirm('يتطلب عربوناً؟ (موافق=نعم)');
+  const addType = async () => {
+    const name = await uiPrompt('اسم نوع المزاد (مثل: مزاد فوري):'); if (!name?.trim()) return;
+    const icon = await uiPrompt('أيقونة (رمز تعبيري، اختياري مثل ⚡):', '') || '';
+    const commissionPct = Number(await uiPrompt('نسبة العمولة %:', '2.5') || 0);
+    const requiresDeposit = await uiConfirm('يتطلب عربوناً؟ (موافق=نعم)');
     run(() => api('/admin/auction-types', { method: 'POST', body: JSON.stringify({ name, icon, commissionPct, requiresDeposit }) }));
   };
-  const setTypeIcon = (t: AType) => {
-    const icon = prompt('الأيقونة (رمز تعبيري، فارغ للحذف):', t.icon ?? '');
+  const setTypeIcon = async (t: AType) => {
+    const icon = await uiPrompt('الأيقونة (رمز تعبيري، فارغ للحذف):', t.icon ?? '');
     if (icon === null) return;
     run(() => api(`/admin/auction-types/${t.id}`, { method: 'PATCH', body: JSON.stringify({ icon }) }));
   };
-  const addAd = () => {
-    const title = prompt('عنوان الإعلان:'); if (!title?.trim()) return;
-    const placement = prompt(`الموضع (${PLACEMENTS.join(' / ')}):`, 'HOME_TOP') || 'HOME_TOP';
-    const link = prompt('الرابط (داخلي مثل /sell أو خارجي https://...):', '/') || '/';
-    const imageUrl = prompt('رابط صورة (اختياري):', '') || '';
-    const advertiser = prompt('اسم المُعلِن (اختياري):', '') || '';
+  const addAd = async () => {
+    const title = await uiPrompt('عنوان الإعلان:'); if (!title?.trim()) return;
+    const placement = await uiPrompt(`الموضع (${PLACEMENTS.join(' / ')}):`, 'HOME_TOP') || 'HOME_TOP';
+    const link = await uiPrompt('الرابط (داخلي مثل /sell أو خارجي https://...):', '/') || '/';
+    const imageUrl = await uiPrompt('رابط صورة (اختياري):', '') || '';
+    const advertiser = await uiPrompt('اسم المُعلِن (اختياري):', '') || '';
     run(() => api('/admin/ads', { method: 'POST', body: JSON.stringify({ title, placement, link, imageUrl, advertiser, type: 'BANNER' }) }));
   };
 
@@ -87,7 +88,7 @@ export default function MarketingPage() {
               <button onClick={() => setTypeIcon(t)} className="rounded-lg bg-sand-100 px-3 py-2 text-sm font-bold">🖼️</button>
               <button onClick={() => run(() => api(`/admin/auction-types/${t.id}`, { method: 'PATCH', body: JSON.stringify({ active: !t.active }) }))}
                 className="rounded-lg bg-sand-100 px-3 py-2 text-sm font-bold">{t.active ? 'إخفاء' : 'إظهار'}</button>
-              <button onClick={() => confirm('حذف؟') && run(() => api(`/admin/auction-types/${t.id}`, { method: 'DELETE' }))}
+              <button onClick={async () => (await uiConfirm('حذف؟')) && run(() => api(`/admin/auction-types/${t.id}`, { method: 'DELETE' }))}
                 className="rounded-lg bg-red-100 px-3 py-2 text-sm font-bold text-red-600">حذف</button>
             </div>
           ))}
@@ -106,7 +107,7 @@ export default function MarketingPage() {
               </div>
               <button onClick={() => run(() => api(`/admin/ads/${a.id}`, { method: 'PATCH', body: JSON.stringify({ status: a.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE' }) }))}
                 className="rounded-lg bg-sand-100 px-3 py-2 text-sm font-bold">{a.status === 'ACTIVE' ? 'إيقاف' : 'تفعيل'}</button>
-              <button onClick={() => confirm('حذف؟') && run(() => api(`/admin/ads/${a.id}`, { method: 'DELETE' }))}
+              <button onClick={async () => (await uiConfirm('حذف؟')) && run(() => api(`/admin/ads/${a.id}`, { method: 'DELETE' }))}
                 className="rounded-lg bg-red-100 px-3 py-2 text-sm font-bold text-red-600">حذف</button>
             </div>
           ))}

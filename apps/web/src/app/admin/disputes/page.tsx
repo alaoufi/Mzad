@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -46,13 +47,13 @@ export default function AdminDisputesPage() {
 
   const setStatus = async (id: string, status: string) => {
     try { await api(`/admin/disputes/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
   const resolve = async (id: string, status: 'RESOLVED' | 'REJECTED') => {
-    const resolution = prompt(status === 'RESOLVED' ? 'قرار الإدارة (الحل):' : 'سبب الرفض:');
+    const resolution = await uiPrompt(status === 'RESOLVED' ? 'قرار الإدارة (الحل):' : 'سبب الرفض:');
     if (resolution === null) return;
     try { await api(`/admin/disputes/${id}`, { method: 'PATCH', body: JSON.stringify({ status, resolution }) }); load(); }
-    catch (e: any) { alert(e.message); }
+    catch (e: any) { uiToast(e.message); }
   };
 
   if (!user) {
