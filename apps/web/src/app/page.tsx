@@ -20,6 +20,7 @@ export default function HomePage() {
   const [mode, setMode] = useState<Mode>('DIRECT');
   const [path, setPath] = useState<Cat[]>([]);
   const q = useSearchTerm();
+  const [sort, setSort] = useState('recent');
   const [loading, setLoading] = useState(true);
 
   // الاهتمامات الشخصية
@@ -109,6 +110,7 @@ export default function HomePage() {
     else if (mode === 'SUPPLIES') { if (suppliesRoot) params.set('categoryId', suppliesRoot.id); }
     else if (suppliesRoot) params.set('exclude', suppliesRoot.id);
     if (q) params.set('q', q);
+    if (sort !== 'recent') params.set('sort', sort);
     api<{ items: ListingSummary[] }>(`/listings?${params}`)
       .then((r) => setListings(r.items))
       .catch(() => setListings([]))
@@ -117,7 +119,7 @@ export default function HomePage() {
 
   useEffect(() => { setPath([]); }, [mode]);
   useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ },
-    [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id, q]);
+    [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
 
   const deepest = path[path.length - 1];
   const title =
@@ -282,8 +284,20 @@ export default function HomePage() {
         }
         )}
 
+        {/* الفرز */}
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <span className="text-xs font-bold text-gray-400">ترتيب:</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value)}
+            className="rounded-xl border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700">
+            <option value="recent">الأحدث</option>
+            <option value="views">الأكثر مشاهدة</option>
+            <option value="price_asc">الأقل سعراً</option>
+            <option value="price_desc">الأعلى سعراً</option>
+          </select>
+        </div>
+
         {/* النتائج */}
-        <div className="mt-5">
+        <div className="mt-3">
           {loading ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {[0, 1, 2, 3].map((i) => <div key={i} className="card h-44 animate-pulse bg-black/5" />)}

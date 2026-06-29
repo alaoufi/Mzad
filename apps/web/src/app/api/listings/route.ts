@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   const lat = sp.get('lat') ? Number(sp.get('lat')) : undefined;
   const lng = sp.get('lng') ? Number(sp.get('lng')) : undefined;
   const page = Math.max(1, Number(sp.get('page') ?? 1));
+  const sort = sp.get('sort') ?? 'recent';
 
   const exclude = sp.get('exclude') ?? undefined;
 
@@ -90,7 +91,11 @@ export async function GET(req: NextRequest) {
         auction: { select: { id: true, status: true, endAt: true, highestBidId: true, startPrice: true } },
         seller: { select: { id: true, name: true, trustScore: true, identityStatus: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy:
+        sort === 'views' ? [{ views: 'desc' }, { createdAt: 'desc' }]
+        : sort === 'price_asc' ? [{ price: 'asc' }]
+        : sort === 'price_desc' ? [{ price: 'desc' }]
+        : [{ createdAt: 'desc' }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
