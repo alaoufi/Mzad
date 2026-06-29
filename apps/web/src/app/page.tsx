@@ -64,8 +64,8 @@ export default function HomePage() {
         {/* الهيرو */}
         <div className="mb-4 overflow-hidden rounded-[28px] p-6 text-white shadow-xl transition-all duration-500"
           style={{ backgroundImage: gradient(theme), boxShadow: `0 24px 48px -20px ${theme.from}88` }}>
-          <h1 className="flex items-center gap-3 text-2xl font-extrabold sm:text-3xl">
-            <span className="text-4xl drop-shadow">{theme.emoji}</span> {title}
+          <h1 className="flex items-center gap-3 text-2xl font-extrabold text-emboss-light sm:text-3xl">
+            <span className="text-4xl drop-shadow animate-floaty">{theme.emoji}</span> {title}
           </h1>
           <p className="mt-1 text-white/85">{theme.tagline}</p>
         </div>
@@ -74,7 +74,7 @@ export default function HomePage() {
         {mode !== 'SUPPLIES' && <AdBanner placement="HOME_TOP" onClick={() => setMode('SUPPLIES')} />}
 
         {/* الأسواق الثلاثة */}
-        <div className="mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/80 p-1 shadow-sm ring-1 ring-black/5 backdrop-blur">
+        <div className="float-box mb-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/85 p-1 ring-1 ring-black/5 backdrop-blur">
           {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات'], ['SUPPLIES', '🛒 المستلزمات']] as [Mode, string][]).map(
             ([m, label]) => (
               <button key={m} onClick={() => setMode(m)}
@@ -126,8 +126,8 @@ export default function HomePage() {
         {/* النتائج */}
         <div className="mt-5">
           {loading ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {[0, 1, 2].map((i) => <div key={i} className="card h-72 animate-pulse bg-black/5" />)}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {[0, 1, 2, 3].map((i) => <div key={i} className="card h-44 animate-pulse bg-black/5" />)}
             </div>
           ) : listings.length === 0 ? (
             <div className="py-16 text-center text-gray-500">
@@ -135,7 +135,7 @@ export default function HomePage() {
               <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
           )}
@@ -157,7 +157,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 function Chip({ children, active, onClick, accent }: { children: React.ReactNode; active?: boolean; onClick: () => void; accent: string }) {
   return (
     <button onClick={onClick}
-      className="chip whitespace-nowrap !px-4 !py-2 !text-base shadow-sm transition"
+      className="chip whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm transition"
       style={active ? { backgroundColor: accent, color: '#fff' } : undefined}>
       {children}
     </button>

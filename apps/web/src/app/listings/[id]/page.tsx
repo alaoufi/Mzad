@@ -58,9 +58,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       {/* لافتة السوق حسب النوع */}
       <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
         style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 40px -18px ${theme.from}88` }}>
-        <span className="text-4xl">{theme.emoji}</span>
+        <span className="text-4xl animate-floaty">{theme.emoji}</span>
         <div>
-          <div className="text-lg font-extrabold">{theme.label}</div>
+          <div className="text-lg font-extrabold text-emboss-light">{theme.label}</div>
           <div className="text-sm text-white/80">{theme.tagline}</div>
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       {/* التفاصيل */}
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-extrabold">{listing.title}</h1>
+          <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
           <p className="mt-1 text-gray-500">
             📍 {listing.city} — {listing.region}
           </p>
@@ -185,7 +185,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                 <div className="card flex items-center justify-between p-5">
                   <div>
                     <div className="text-gray-500">السعر</div>
-                    <div className="text-3xl font-extrabold text-brand-dark">
+                    <div className="text-3xl font-extrabold text-brand-dark text-emboss">
                       {listing.price ? `${Number(listing.price).toLocaleString('ar-SA')} ﷼` : 'على السوم'}
                     </div>
                   </div>

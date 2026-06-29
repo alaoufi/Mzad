@@ -94,7 +94,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
 
       <div className={`mb-4 rounded-2xl p-5 text-center transition ${flash ? 'bg-gold/20' : 'bg-black/[0.03]'}`}>
         <div className="text-gray-500">{open ? 'أعلى مساومة حالياً' : 'أعلى مزايدة حالياً'}</div>
-        <div className="text-4xl font-extrabold text-brand-dark">{highest.toLocaleString('ar-SA')} ﷼</div>
+        <div className="text-4xl font-extrabold text-brand-dark text-emboss">{highest.toLocaleString('ar-SA')} ﷼</div>
         <div className="mt-1 text-sm text-gray-400">
           {open ? 'يبدأ من' : 'سعر البداية'} {startPrice.toLocaleString('ar-SA')} · أقل زيادة {minIncrement.toLocaleString('ar-SA')} ﷼
         </div>
