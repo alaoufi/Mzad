@@ -46,6 +46,7 @@ model User {
   reports         Report[]
   otps            OtpCode[]
   favorites       Favorite[]
+  walletTxns      WalletTxn[]
 }
 
 // رموز التحقق بالجوال
@@ -334,6 +335,22 @@ model Ad {
   createdAt   DateTime  @default(now())
 
   @@index([placement, status])
+}
+
+// ───────────────────────── المحفظة والسجل المالي ─────────────────────────
+
+// حركة مالية في محفظة المستخدم (موجب = إضافة، سالب = خصم)
+model WalletTxn {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      String   // TOPUP / COMMISSION / DEPOSIT_HOLD / DEPOSIT_RELEASE / PAYOUT / REFUND
+  amount    Decimal  @db.Decimal(12, 2)
+  note      String?
+  refId     String?  // مرجع (إعلان/مزاد) اختياري
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 // ───────────────────────── إعدادات المنصة ─────────────────────────

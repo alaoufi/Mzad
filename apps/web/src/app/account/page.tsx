@@ -137,12 +137,15 @@ export default function AccountPage() {
       )}
 
       {/* روابط سريعة */}
-      <div className="grid grid-cols-2 gap-3">
-        <button className="card float-box flex items-center justify-center gap-2 p-4 font-bold" onClick={() => router.push('/favorites')}>
-          ❤️ المفضلة
+      <div className="grid grid-cols-3 gap-3">
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-4 font-bold" onClick={() => router.push('/wallet')}>
+          👛 <span className="text-sm">المحفظة</span>
         </button>
-        <button className="card float-box flex items-center justify-center gap-2 p-4 font-bold" onClick={() => router.push('/messages')}>
-          💬 رسائلي
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-4 font-bold" onClick={() => router.push('/favorites')}>
+          ❤️ <span className="text-sm">المفضلة</span>
+        </button>
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-4 font-bold" onClick={() => router.push('/messages')}>
+          💬 <span className="text-sm">رسائلي</span>
         </button>
       </div>
 
