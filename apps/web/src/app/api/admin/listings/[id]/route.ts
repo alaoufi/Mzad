@@ -90,6 +90,7 @@ async function recordCommission(listingId: string, sellerId: string) {
         data: { userId: brokerId, type: 'BROKER_SHARE', amount: share, refId: listingId,
           note: `نصيب الدلال (${bPct}% من العمولة)` },
       });
+      await notify(brokerId, 'EARNING', `💰 أُضيف نصيبك ${share.toFixed(0)} ﷼ من عمولة بيع إعلان`, '/wallet');
     }
   }
 
@@ -102,6 +103,7 @@ async function recordCommission(listingId: string, sellerId: string) {
         data: { userId: sup.id, type: 'SUPERVISOR_SHARE', amount: share, refId: listingId,
           note: `نصيب مشرف الدلالين (${cfg.supervisorSharePct}% من العمولة)` },
       });
+      await notify(sup.id, 'EARNING', `💰 أُضيف نصيبك ${share.toFixed(0)} ﷼ كمشرف دلالين من عمولة بيع`, '/wallet');
     }
   }
 }

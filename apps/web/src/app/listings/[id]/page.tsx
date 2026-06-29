@@ -196,12 +196,17 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               )}
             </div>
           </div>
-          <a
-            href={`https://wa.me/`}
-            className="btn-outline !px-4 !py-2 !text-base !min-h-0"
-          >
-            تواصل
-          </a>
+          {listing.seller?.phone ? (
+            <a
+              href={`https://wa.me/${String(listing.seller.phone).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`السلام عليكم، بخصوص إعلان «${listing.title}» في مزاد`)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="btn-outline !px-4 !py-2 !text-base !min-h-0 !border-green-300 !text-green-700"
+            >
+              💬 واتساب
+            </a>
+          ) : (
+            <span className="rounded-2xl bg-sand-100 px-4 py-2 text-sm font-bold text-gray-500">عبر المحادثة بالأسفل</span>
+          )}
         </div>
 
         {/* المواصفات */}

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (resolution !== undefined) data.resolution = resolution?.trim() || null;
   if (Object.keys(data).length === 0) return json({ message: 'لا تغييرات' }, 400);
 
-  await prisma.dispute.update({ where: { id: params.id }, data });
+  const updated = await prisma.dispute.update({ where: { id: params.id }, data });
+
+  if (status === 'RESOLVED' || status === 'REJECTED') {
+    const msg = status === 'RESOLVED' ? '⚖️ تمّ حلّ نزاعك بقرار من الإدارة' : '⚖️ اطّلعت الإدارة على نزاعك';
+    await notify(updated.openedById, 'DISPUTE', resolution ? `${msg}: ${resolution}` : msg, updated.listingId ? `/listings/${updated.listingId}` : '/disputes');
+  }
   return json({ ok: true });
 }

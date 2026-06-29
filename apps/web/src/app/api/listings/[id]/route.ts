@@ -17,12 +17,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
       media: { orderBy: { order: 'asc' } },
       health: true,
       seller: {
-        select: { id: true, name: true, trustScore: true, identityStatus: true, city: true, region: true },
+        select: { id: true, name: true, phone: true, trustScore: true, identityStatus: true, city: true, region: true },
       },
       auction: { include: { bids: { orderBy: { amount: 'desc' }, take: 10 } } },
     },
   });
   if (!listing) return json({ message: 'الإعلان غير موجود' }, 404);
+  // احترام «إخفاء الجوال»: لا نكشف رقم البائع إن طلب الإخفاء
+  if (listing.hidePhone && listing.seller) (listing.seller as any).phone = null;
   return json(listing);
 }
 
