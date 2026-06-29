@@ -228,7 +228,15 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
         <button
           className="w-full text-center text-sm text-gray-400"
-          onClick={() => alert('🚩 شكراً، سيراجع فريق الأمان البلاغ')}
+          onClick={async () => {
+            if (!user) { alert('سجّل الدخول أولاً للإبلاغ'); return; }
+            const reason = prompt('سبب الإبلاغ عن هذا الإعلان:');
+            if (!reason?.trim()) return;
+            try {
+              await api('/reports', { method: 'POST', body: JSON.stringify({ targetType: 'listing', targetId: listing.id, reason }) });
+              alert('🚩 شكراً، سيراجع فريق الأمان البلاغ');
+            } catch (e: any) { alert(e.message); }
+          }}
         >
           🚩 إبلاغ عن الإعلان
         </button>

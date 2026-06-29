@@ -17,6 +17,7 @@ interface AdminData {
 }
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'نشط', DRAFT: 'بانتظار الموافقة', SOLD: 'مُباع', CLOSED: 'مخفي' };
+const TARGET_LABEL: Record<string, string> = { listing: 'إعلان', user: 'مستخدم', message: 'رسالة', auction: 'مزاد' };
 
 export default function AdminPage() {
   const router = useRouter();
@@ -57,6 +58,10 @@ export default function AdminPage() {
   };
   const setIdentity = async (id: string, identityStatus: string) => {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ identityStatus }) }); load(); }
+    catch (e: any) { alert(e.message); }
+  };
+  const setReportStatus = async (id: string, status: string) => {
+    try { await api(`/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); load(); }
     catch (e: any) { alert(e.message); }
   };
 
@@ -268,10 +273,31 @@ export default function AdminPage() {
       {/* البلاغات */}
       {data.openReports.length > 0 && (
         <div className="card p-4">
-          <h2 className="mb-3 text-lg font-bold">🚩 بلاغات مفتوحة</h2>
+          <h2 className="mb-3 text-lg font-bold">🚩 بلاغات مفتوحة ({data.openReports.length})</h2>
           <ul className="space-y-2">
             {data.openReports.map((r) => (
-              <li key={r.id} className="rounded-xl bg-red-50 p-3 text-sm"><b>{r.targetType}</b> — {r.reason}</li>
+              <li key={r.id} className="rounded-xl bg-red-50 p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <b>{TARGET_LABEL[r.targetType] ?? r.targetType}</b>
+                  {r.targetType === 'listing' && (
+                    <Link href={`/listings/${r.targetId}`} className="text-xs font-bold text-brand">عرض ↗</Link>
+                  )}
+                </div>
+                <p className="mt-1 text-gray-700">{r.reason}</p>
+                <div className="mt-1 text-xs text-gray-400">
+                  بلّغ: {r.reporter?.name ?? '—'}{r.status === 'REVIEWING' && ' · قيد المراجعة'}
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button onClick={() => setReportStatus(r.id, 'RESOLVED')}
+                    className="flex-1 rounded-xl bg-green-600 py-1.5 text-xs font-bold text-white">✔ عولج</button>
+                  {r.status !== 'REVIEWING' && (
+                    <button onClick={() => setReportStatus(r.id, 'REVIEWING')}
+                      className="flex-1 rounded-xl bg-amber-100 py-1.5 text-xs font-bold text-amber-700">قيد المراجعة</button>
+                  )}
+                  <button onClick={() => setReportStatus(r.id, 'REJECTED')}
+                    className="flex-1 rounded-xl bg-gray-200 py-1.5 text-xs font-bold text-gray-700">رفض</button>
+                </div>
+              </li>
             ))}
           </ul>
         </div>
