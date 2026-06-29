@@ -25,7 +25,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   if (!listing) return json({ message: 'الإعلان غير موجود' }, 404);
   // احترام «إخفاء الجوال»: لا نكشف رقم البائع إن طلب الإخفاء
   if (listing.hidePhone && listing.seller) (listing.seller as any).phone = null;
-  return json(listing);
+  // عدّاد المشاهدات (لا يُفشل الطلب عند الخطأ)
+  prisma.listing.update({ where: { id: params.id }, data: { views: { increment: 1 } } }).catch(() => {});
+  return json({ ...listing, views: (listing.views ?? 0) + 1 });
 }
 
 // تعديل الإعلان أو أرشفته

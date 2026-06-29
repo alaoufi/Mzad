@@ -56,6 +56,18 @@ export default function ListingPage({ params }: { params: { id: string } }) {
     } catch (e: any) { uiToast(e.message, 'error'); }
     finally { setSavingEdit(false); }
   };
+  const share = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const text = `${listing.title} — في مزاد`;
+    try {
+      if (typeof navigator !== 'undefined' && (navigator as any).share) {
+        await (navigator as any).share({ title: listing.title, text, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        uiToast('تم نسخ رابط الإعلان', 'success');
+      }
+    } catch { /* أُلغيت المشاركة */ }
+  };
   const requestPurchase = async () => {
     if (!user) { uiToast('سجّل الدخول أولاً لإرسال طلبك', 'info'); return; }
     try {
@@ -185,11 +197,16 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           <div>
             <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
             <p className="mt-1 text-gray-500">📍 {listing.city} — {listing.region}</p>
-            {listing.createdAt && (
-              <p className="mt-1 text-xs text-gray-400">🗓️ نُشر: <HijriDate value={listing.createdAt} /></p>
-            )}
+            <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-gray-400">
+              {listing.createdAt && <span>🗓️ <HijriDate value={listing.createdAt} /></span>}
+              {typeof listing.views === 'number' && <span>👁️ {listing.views.toLocaleString('ar-SA')} مشاهدة</span>}
+            </p>
           </div>
-          <HeartButton id={listing.id} className="shrink-0 !h-11 !w-11 !text-2xl ring-1 ring-sand-200" />
+          <div className="flex shrink-0 gap-2">
+            <button onClick={share} aria-label="مشاركة"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl ring-1 ring-sand-200">↗️</button>
+            <HeartButton id={listing.id} className="!h-11 !w-11 !text-2xl ring-1 ring-sand-200" />
+          </div>
         </div>
 
         {/* البائع والثقة */}

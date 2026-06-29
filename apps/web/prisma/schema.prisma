@@ -135,6 +135,7 @@ model Listing {
   hidePhone        Boolean       @default(false)
   status           ListingStatus @default(ACTIVE)
   archived         Boolean       @default(false) // أرشفة من البائع
+  views            Int           @default(0)
   createdAt        DateTime      @default(now())
 
   media   Media[]
