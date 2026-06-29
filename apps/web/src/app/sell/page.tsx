@@ -81,8 +81,15 @@ export default function SellPage() {
         approxWeightKg: form.approxWeightKg ? Number(form.approxWeightKg) : undefined,
         city: form.city, region: form.region, saleType: form.saleType, health, media,
       };
-      if (form.saleType === 'DIRECT') body.price = form.price ? Number(form.price) : undefined;
-      else body.auction = { startPrice: Number(form.startPrice), minIncrement: Number(form.minIncrement), durationHours: Number(form.durationHours) };
+      if (form.saleType === 'DIRECT') {
+        body.price = form.price ? Number(form.price) : undefined;
+      } else if (form.saleType === 'ONSOOM') {
+        body.saleType = 'DIRECT';
+        body.onsoom = true;
+        body.auction = { startPrice: Number(form.startPrice || 0), minIncrement: Number(form.minIncrement) };
+      } else {
+        body.auction = { startPrice: Number(form.startPrice), minIncrement: Number(form.minIncrement), durationHours: Number(form.durationHours) };
+      }
       const created = await api<{ id: string }>('/listings', { method: 'POST', body: JSON.stringify(body) });
       router.push(`/listings/${created.id}`);
     } catch (e: any) { setError(e.message); }
@@ -98,7 +105,10 @@ export default function SellPage() {
       case 4: return true;
       case 5: return !!form.city && !!form.region;
       case 6: return true;
-      case 7: return form.saleType === 'DIRECT' ? !!form.price : !!form.startPrice;
+      case 7:
+        if (form.saleType === 'DIRECT') return !!form.price;
+        if (form.saleType === 'ONSOOM') return true;
+        return !!form.startPrice;
       default: return false;
     }
   };
@@ -235,16 +245,31 @@ export default function SellPage() {
         {/* 7: البيع */}
         {step === 7 && (
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <button onClick={() => set('saleType', 'DIRECT')}
-                className={`flex-1 rounded-2xl border-2 py-4 text-lg font-bold transition ${form.saleType === 'DIRECT' ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>🏷️ عرض (سعر ثابت)</button>
-              <button onClick={() => set('saleType', 'AUCTION')}
-                className={`flex-1 rounded-2xl border-2 py-4 text-lg font-bold transition ${form.saleType === 'AUCTION' ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>🔨 مزاد</button>
+            <div className="grid grid-cols-3 gap-2">
+              {([['DIRECT', '🏷️ سعر ثابت'], ['ONSOOM', '🤝 على السوم'], ['AUCTION', '🔨 مزاد']] as [string, string][]).map(([v, l]) => (
+                <button key={v} onClick={() => set('saleType', v)}
+                  className={`rounded-2xl border-2 py-4 text-base font-bold transition ${form.saleType === v ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{l}</button>
+              ))}
             </div>
-            {form.saleType === 'DIRECT' ? (
+
+            {form.saleType === 'DIRECT' && (
               <div><label className="mb-2 block font-bold">السعر (ريال)</label>
                 <input type="number" className="input text-2xl" placeholder="0" value={form.price} onChange={(e) => set('price', e.target.value)} /></div>
-            ) : (
+            )}
+
+            {form.saleType === 'ONSOOM' && (
+              <div className="space-y-3">
+                <div className="rounded-2xl bg-sand-50 p-3 text-sm text-gray-600">
+                  🤝 على السوم: يساوم المشترون بمزايدة مفتوحة <b>بدون وقت محدّد</b>، وتقبل أنت أعلى مبلغ متى شئت.
+                </div>
+                <div><label className="mb-2 block font-bold">أقل مبلغ للمساومة (اختياري)</label>
+                  <input type="number" className="input text-2xl" placeholder="0" value={form.startPrice} onChange={(e) => set('startPrice', e.target.value)} /></div>
+                <div><label className="mb-2 block font-bold">أقل زيادة</label>
+                  <input type="number" className="input" value={form.minIncrement} onChange={(e) => set('minIncrement', e.target.value)} /></div>
+              </div>
+            )}
+
+            {form.saleType === 'AUCTION' && (
               <div className="space-y-3">
                 <div><label className="mb-2 block font-bold">سعر البداية (ريال)</label>
                   <input type="number" className="input text-2xl" value={form.startPrice} onChange={(e) => set('startPrice', e.target.value)} /></div>

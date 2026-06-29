@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { ListingSummary } from '@/lib/api';
 import { Countdown } from './Countdown';
+import { isOpenEnd } from '@/lib/auction';
 
 export function ListingCard({ listing }: { listing: ListingSummary }) {
   const img = listing.media?.[0]?.url;
   const isAuction = listing.saleType === 'AUCTION';
+  const isOnsoom = !isAuction && !!listing.auction && isOpenEnd(listing.auction.endAt);
 
   return (
     <Link href={`/listings/${listing.id}`} className="card-3d group block">
@@ -21,6 +23,11 @@ export function ListingCard({ listing }: { listing: ListingSummary }) {
         {isAuction && (
           <span className="absolute right-2 top-2 rounded-full bg-gradient-to-l from-gold to-amber-500 px-3 py-1 text-sm font-bold text-white shadow">
             🔨 مزاد
+          </span>
+        )}
+        {isOnsoom && (
+          <span className="absolute right-2 top-2 rounded-full bg-brand px-3 py-1 text-sm font-bold text-white shadow">
+            🤝 على السوم
           </span>
         )}
         {listing.seller?.identityStatus === 'VERIFIED' && (

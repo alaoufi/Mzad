@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
 import { themeFor, gradient, sceneBackground } from '@/lib/themes';
+import { isOpenEnd } from '@/lib/auction';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -17,13 +19,32 @@ const HEALTH_LABELS: Record<string, string> = {
 };
 
 export default function ListingPage({ params }: { params: { id: string } }) {
+  const { user } = useAuth();
   const [listing, setListing] = useState<any>(null);
   const [error, setError] = useState('');
   const [activeImg, setActiveImg] = useState(0);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api(`/listings/${params.id}`).then(setListing).catch((e) => setError(e.message));
   }, [params.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const convert = async (to: 'DIRECT' | 'AUCTION' | 'ONSOOM') => {
+    try {
+      const body: any = { to };
+      if (to === 'AUCTION') {
+        body.startPrice = Number(prompt('سعر بداية المزاد (ريال):', '1000') || 0);
+        body.durationHours = Number(prompt('مدة المزاد بالساعات:', '24') || 24);
+      } else if (to === 'ONSOOM') {
+        body.startPrice = Number(prompt('أقل مبلغ للمساومة (ريال):', '0') || 0);
+      } else if (to === 'DIRECT') {
+        body.price = Number(prompt('السعر الثابت (ريال):', '0') || 0);
+      }
+      await api(`/listings/${params.id}/convert`, { method: 'POST', body: JSON.stringify(body) });
+      load();
+    } catch (e: any) { alert(e.message); }
+  };
 
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
   if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
@@ -148,22 +169,50 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           <p className="leading-relaxed text-gray-700">{listing.description}</p>
         </div>
 
-        {/* السعر / المزاد */}
-        {listing.saleType === 'AUCTION' && listing.auction ? (
-          <LiveAuction auctionId={listing.auction.id} />
-        ) : (
-          <div className="card flex items-center justify-between p-5">
-            <div>
-              <div className="text-gray-500">السعر</div>
-              <div className="text-3xl font-extrabold text-brand-dark">
-                {listing.price
-                  ? `${Number(listing.price).toLocaleString('ar-SA')} ﷼`
-                  : 'على السوم'}
-              </div>
-            </div>
-            <button className="btn-primary">اطلب الشراء</button>
-          </div>
-        )}
+        {/* السعر / المزاد / على السوم */}
+        {(() => {
+          const canManage =
+            !!user && (user.id === listing.seller?.id || user.role === 'BROKER' || user.role === 'ADMIN');
+          const hasAuction = !!listing.auction;
+          const open = hasAuction && isOpenEnd(listing.auction.endAt);
+          const timed = hasAuction && !open;
+
+          return (
+            <>
+              {hasAuction ? (
+                <LiveAuction auctionId={listing.auction.id} canManage={canManage} />
+              ) : (
+                <div className="card flex items-center justify-between p-5">
+                  <div>
+                    <div className="text-gray-500">السعر</div>
+                    <div className="text-3xl font-extrabold text-brand-dark">
+                      {listing.price ? `${Number(listing.price).toLocaleString('ar-SA')} ﷼` : 'على السوم'}
+                    </div>
+                  </div>
+                  <button className="btn-primary">اطلب الشراء</button>
+                </div>
+              )}
+
+              {/* تحويل نوع البيع (للمالك أو الدلال أو الإدارة) */}
+              {canManage && (
+                <div className="card p-4">
+                  <h3 className="mb-2 text-sm font-bold text-gray-500">تحويل نوع البيع</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {(timed || open) && (
+                      <button onClick={() => convert('DIRECT')} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">🏷️ عرض بسعر</button>
+                    )}
+                    {!open && (
+                      <button onClick={() => convert('ONSOOM')} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">🤝 على السوم</button>
+                    )}
+                    {!timed && (
+                      <button onClick={() => convert('AUCTION')} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">🔨 مزاد مؤقّت</button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* المحادثة والتقييمات */}
         <ListingChat listingId={listing.id} />

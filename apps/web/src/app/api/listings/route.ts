@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
+import { OPEN_END_ISO } from '@/lib/auction';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -135,8 +136,9 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  const now = new Date();
   if (dto.saleType === 'AUCTION' && dto.auction) {
-    const now = new Date();
+    // مزاد مؤقّت بوقت نهاية
     const durationHours = Number(dto.auction.durationHours) || 24;
     await prisma.auction.create({
       data: {
@@ -147,6 +149,18 @@ export async function POST(req: NextRequest) {
         deposit: dto.auction.deposit != null ? new Prisma.Decimal(dto.auction.deposit) : null,
         startAt: now,
         endAt: new Date(now.getTime() + durationHours * 3600_000),
+        status: 'LIVE',
+      },
+    });
+  } else if (dto.onsoom) {
+    // عرض على السوم: مزايدة مفتوحة بلا وقت (saleType يبقى DIRECT)
+    await prisma.auction.create({
+      data: {
+        listingId: listing.id,
+        startPrice: new Prisma.Decimal(dto.auction?.startPrice ?? dto.price ?? 0),
+        minIncrement: new Prisma.Decimal(dto.auction?.minIncrement ?? 100),
+        startAt: now,
+        endAt: new Date(OPEN_END_ISO),
         status: 'LIVE',
       },
     });
