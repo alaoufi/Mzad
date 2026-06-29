@@ -37,14 +37,19 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCat]);
 
+  const auctionsCount = listings.filter((l) => l.saleType === 'AUCTION').length;
+
   return (
-    <div>
+    <div className="animate-fadeup">
+      {/* بطاقة ترحيب */}
+      <div className="mb-5 overflow-hidden rounded-3xl bg-gradient-to-l from-brand-dark to-brand-light p-6 text-white shadow-lg shadow-brand/20">
+        <h1 className="text-2xl font-extrabold sm:text-3xl">سوق ومزادات المواشي 🐪</h1>
+        <p className="mt-1 text-white/85">إبل · غنم · ماعز · بقر · خيل — بيع وشراء بمصداقية</p>
+      </div>
+
       {/* البحث */}
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          load(activeCat, q);
-        }}
+        onSubmit={(e) => { e.preventDefault(); load(activeCat, q); }}
         className="mb-5 flex gap-2"
       >
         <input
@@ -53,49 +58,45 @@ export default function HomePage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <button type="submit" className="btn-primary !px-5">
-          🔍
-        </button>
-        <button
-          type="button"
-          title="البحث الصوتي (قريباً)"
-          className="btn-outline !px-5"
-          onClick={() => alert('🎙️ البحث الصوتي يأتي في المرحلة الرابعة')}
-        >
-          🎙️
-        </button>
+        <button type="submit" className="btn-primary !px-5">🔍</button>
+        <button type="button" title="البحث الصوتي (قريباً)" className="btn-outline !px-5"
+          onClick={() => alert('🎙️ البحث الصوتي يأتي قريباً')}>🎙️</button>
       </form>
 
       {/* التصنيفات */}
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
-        <button
-          onClick={() => setActiveCat(null)}
-          className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${
-            !activeCat ? '!bg-brand !text-white' : ''
-          }`}
-        >
+      <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto pb-1">
+        <button onClick={() => setActiveCat(null)}
+          className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${!activeCat ? '!bg-brand !text-white' : ''}`}>
           الكل
         </button>
         {categories.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setActiveCat(c.id)}
-            className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${
-              activeCat === c.id ? '!bg-brand !text-white' : ''
-            }`}
-          >
+          <button key={c.id} onClick={() => setActiveCat(c.id)}
+            className={`chip whitespace-nowrap !px-4 !py-2 !text-base ${activeCat === c.id ? '!bg-brand !text-white' : ''}`}>
             {c.icon} {c.name}
           </button>
         ))}
       </div>
 
+      {/* شريط إحصائي */}
+      {!loading && listings.length > 0 && (
+        <div className="mb-4 flex items-center justify-between text-sm text-gray-500">
+          <span>{listings.length} إعلان</span>
+          {auctionsCount > 0 && <span className="chip !bg-gold/15 !text-gold">🔨 {auctionsCount} مزاد مباشر</span>}
+        </div>
+      )}
+
       {/* النتائج */}
       {loading ? (
-        <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="card h-72 animate-pulse bg-sand-100" />
+          ))}
+        </div>
       ) : listings.length === 0 ? (
         <div className="py-16 text-center text-gray-500">
-          <p className="text-5xl">🐑</p>
-          <p className="mt-3 text-lg">لا توجد إعلانات مطابقة</p>
+          <p className="text-6xl">🐑</p>
+          <p className="mt-3 text-lg font-bold">لا توجد إعلانات مطابقة</p>
+          <p className="text-sm">جرّب تصنيفاً آخر أو أضف إعلانك أنت</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

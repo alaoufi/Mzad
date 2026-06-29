@@ -98,6 +98,13 @@ export default function AccountPage() {
         </div>
       </div>
 
+      {/* رابط الإدارة */}
+      {profile?.role === 'ADMIN' && (
+        <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/admin')}>
+          🛡️ لوحة الإدارة
+        </button>
+      )}
+
       {/* أزرار */}
       <div className="flex gap-3">
         <button className="btn-primary flex-1" onClick={() => router.push('/sell')}>

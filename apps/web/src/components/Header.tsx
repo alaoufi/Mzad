@@ -7,15 +7,18 @@ export function Header() {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 bg-brand text-white shadow-md">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-gradient-to-l from-brand-dark to-brand text-white shadow-lg shadow-brand/20">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold">
-          <span>🐪</span>
+          <span className="text-3xl">🐪</span>
           <span>مزاد</span>
         </Link>
 
         <nav className="flex items-center gap-2">
-          <Link href="/sell" className="btn-gold !px-4 !py-2 !text-base !min-h-0">
+          <Link
+            href="/sell"
+            className="hidden rounded-xl bg-gradient-to-l from-gold to-amber-500 px-4 py-2 text-base font-bold shadow sm:inline-flex"
+          >
             ＋ أضف إعلان
           </Link>
           {user ? (

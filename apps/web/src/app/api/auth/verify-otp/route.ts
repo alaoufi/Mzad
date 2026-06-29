@@ -17,15 +17,27 @@ export async function POST(req: NextRequest) {
 
   await prisma.otpCode.update({ where: { id: otp.id }, data: { consumed: true } });
 
+  // أرقام الإدارة (تُمنح صلاحية ADMIN تلقائياً)
+  const ADMIN_PHONES = (process.env.ADMIN_PHONES ?? '966500000000').split(',');
+  const isAdmin = ADMIN_PHONES.includes(normalized);
+
   let user = await prisma.user.findUnique({ where: { phone: normalized } });
   if (!user) {
     user = await prisma.user.create({
-      data: { phone: normalized, name: (name ?? '').trim() || 'مستخدم جديد', isPhoneVerified: true },
+      data: {
+        phone: normalized,
+        name: (name ?? '').trim() || (isAdmin ? 'مشرف المنصة' : 'مستخدم جديد'),
+        isPhoneVerified: true,
+        role: isAdmin ? 'ADMIN' : 'USER',
+      },
     });
-  } else if (!user.isPhoneVerified) {
+  } else {
     user = await prisma.user.update({
       where: { id: user.id },
-      data: { isPhoneVerified: true },
+      data: {
+        isPhoneVerified: true,
+        ...(isAdmin && user.role !== 'ADMIN' ? { role: 'ADMIN' } : {}),
+      },
     });
   }
 

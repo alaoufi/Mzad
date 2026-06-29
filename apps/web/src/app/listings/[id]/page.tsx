@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { LiveAuction } from '@/components/LiveAuction';
+import { ListingChat } from '@/components/ListingChat';
+import { SellerReviews } from '@/components/SellerReviews';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -142,6 +144,10 @@ export default function ListingPage({ params }: { params: { id: string } }) {
             <button className="btn-primary">اطلب الشراء</button>
           </div>
         )}
+
+        {/* المحادثة والتقييمات */}
+        <ListingChat listingId={listing.id} />
+        {listing.seller?.id && <SellerReviews sellerId={listing.seller.id} />}
 
         <button
           className="w-full text-center text-sm text-gray-400"

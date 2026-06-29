@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth';
 import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
 import { SupportButton } from '@/components/SupportButton';
 
 export const metadata: Metadata = {
@@ -15,11 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
       <body>
@@ -27,6 +24,7 @@ export default function RootLayout({
           <Header />
           <main className="mx-auto max-w-5xl px-4 py-6 pb-28">{children}</main>
           <SupportButton />
+          <BottomNav />
         </AuthProvider>
       </body>
     </html>
