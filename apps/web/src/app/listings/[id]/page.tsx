@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { uiToast, uiConfirm, uiPrompt } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -25,6 +26,7 @@ const HEALTH_LABELS: Record<string, string> = {
 
 export default function ListingPage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
+  const router = useRouter();
   const [listing, setListing] = useState<any>(null);
   const [error, setError] = useState('');
   const [activeImg, setActiveImg] = useState(0);
@@ -55,6 +57,13 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       setEditing(false); uiToast('تم حفظ التعديل', 'success'); load();
     } catch (e: any) { uiToast(e.message, 'error'); }
     finally { setSavingEdit(false); }
+  };
+  const openPrivateChat = async () => {
+    if (!user) { uiToast('سجّل الدخول أولاً للمراسلة', 'info'); return; }
+    try {
+      const r = await api<{ id: string }>('/conversations', { method: 'POST', body: JSON.stringify({ listingId: params.id }) });
+      router.push(`/messages/${r.id}`);
+    } catch (e: any) { uiToast(e.message, 'error'); }
   };
   const share = async () => {
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -220,17 +229,24 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               )}
             </div>
           </div>
-          {listing.seller?.phone ? (
-            <a
-              href={`https://wa.me/${String(listing.seller.phone).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`السلام عليكم، بخصوص إعلان «${listing.title}» في مزاد`)}`}
-              target="_blank" rel="noopener noreferrer"
-              className="btn-outline !px-4 !py-2 !text-base !min-h-0 !border-green-300 !text-green-700"
-            >
-              💬 واتساب
-            </a>
-          ) : (
-            <span className="rounded-2xl bg-sand-100 px-4 py-2 text-sm font-bold text-gray-500">عبر المحادثة بالأسفل</span>
-          )}
+          <div className="flex shrink-0 flex-col gap-2">
+            {!isOwner && (
+              <button onClick={openPrivateChat}
+                className="rounded-2xl px-4 py-2 text-sm font-bold text-white shadow"
+                style={{ backgroundImage: 'linear-gradient(135deg, #128C7E, #25D366)' }}>
+                💬 مراسلة خاصة
+              </button>
+            )}
+            {listing.seller?.phone && (
+              <a
+                href={`https://wa.me/${String(listing.seller.phone).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`السلام عليكم، بخصوص إعلان «${listing.title}» في مزاد`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="rounded-2xl border border-green-300 px-4 py-1.5 text-center text-sm font-bold text-green-700"
+              >
+                واتساب
+              </a>
+            )}
+          </div>
         </div>
 
         {/* المواصفات */}

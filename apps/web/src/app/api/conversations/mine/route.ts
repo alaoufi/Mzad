@@ -5,51 +5,44 @@ import { getUser, json } from '@/lib/server-auth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// محادثات المستخدم: الإعلانات التي راسل فيها (أو إعلاناته التي فيها رسائل)
+// محادثاتي الخاصة (كمشتري أو كبائع للإعلان)
 export async function GET(req: NextRequest) {
   const auth = getUser(req);
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
 
-  // المحادثات التي أرسل فيها المستخدم رسالة
-  const sent = await prisma.message.findMany({
-    where: { senderId: auth.sub },
-    select: { conversationId: true },
-    distinct: ['conversationId'],
-  });
-  // محادثات إعلاناته
-  const ownConvs = await prisma.conversation.findMany({
-    where: { listing: { sellerId: auth.sub } },
-    select: { id: true },
-  });
-
-  const ids = Array.from(new Set([...sent.map((s) => s.conversationId), ...ownConvs.map((c) => c.id)]));
-  if (ids.length === 0) return json({ conversations: [] });
-
   const convs = await prisma.conversation.findMany({
-    where: { id: { in: ids } },
+    where: { isPublic: false, OR: [{ buyerId: auth.sub }, { listing: { sellerId: auth.sub } }] },
     include: {
-      listing: {
-        select: { id: true, title: true, media: { take: 1, orderBy: { order: 'asc' } } },
-      },
+      listing: { select: { id: true, title: true, sellerId: true, media: { take: 1, orderBy: { order: 'asc' } } } },
       messages: { orderBy: { createdAt: 'desc' }, take: 1 },
-      _count: { select: { messages: true } },
     },
   });
 
-  // ترتيب حسب آخر رسالة
-  convs.sort((a, b) => {
-    const ta = a.messages[0]?.createdAt ?? a.createdAt;
-    const tb = b.messages[0]?.createdAt ?? b.createdAt;
-    return new Date(tb).getTime() - new Date(ta).getTime();
-  });
+  const otherIds = new Set<string>();
+  for (const c of convs) {
+    const otherId = c.listing.sellerId === auth.sub ? c.buyerId : c.listing.sellerId;
+    if (otherId) otherIds.add(otherId);
+  }
+  const users = await prisma.user.findMany({ where: { id: { in: [...otherIds] } }, select: { id: true, name: true } });
+  const nameOf = new Map(users.map((u) => [u.id, u.name]));
 
-  return json({
-    conversations: convs.map((c) => ({
-      listingId: c.listing.id,
-      title: c.listing.title,
-      image: c.listing.media[0]?.url ?? null,
-      lastMessage: c.messages[0]?.body ?? '',
-      count: c._count.messages,
-    })),
-  });
+  const list = convs
+    .map((c) => {
+      const iAmSeller = c.listing.sellerId === auth.sub;
+      const otherId = iAmSeller ? c.buyerId : c.listing.sellerId;
+      const last = c.messages[0];
+      return {
+        id: c.id,
+        listingId: c.listing.id,
+        title: c.listing.title,
+        image: c.listing.media[0]?.url ?? null,
+        otherName: (otherId && nameOf.get(otherId)) || 'مستخدم',
+        iAmSeller,
+        lastMessage: last?.body ?? '',
+        lastAt: last?.createdAt ?? c.createdAt,
+      };
+    })
+    .sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+
+  return json({ conversations: list });
 }

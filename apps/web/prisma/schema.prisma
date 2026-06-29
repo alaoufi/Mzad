@@ -265,11 +265,13 @@ model Conversation {
   id        String    @id @default(uuid())
   listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
   listingId String
+  buyerId   String?   // طرف المحادثة الخاصة (المشتري)؛ الطرف الآخر هو بائع الإعلان
   isPublic  Boolean   @default(false)
   createdAt DateTime  @default(now())
   messages  Message[]
 
   @@index([listingId])
+  @@index([buyerId])
 }
 
 enum MessageType {
