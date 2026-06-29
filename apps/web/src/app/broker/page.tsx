@@ -26,6 +26,7 @@ export default function BrokerPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [items, setItems] = useState<BAuction[]>([]);
+  const [earnings, setEarnings] = useState(0);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +34,13 @@ export default function BrokerPage() {
     api<{ auctions: BAuction[] }>('/broker/auctions')
       .then((r) => setItems(r.auctions)).catch((e) => setError(e.message)).finally(() => setLoading(false));
 
-  useEffect(() => { if (!user) { setLoading(false); return; } load(); }, [user]);
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    load();
+    api<{ txns: { type: string; amount: string | number }[] }>('/wallet')
+      .then((r) => setEarnings(r.txns.filter((t) => t.type === 'BROKER_SHARE').reduce((s, t) => s + Number(t.amount), 0)))
+      .catch(() => {});
+  }, [user]);
 
   const act = async (id: string, action: string) => {
     if (action === 'cancel' && !await uiConfirm('إلغاء هذا المزاد؟')) return;
@@ -70,6 +77,25 @@ export default function BrokerPage() {
         <button onClick={() => router.push('/sell')} className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white">＋ مزاد جديد</button>
       </div>
       <p className="text-sm text-gray-500">جدول مزاداتك بموعد بداية، وابدأها أو ألغها. تتحوّل تلقائياً: مجدول ← مباشر ← منتهٍ.</p>
+
+      {/* ملخّص الدلال */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="card float-box p-3 text-center">
+          <div className="text-lg">🔨</div>
+          <div className="text-xl font-extrabold text-brand-dark text-emboss">{items.length}</div>
+          <div className="text-[11px] text-gray-500">مزاداتي</div>
+        </div>
+        <div className="card float-box p-3 text-center">
+          <div className="text-lg">🟢</div>
+          <div className="text-xl font-extrabold text-brand-dark text-emboss">{items.filter((a) => a.status === 'LIVE').length}</div>
+          <div className="text-[11px] text-gray-500">مباشر الآن</div>
+        </div>
+        <button onClick={() => router.push('/wallet')} className="card float-box p-3 text-center active:scale-95">
+          <div className="text-lg">💰</div>
+          <div className="text-xl font-extrabold text-green-600 text-emboss">{earnings.toLocaleString('ar-SA')}</div>
+          <div className="text-[11px] text-gray-500">أنصبتي ﷼</div>
+        </button>
+      </div>
 
       {items.length === 0 ? (
         <div className="card p-10 text-center text-gray-500">
