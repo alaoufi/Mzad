@@ -20,7 +20,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
   const [endAt, setEndAt] = useState('');
   const [startAt, setStartAt] = useState('');
   const [status, setStatus] = useState('LIVE');
-  const [type, setType] = useState<{ name: string; commissionPct: number; requiresDeposit: boolean } | null>(null);
+  const [type, setType] = useState<{ name: string; icon?: string | null; commissionPct: number; requiresDeposit: boolean } | null>(null);
   const [bids, setBids] = useState<BidRow[]>([]);
   const [amount, setAmount] = useState(0);
   const [msg, setMsg] = useState('');
@@ -104,7 +104,7 @@ export function LiveAuction({ auctionId, canManage }: { auctionId: string; canMa
 
       {type && (
         <div className="mb-3 flex flex-wrap gap-2 text-sm">
-          <span className="chip">🏷️ نوع المزاد: {type.name}</span>
+          <span className="chip">{type.icon || '🏷️'} نوع المزاد: {type.name}</span>
           {type.commissionPct > 0 && <span className="chip">عمولة {type.commissionPct}%</span>}
           {type.requiresDeposit && <span className="chip">يتطلب عربوناً</span>}
         </div>

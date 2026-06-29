@@ -46,7 +46,7 @@ export default function SellPage() {
 
   const isBroker = user?.role === 'BROKER' || user?.role === 'ADMIN';
 
-  const [auctionTypes, setAuctionTypes] = useState<{ id: string; name: string; commissionPct: number }[]>([]);
+  const [auctionTypes, setAuctionTypes] = useState<{ id: string; name: string; icon?: string | null; commissionPct: number }[]>([]);
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
@@ -287,7 +287,7 @@ export default function SellPage() {
                     <select className="input" value={form.typeId} onChange={(e) => set('typeId', e.target.value)}>
                       <option value="">— اختر نوعاً (اختياري) —</option>
                       {auctionTypes.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}{t.commissionPct ? ` (عمولة ${t.commissionPct}%)` : ''}</option>
+                        <option key={t.id} value={t.id}>{t.icon ? `${t.icon} ` : ''}{t.name}{t.commissionPct ? ` (عمولة ${t.commissionPct}%)` : ''}</option>
                       ))}
                     </select>
                   </div>

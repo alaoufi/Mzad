@@ -10,7 +10,7 @@ export async function GET() {
     const types = await prisma.auctionType.findMany({
       where: { active: true },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, commissionPct: true, requiresDeposit: true },
+      select: { id: true, name: true, icon: true, commissionPct: true, requiresDeposit: true },
     });
     return json({ types });
   } catch {

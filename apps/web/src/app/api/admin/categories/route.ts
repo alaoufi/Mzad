@@ -5,6 +5,18 @@ import { getUser, json } from '@/lib/server-auth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// الشجرة الكاملة (تشمل المخفيّة) للإدارة
+export async function GET(req: NextRequest) {
+  const auth = getUser(req);
+  if (!auth || auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
+  const species = await prisma.category.findMany({
+    where: { level: 'SPECIES' },
+    include: { children: { include: { children: true } } },
+    orderBy: { name: 'asc' },
+  });
+  return json(species);
+}
+
 // إنشاء تصنيف (نوع/لون/سلالة)
 export async function POST(req: NextRequest) {
   const auth = getUser(req);

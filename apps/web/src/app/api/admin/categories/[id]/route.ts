@@ -11,12 +11,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
-  const { name, icon } = await req.json();
+  const { name, icon, hidden } = await req.json();
   await prisma.category.update({
     where: { id: params.id },
     data: {
       ...(name?.trim() ? { name: name.trim() } : {}),
       ...(icon !== undefined ? { icon: icon || null } : {}),
+      ...(hidden !== undefined ? { hidden: !!hidden } : {}),
     },
   });
   return json({ ok: true });

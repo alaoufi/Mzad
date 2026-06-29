@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
-interface AType { id: string; name: string; description?: string | null; commissionPct: number; requiresDeposit: boolean; active: boolean; }
+interface AType { id: string; name: string; icon?: string | null; description?: string | null; commissionPct: number; requiresDeposit: boolean; active: boolean; }
 interface Ad { id: string; title: string; placement: string; status: string; link?: string | null; advertiser?: string | null; impressions: number; clicks: number; }
 
 const PLACEMENTS = ['HOME_TOP', 'HOME_MID', 'MARKET_TOP', 'SUPPLIES_TOP', 'LISTING_DETAIL'];
@@ -33,9 +33,15 @@ export default function MarketingPage() {
 
   const addType = () => {
     const name = prompt('اسم نوع المزاد (مثل: مزاد فوري):'); if (!name?.trim()) return;
+    const icon = prompt('أيقونة (رمز تعبيري، اختياري مثل ⚡):', '') || '';
     const commissionPct = Number(prompt('نسبة العمولة %:', '2.5') || 0);
     const requiresDeposit = confirm('يتطلب عربوناً؟ (موافق=نعم)');
-    run(() => api('/admin/auction-types', { method: 'POST', body: JSON.stringify({ name, commissionPct, requiresDeposit }) }));
+    run(() => api('/admin/auction-types', { method: 'POST', body: JSON.stringify({ name, icon, commissionPct, requiresDeposit }) }));
+  };
+  const setTypeIcon = (t: AType) => {
+    const icon = prompt('الأيقونة (رمز تعبيري، فارغ للحذف):', t.icon ?? '');
+    if (icon === null) return;
+    run(() => api(`/admin/auction-types/${t.id}`, { method: 'PATCH', body: JSON.stringify({ icon }) }));
   };
   const addAd = () => {
     const title = prompt('عنوان الإعلان:'); if (!title?.trim()) return;
@@ -72,13 +78,15 @@ export default function MarketingPage() {
           <button onClick={addType} className="btn-primary w-full">＋ نوع مزاد جديد</button>
           {(types ?? []).length === 0 && <p className="py-6 text-center text-gray-400">لا توجد أنواع بعد</p>}
           {(types ?? []).map((t) => (
-            <div key={t.id} className="card flex items-center gap-2 p-3">
+            <div key={t.id} className={`card flex items-center gap-2 p-3 ${!t.active ? 'opacity-50' : ''}`}>
+              <span className="text-2xl">{t.icon || '🔨'}</span>
               <div className="min-w-0 flex-1">
                 <div className="font-bold">{t.name}</div>
-                <div className="text-xs text-gray-500">عمولة {t.commissionPct}% {t.requiresDeposit && '· يتطلب عربوناً'} {!t.active && '· موقوف'}</div>
+                <div className="text-xs text-gray-500">عمولة {t.commissionPct}% {t.requiresDeposit && '· يتطلب عربوناً'} {!t.active && '· مخفي'}</div>
               </div>
+              <button onClick={() => setTypeIcon(t)} className="rounded-lg bg-sand-100 px-3 py-2 text-sm font-bold">🖼️</button>
               <button onClick={() => run(() => api(`/admin/auction-types/${t.id}`, { method: 'PATCH', body: JSON.stringify({ active: !t.active }) }))}
-                className="rounded-lg bg-sand-100 px-3 py-2 text-sm font-bold">{t.active ? 'إيقاف' : 'تفعيل'}</button>
+                className="rounded-lg bg-sand-100 px-3 py-2 text-sm font-bold">{t.active ? 'إخفاء' : 'إظهار'}</button>
               <button onClick={() => confirm('حذف؟') && run(() => api(`/admin/auction-types/${t.id}`, { method: 'DELETE' }))}
                 className="rounded-lg bg-red-100 px-3 py-2 text-sm font-bold text-red-600">حذف</button>
             </div>

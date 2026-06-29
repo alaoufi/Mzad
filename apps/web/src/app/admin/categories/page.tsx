@@ -9,6 +9,7 @@ interface Cat {
   id: string;
   name: string;
   icon?: string;
+  hidden?: boolean;
   children?: Cat[];
 }
 
@@ -21,7 +22,7 @@ export default function AdminCategoriesPage() {
   const [loading, setLoading] = useState(true);
 
   const load = () =>
-    api<Cat[]>('/categories').then(setTree).catch(() => {}).finally(() => setLoading(false));
+    api<Cat[]>('/admin/categories').then(setTree).catch(() => {}).finally(() => setLoading(false));
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -46,13 +47,18 @@ export default function AdminCategoriesPage() {
     if (!name?.trim()) return;
     run(() => api('/admin/categories', { method: 'POST', body: JSON.stringify({ name, level, parentId }) }));
   };
-  const rename = (c: Cat, isSpecies = false) => {
+  const rename = (c: Cat) => {
     const name = prompt('الاسم الجديد:', c.name);
-    if (name === null) return;
-    let icon: string | undefined;
-    if (isSpecies) icon = prompt('الرمز التعبيري:', c.icon ?? '') ?? undefined;
-    run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ name, icon }) }));
+    if (name === null || !name.trim()) return;
+    run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ name }) }));
   };
+  const setIcon = (c: Cat) => {
+    const icon = prompt('الأيقونة (رمز تعبيري مثل 🐪، اتركه فارغاً للحذف):', c.icon ?? '');
+    if (icon === null) return;
+    run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ icon }) }));
+  };
+  const toggleHide = (c: Cat) =>
+    run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !c.hidden }) }));
   const del = (c: Cat) => {
     if (!confirm(`حذف "${c.name}"؟`)) return;
     run(() => api(`/admin/categories/${c.id}`, { method: 'DELETE' }));
@@ -86,12 +92,15 @@ export default function AdminCategoriesPage() {
         {tree.map((sp) => (
           <div key={sp.id} className="card overflow-hidden">
             {/* النوع */}
-            <div className="flex items-center gap-2 bg-sand-50 p-3">
+            <div className={`flex items-center gap-2 bg-sand-50 p-3 ${sp.hidden ? 'opacity-50' : ''}`}>
               <button onClick={() => toggle(sp.id)} className="text-xl">{open[sp.id] ? '▾' : '▸'}</button>
               <span className="text-2xl">{sp.icon}</span>
-              <span className="flex-1 text-lg font-bold">{sp.name}</span>
-              <span className="text-xs text-gray-400">{sp.children?.length ?? 0} لون</span>
-              <Btn onClick={() => rename(sp, true)}>✏️</Btn>
+              <span className="flex-1 text-lg font-bold">
+                {sp.name}{sp.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
+              </span>
+              <Btn onClick={() => setIcon(sp)}>🖼️</Btn>
+              <Btn onClick={() => rename(sp)}>✏️</Btn>
+              <Btn onClick={() => toggleHide(sp)}>{sp.hidden ? '🙈' : '👁️'}</Btn>
               <Btn onClick={() => del(sp)}>🗑️</Btn>
             </div>
 
@@ -99,19 +108,26 @@ export default function AdminCategoriesPage() {
               <div className="space-y-2 p-3">
                 {sp.children?.map((color) => (
                   <div key={color.id} className="rounded-2xl border border-sand-200">
-                    <div className="flex items-center gap-2 p-2">
+                    <div className={`flex items-center gap-2 p-2 ${color.hidden ? 'opacity-50' : ''}`}>
                       <button onClick={() => toggle(color.id)} className="text-sm">{open[color.id] ? '▾' : '▸'}</button>
-                      <span className="flex-1 font-bold text-brand-dark">{color.name}</span>
-                      <span className="text-xs text-gray-400">{color.children?.length ?? 0} سلالة</span>
+                      <span className="flex-1 font-bold text-brand-dark">
+                        {color.icon} {color.name}{color.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
+                      </span>
+                      <Btn onClick={() => setIcon(color)}>🖼️</Btn>
                       <Btn onClick={() => rename(color)}>✏️</Btn>
+                      <Btn onClick={() => toggleHide(color)}>{color.hidden ? '🙈' : '👁️'}</Btn>
                       <Btn onClick={() => del(color)}>🗑️</Btn>
                     </div>
                     {open[color.id] && (
                       <div className="space-y-1 px-3 pb-3">
                         {color.children?.map((breed) => (
-                          <div key={breed.id} className="flex items-center gap-2 rounded-xl bg-sand-50 px-3 py-2">
-                            <span className="flex-1">{breed.name}</span>
+                          <div key={breed.id} className={`flex items-center gap-2 rounded-xl bg-sand-50 px-3 py-2 ${breed.hidden ? 'opacity-50' : ''}`}>
+                            <span className="flex-1">
+                              {breed.icon} {breed.name}{breed.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
+                            </span>
+                            <Btn onClick={() => setIcon(breed)}>🖼️</Btn>
                             <Btn onClick={() => rename(breed)}>✏️</Btn>
+                            <Btn onClick={() => toggleHide(breed)}>{breed.hidden ? '🙈' : '👁️'}</Btn>
                             <Btn onClick={() => del(breed)}>🗑️</Btn>
                           </div>
                         ))}

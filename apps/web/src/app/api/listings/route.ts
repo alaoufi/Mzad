@@ -22,20 +22,17 @@ export async function GET(req: NextRequest) {
 
   const exclude = sp.get('exclude') ?? undefined;
 
-  // حساب شجرة التصنيف (لمطابقة كل المنحدرات من نوع/لون)
-  let childrenMap: Map<string, string[]> | null = null;
-  const subtree = async (rootId: string): Promise<string[]> => {
-    if (!childrenMap) {
-      const all = await prisma.category.findMany({ select: { id: true, parentId: true } });
-      childrenMap = new Map();
-      for (const c of all) {
-        if (c.parentId) {
-          const arr = childrenMap.get(c.parentId) ?? [];
-          arr.push(c.id);
-          childrenMap.set(c.parentId, arr);
-        }
-      }
+  // تحميل كل التصنيفات مرة واحدة لحساب الأشجار والمخفيّ
+  const allCats = await prisma.category.findMany({ select: { id: true, parentId: true, hidden: true } });
+  const childrenMap = new Map<string, string[]>();
+  for (const c of allCats) {
+    if (c.parentId) {
+      const arr = childrenMap.get(c.parentId) ?? [];
+      arr.push(c.id);
+      childrenMap.set(c.parentId, arr);
     }
+  }
+  const subtree = (rootId: string): string[] => {
     const ids: string[] = [];
     const stack = [rootId];
     while (stack.length) {
@@ -47,12 +44,14 @@ export async function GET(req: NextRequest) {
     return ids;
   };
 
-  const categoryFilter: Prisma.ListingWhereInput = categoryId
-    ? { categoryId: { in: await subtree(categoryId) } }
-    : {};
-  const excludeFilter: Prisma.ListingWhereInput = exclude
-    ? { NOT: { categoryId: { in: await subtree(exclude) } } }
-    : {};
+  // كل التصنيفات المخفيّة وفروعها → تُستبعد إعلاناتها
+  const hiddenIds = new Set<string>();
+  for (const c of allCats) if (c.hidden) for (const id of subtree(c.id)) hiddenIds.add(id);
+
+  const categoryFilter: Prisma.ListingWhereInput = categoryId ? { categoryId: { in: subtree(categoryId) } } : {};
+  const excludeIds = new Set<string>(exclude ? subtree(exclude) : []);
+  for (const id of hiddenIds) excludeIds.add(id);
+  const excludeFilter: Prisma.ListingWhereInput = excludeIds.size ? { NOT: { categoryId: { in: [...excludeIds] } } } : {};
 
   const where: Prisma.ListingWhereInput = {
     status: 'ACTIVE',
