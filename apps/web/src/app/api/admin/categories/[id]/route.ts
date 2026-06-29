@@ -11,7 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
-  const { name, icon, hidden, themeKey } = await req.json();
+  const { name, icon, hidden, themeKey, order } = await req.json();
   await prisma.category.update({
     where: { id: params.id },
     data: {
@@ -19,6 +19,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(icon !== undefined ? { icon: icon || null } : {}),
       ...(hidden !== undefined ? { hidden: !!hidden } : {}),
       ...(themeKey !== undefined ? { themeKey: themeKey || null } : {}),
+      ...(order !== undefined ? { order: Number(order) || 0 } : {}),
     },
   });
   return json({ ok: true });

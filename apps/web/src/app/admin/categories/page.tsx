@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -10,78 +10,93 @@ import { THEME_LIST, FAMILIES, themeByKey, gradient } from '@/lib/themes';
 interface Cat {
   id: string;
   name: string;
-  icon?: string;
-  hidden?: boolean;
+  icon?: string | null;
   themeKey?: string | null;
-  level?: string;
-  children?: Cat[];
+  hidden?: boolean;
+  order?: number;
+  parentId?: string | null;
 }
 
-type Level = 'SPECIES' | 'TYPE' | 'BREED';
-const LEVEL_LABEL: Record<Level, string> = { SPECIES: 'النوع', TYPE: 'اللون / الصنف', BREED: 'السلالة' };
-
-// اقتراحات أيقونات شائعة
 const ICON_SUGGESTIONS = ['🐪', '🐫', '🐐', '🐑', '🐏', '🐄', '🐂', '🐎', '🐴', '🐔', '🦅', '🐓', '🛒', '💊', '🌾', '🧴', '🥛', '🍖', '🏷️', '⭐'];
 
 interface Draft { name: string; icon: string; themeKey: string; hidden: boolean }
 
+function depthLabel(depth: number) {
+  if (depth === 0) return 'النوع (الرأس)';
+  return `المستوى ${depth + 1}`;
+}
+
 export default function AdminCategoriesPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [tree, setTree] = useState<Cat[]>([]);
+  const [flat, setFlat] = useState<Cat[]>([]);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
-  // نافذة التعديل/الإضافة الموحّدة
   const [editFor, setEditFor] = useState<Cat | null>(null);
-  const [addCtx, setAddCtx] = useState<{ parentId: string | null; level: Level } | null>(null);
+  const [addParent, setAddParent] = useState<{ id: string | null; depth: number } | null>(null);
   const [draft, setDraft] = useState<Draft>({ name: '', icon: '', themeKey: '', hidden: false });
   const [saving, setSaving] = useState(false);
-  const [mounted, setMounted] = useState(false);
+
   useEffect(() => { setMounted(true); }, []);
 
   const load = () =>
-    api<Cat[]>('/admin/categories').then(setTree).catch(() => {}).finally(() => setLoading(false));
+    api<Cat[]>('/admin/categories').then(setFlat).catch(() => {}).finally(() => setLoading(false));
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     load();
   }, [user]);
 
-  const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
+  // أبناء كل عقدة (مرتّبين) + عمق كل عقدة
+  const childrenOf = useMemo(() => {
+    const m = new Map<string | null, Cat[]>();
+    for (const c of flat) {
+      const k = c.parentId ?? null;
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push(c);
+    }
+    for (const arr of m.values()) arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+    return m;
+  }, [flat]);
+  const depthOf = (cat: Cat): number => {
+    let d = 0, p = cat.parentId;
+    const byId = new Map(flat.map((c) => [c.id, c]));
+    while (p) { d++; p = byId.get(p)?.parentId ?? null; }
+    return d;
+  };
 
+  const toggle = (id: string) => setOpen((o) => ({ ...o, [id]: !o[id] }));
   const run = async (fn: () => Promise<any>) => {
     setError('');
     try { await fn(); load(); } catch (e: any) { setError(e.message); alert(e.message); }
   };
 
   const openEdit = (c: Cat) => {
-    setAddCtx(null);
+    setAddParent(null);
     setDraft({ name: c.name, icon: c.icon ?? '', themeKey: c.themeKey ?? '', hidden: !!c.hidden });
     setEditFor(c);
   };
-  const openAdd = (parentId: string | null, level: Level) => {
+  const openAdd = (parentId: string | null, depth: number) => {
     setEditFor(null);
     setDraft({ name: '', icon: '', themeKey: '', hidden: false });
-    setAddCtx({ parentId, level });
+    setAddParent({ id: parentId, depth });
+    if (parentId) setOpen((o) => ({ ...o, [parentId]: true }));
   };
-  const closeModal = () => { setEditFor(null); setAddCtx(null); };
+  const closeModal = () => { setEditFor(null); setAddParent(null); };
 
   const save = async () => {
     if (!draft.name.trim()) { alert('الاسم مطلوب'); return; }
     setSaving(true);
     try {
       if (editFor) {
-        await api(`/admin/categories/${editFor.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ name: draft.name, icon: draft.icon, themeKey: draft.themeKey, hidden: draft.hidden }),
-        });
-      } else if (addCtx) {
-        await api('/admin/categories', {
-          method: 'POST',
-          body: JSON.stringify({ name: draft.name, level: addCtx.level, parentId: addCtx.parentId, icon: draft.icon, themeKey: draft.themeKey }),
-        });
+        await api(`/admin/categories/${editFor.id}`, { method: 'PATCH',
+          body: JSON.stringify({ name: draft.name, icon: draft.icon, themeKey: draft.themeKey, hidden: draft.hidden }) });
+      } else if (addParent) {
+        await api('/admin/categories', { method: 'POST',
+          body: JSON.stringify({ name: draft.name, parentId: addParent.id, icon: draft.icon, themeKey: draft.themeKey }) });
       }
       closeModal();
       load();
@@ -90,8 +105,21 @@ export default function AdminCategoriesPage() {
   };
 
   const del = (c: Cat) => {
-    if (!confirm(`حذف "${c.name}"؟`)) return;
+    if (!confirm(`حذف "${c.name}"؟ (يجب ألا يكون له فروع أو إعلانات)`)) return;
     run(() => api(`/admin/categories/${c.id}`, { method: 'DELETE' }));
+  };
+  const toggleHide = (c: Cat) =>
+    run(() => api(`/admin/categories/${c.id}`, { method: 'PATCH', body: JSON.stringify({ hidden: !c.hidden }) }));
+  const move = (c: Cat, dir: -1 | 1) => {
+    const sibs = childrenOf.get(c.parentId ?? null) ?? [];
+    const i = sibs.findIndex((s) => s.id === c.id);
+    const j = i + dir;
+    if (j < 0 || j >= sibs.length) return;
+    const a = sibs[i], b = sibs[j];
+    run(async () => {
+      await api(`/admin/categories/${a.id}`, { method: 'PATCH', body: JSON.stringify({ order: b.order ?? 0 }) });
+      await api(`/admin/categories/${b.id}`, { method: 'PATCH', body: JSON.stringify({ order: a.order ?? 0 }) });
+    });
   };
 
   if (!user) {
@@ -107,7 +135,49 @@ export default function AdminCategoriesPage() {
   }
   if (loading) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 
-  const modalLevel: Level = editFor ? (editFor.level as Level) ?? 'SPECIES' : addCtx?.level ?? 'SPECIES';
+  const roots = childrenOf.get(null) ?? [];
+  const modalDepth = editFor ? depthOf(editFor) : addParent?.depth ?? 0;
+
+  // عقدة شجرة بأي عمق
+  const Node = ({ cat, depth }: { cat: Cat; depth: number }) => {
+    const kids = childrenOf.get(cat.id) ?? [];
+    const sibs = childrenOf.get(cat.parentId ?? null) ?? [];
+    const idx = sibs.findIndex((s) => s.id === cat.id);
+    const isOpen = open[cat.id];
+    return (
+      <div className="rounded-2xl border border-sand-200 bg-white" style={{ marginInlineStart: depth ? 12 : 0 }}>
+        <div className={`flex items-center gap-1.5 p-2 ${cat.hidden ? 'opacity-50' : ''}`}>
+          <button onClick={() => toggle(cat.id)} className="w-5 text-gray-400" disabled={!kids.length}>
+            {kids.length ? (isOpen ? '▾' : '▸') : '•'}
+          </button>
+          {cat.icon && <span className="text-lg">{cat.icon}</span>}
+          <span className={`flex-1 truncate ${depth === 0 ? 'text-base font-extrabold' : depth === 1 ? 'font-bold text-brand-dark' : ''}`}>
+            {cat.name}{cat.hidden && <span className="mr-1 text-[10px] text-red-500">(مخفي)</span>}
+          </span>
+          {cat.themeKey && (
+            <span className="h-6 w-6 shrink-0 overflow-hidden rounded-md ring-1 ring-sand-200" title="ثيم"
+              style={{ backgroundImage: gradient(themeByKey(cat.themeKey)) }} />
+          )}
+          <div className="flex flex-col">
+            <button onClick={() => move(cat, -1)} disabled={idx === 0} className="text-[10px] leading-3 text-gray-400 disabled:opacity-30">▲</button>
+            <button onClick={() => move(cat, 1)} disabled={idx === sibs.length - 1} className="text-[10px] leading-3 text-gray-400 disabled:opacity-30">▼</button>
+          </div>
+          <IconBtn onClick={() => toggleHide(cat)}>{cat.hidden ? '🙈' : '👁️'}</IconBtn>
+          <IconBtn onClick={() => openEdit(cat)}>✏️</IconBtn>
+          <IconBtn onClick={() => del(cat)}>🗑️</IconBtn>
+        </div>
+        {isOpen && (
+          <div className="space-y-1.5 px-2 pb-2">
+            {kids.map((k) => <Node key={k.id} cat={k} depth={depth + 1} />)}
+            <button onClick={() => openAdd(cat.id, depth + 1)}
+              className="w-full rounded-xl border-2 border-dashed border-sand-300 py-1.5 text-xs font-bold text-gray-500 hover:border-brand hover:text-brand">
+              ＋ إضافة تصنيف فرعي تحت «{cat.name}»
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="animate-fadeup space-y-4">
@@ -115,14 +185,16 @@ export default function AdminCategoriesPage() {
         <h1 className="text-2xl font-extrabold">🗂️ إدارة التصنيفات</h1>
         <button onClick={() => router.push('/admin')} className="text-sm font-bold text-brand">← اللوحة</button>
       </div>
-      <p className="text-sm text-gray-500">النوع ← اللون/الصنف ← السلالة. تحكّم كامل بالشجرة.</p>
+      <p className="text-sm text-gray-500">
+        أضف رأساً (نوعاً)، ثم تحته أي عدد من المستويات بأي عمق — لكل عنصر اسمه وأيقونته وثيمه. تحكّم كامل: تعديل · ترتيب · إظهار/إخفاء · حذف.
+      </p>
       {error && <div className="rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 
       <div className="flex gap-2">
-        <button onClick={() => openAdd(null, 'SPECIES')} className="btn-primary flex-1">＋ إضافة نوع جديد</button>
+        <button onClick={() => openAdd(null, 0)} className="btn-primary flex-1">＋ إضافة نوع رئيسي</button>
         <button
           onClick={() => {
-            if (!confirm('⚠️ سيحذف هذا كل التصنيفات والإعلانات الحالية ويعيد بناء الشجرة الافتراضية (إبل/غنم/خيل + المستلزمات). متابعة؟')) return;
+            if (!confirm('⚠️ سيحذف هذا كل التصنيفات والإعلانات الحالية ويعيد بناء الشجرة الافتراضية. متابعة؟')) return;
             run(async () => {
               const r = await api<{ species: number; types: number; breeds: number }>('/admin/rebuild-catalog', { method: 'POST' });
               alert(`✅ تمت إعادة البناء: ${r.species} أنواع، ${r.types} أصناف، ${r.breeds} سلالات.`);
@@ -133,116 +205,52 @@ export default function AdminCategoriesPage() {
         </button>
       </div>
 
-      <div className="space-y-3">
-        {tree.map((sp) => (
-          <div key={sp.id} className="card overflow-hidden">
-            {/* النوع */}
-            <div className={`flex items-center gap-2 bg-sand-50 p-3 ${sp.hidden ? 'opacity-50' : ''}`}>
-              <button onClick={() => toggle(sp.id)} className="text-xl">{open[sp.id] ? '▾' : '▸'}</button>
-              <span className="text-2xl">{sp.icon}</span>
-              <span className="flex-1 text-lg font-bold">
-                {sp.name}{sp.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
-              </span>
-              <ThemeSwatch themeKey={sp.themeKey} />
-              <EditBtn onClick={() => openEdit(sp)} />
-              <Btn onClick={() => del(sp)}>🗑️</Btn>
-            </div>
-
-            {open[sp.id] && (
-              <div className="space-y-2 p-3">
-                {sp.children?.map((color) => (
-                  <div key={color.id} className="rounded-2xl border border-sand-200">
-                    <div className={`flex items-center gap-2 p-2 ${color.hidden ? 'opacity-50' : ''}`}>
-                      <button onClick={() => toggle(color.id)} className="text-sm">{open[color.id] ? '▾' : '▸'}</button>
-                      <span className="flex-1 font-bold text-brand-dark">
-                        {color.icon} {color.name}{color.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
-                      </span>
-                      <ThemeSwatch themeKey={color.themeKey} />
-                      <EditBtn onClick={() => openEdit(color)} />
-                      <Btn onClick={() => del(color)}>🗑️</Btn>
-                    </div>
-                    {open[color.id] && (
-                      <div className="space-y-1 px-3 pb-3">
-                        {color.children?.map((breed) => (
-                          <div key={breed.id} className={`flex items-center gap-2 rounded-xl bg-sand-50 px-3 py-2 ${breed.hidden ? 'opacity-50' : ''}`}>
-                            <span className="flex-1">
-                              {breed.icon} {breed.name}{breed.hidden && <span className="mr-1 text-xs text-red-500">(مخفي)</span>}
-                            </span>
-                            <ThemeSwatch themeKey={breed.themeKey} />
-                            <EditBtn onClick={() => openEdit(breed)} />
-                            <Btn onClick={() => del(breed)}>🗑️</Btn>
-                          </div>
-                        ))}
-                        <button onClick={() => openAdd(color.id, 'BREED')}
-                          className="w-full rounded-xl border-2 border-dashed border-sand-300 py-2 text-sm font-bold text-gray-500">
-                          ＋ سلالة
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <button onClick={() => openAdd(sp.id, 'TYPE')}
-                  className="w-full rounded-xl border-2 border-dashed border-sand-300 py-2 text-sm font-bold text-gray-500">
-                  ＋ لون / صنف
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="space-y-2">
+        {roots.map((r) => <Node key={r.id} cat={r} depth={0} />)}
+        {roots.length === 0 && <p className="py-8 text-center text-gray-400">لا توجد تصنيفات — أضف أول نوع.</p>}
       </div>
 
       {/* نافذة التعديل/الإضافة الموحّدة */}
-      {(editFor || addCtx) && mounted && createPortal(
+      {(editFor || addParent) && mounted && createPortal(
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-3" onClick={closeModal}>
-          <div className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-extrabold">
-                {editFor ? `✏️ تعديل ${LEVEL_LABEL[modalLevel]}` : `＋ إضافة ${LEVEL_LABEL[modalLevel]}`}
+                {editFor ? `✏️ تعديل — ${depthLabel(modalDepth)}` : `＋ إضافة — ${depthLabel(modalDepth)}`}
               </h3>
               <button onClick={closeModal} className="text-2xl leading-none text-gray-400">×</button>
             </div>
 
-            {/* الاسم */}
-            <label className="mb-1 block text-sm font-bold text-gray-600">الاسم</label>
-            <input className="input mb-4" placeholder="مثل: إبل" value={draft.name}
+            <label className="mb-1 block text-sm font-bold text-gray-600">الاسم / التعريف</label>
+            <input className="input mb-4" placeholder="اكتب الاسم..." value={draft.name}
               onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} autoFocus />
 
-            {/* الأيقونة */}
             <label className="mb-1 block text-sm font-bold text-gray-600">الأيقونة</label>
             <div className="mb-2 flex items-center gap-2">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sand-100 text-2xl">
-                {draft.icon || '—'}
-              </div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sand-100 text-2xl">{draft.icon || '—'}</div>
               <input className="input flex-1" placeholder="رمز تعبيري (اختياري)" value={draft.icon}
                 onChange={(e) => setDraft((d) => ({ ...d, icon: e.target.value }))} />
-              {draft.icon && (
-                <button onClick={() => setDraft((d) => ({ ...d, icon: '' }))}
-                  className="rounded-xl bg-sand-100 px-3 py-2 text-sm font-bold text-gray-500">مسح</button>
-              )}
+              {draft.icon && <button onClick={() => setDraft((d) => ({ ...d, icon: '' }))} className="rounded-xl bg-sand-100 px-3 py-2 text-sm font-bold text-gray-500">مسح</button>}
             </div>
             <div className="mb-4 flex flex-wrap gap-1.5">
               {ICON_SUGGESTIONS.map((e) => (
                 <button key={e} onClick={() => setDraft((d) => ({ ...d, icon: e }))}
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl text-xl ring-1 transition ${draft.icon === e ? 'bg-brand/10 ring-brand' : 'ring-sand-200 hover:bg-sand-50'}`}>
-                  {e}
-                </button>
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl text-xl ring-1 transition ${draft.icon === e ? 'bg-brand/10 ring-brand' : 'ring-sand-200 hover:bg-sand-50'}`}>{e}</button>
               ))}
             </div>
 
-            {/* الإخفاء */}
             <label className="mb-4 flex cursor-pointer items-center justify-between rounded-2xl border-2 border-sand-200 px-4 py-3">
               <span className="font-bold">إخفاء من الموقع</span>
               <input type="checkbox" className="h-6 w-6 accent-brand" checked={draft.hidden}
                 onChange={(e) => setDraft((d) => ({ ...d, hidden: e.target.checked }))} />
             </label>
 
-            {/* الثيم */}
             <label className="mb-2 block text-sm font-bold text-gray-600">الثيم (هوية القسم)</label>
             <button onClick={() => setDraft((d) => ({ ...d, themeKey: '' }))}
               className={`mb-3 w-full rounded-xl border-2 py-2 text-sm font-bold ${draft.themeKey === '' ? 'border-brand bg-sand-50 text-brand' : 'border-dashed border-sand-300 text-gray-500'}`}>
-              بلا ثيم (افتراضي النوع)
+              بلا ثيم (وراثة من الأب)
             </button>
-            <div className="max-h-64 overflow-y-auto rounded-2xl bg-sand-50 p-2">
+            <div className="max-h-60 overflow-y-auto rounded-2xl bg-sand-50 p-2">
               {['مميّزة', ...FAMILIES].map((family) => {
                 const items = THEME_LIST.filter((t) => t.family === family);
                 if (!items.length) return null;
@@ -251,7 +259,6 @@ export default function AdminCategoriesPage() {
                     <div className="mb-1.5 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full" style={{ backgroundImage: gradient(items[0]) }} />
                       <h4 className="text-xs font-extrabold text-gray-600">{family}</h4>
-                      <span className="text-[10px] text-gray-400">({items.length})</span>
                     </div>
                     <div className="grid grid-cols-4 gap-1.5">
                       {items.map((t) => (
@@ -267,7 +274,6 @@ export default function AdminCategoriesPage() {
               })}
             </div>
 
-            {/* أزرار */}
             <div className="mt-5 flex gap-2">
               <button onClick={closeModal} className="btn-outline flex-1">إلغاء</button>
               <button onClick={save} disabled={saving} className="btn-primary flex-1 disabled:opacity-50">
@@ -282,26 +288,10 @@ export default function AdminCategoriesPage() {
   );
 }
 
-function Btn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function IconBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="rounded-lg bg-white px-2 py-1 text-sm ring-1 ring-sand-200 hover:bg-sand-50">
+    <button onClick={onClick} className="rounded-lg bg-white px-1.5 py-1 text-sm ring-1 ring-sand-200 hover:bg-sand-50">
       {children}
     </button>
-  );
-}
-
-function EditBtn({ onClick }: { onClick: () => void }) {
-  return (
-    <button onClick={onClick} className="rounded-lg bg-brand px-3 py-1 text-sm font-bold text-white hover:bg-brand-dark">
-      ✏️ تعديل
-    </button>
-  );
-}
-
-function ThemeSwatch({ themeKey }: { themeKey?: string | null }) {
-  if (!themeKey) return null;
-  return (
-    <span className="h-7 w-7 shrink-0 overflow-hidden rounded-lg ring-1 ring-sand-200" title="الثيم المعيّن"
-      style={{ backgroundImage: gradient(themeByKey(themeKey)) }} />
   );
 }

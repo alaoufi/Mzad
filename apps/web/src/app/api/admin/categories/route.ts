@@ -5,31 +5,47 @@ import { getUser, json } from '@/lib/server-auth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// الشجرة الكاملة (تشمل المخفيّة) للإدارة
+// كل التصنيفات (مسطّحة، تشمل المخفيّة) — يبني العميل الشجرة بأي عمق
 export async function GET(req: NextRequest) {
   const auth = getUser(req);
   if (!auth || auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
-  const species = await prisma.category.findMany({
-    where: { level: 'SPECIES' },
-    include: { children: { include: { children: true } } },
-    orderBy: { name: 'asc' },
+  const all = await prisma.category.findMany({
+    orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    select: { id: true, name: true, level: true, icon: true, themeKey: true, hidden: true, order: true, parentId: true },
   });
-  return json(species);
+  return json(all);
 }
 
-// إنشاء تصنيف (نوع/لون/سلالة)
+// عمق الأب يحدّد المستوى (للحفاظ على enum مع دعم أي عمق)
+async function depthLevel(parentId?: string | null): Promise<'SPECIES' | 'TYPE' | 'BREED'> {
+  if (!parentId) return 'SPECIES';
+  let depth = 1;
+  let cur = await prisma.category.findUnique({ where: { id: parentId }, select: { parentId: true } });
+  while (cur?.parentId) { depth++; cur = await prisma.category.findUnique({ where: { id: cur.parentId }, select: { parentId: true } }); }
+  return depth === 1 ? 'TYPE' : 'BREED';
+}
+
+// إنشاء تصنيف على أي مستوى (الرأس أو أي فرع)
 export async function POST(req: NextRequest) {
   const auth = getUser(req);
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
-  const { name, level, parentId, icon, themeKey } = await req.json();
+  const { name, parentId, icon, themeKey } = await req.json();
   if (!name?.trim()) return json({ message: 'الاسم مطلوب' }, 400);
-  if (!['SPECIES', 'TYPE', 'BREED'].includes(level)) return json({ message: 'مستوى غير صحيح' }, 400);
-  if (level !== 'SPECIES' && !parentId) return json({ message: 'يجب تحديد التصنيف الأب' }, 400);
+
+  const level = await depthLevel(parentId);
+  const max = await prisma.category.aggregate({ where: { parentId: parentId ?? null }, _max: { order: true } });
 
   const created = await prisma.category.create({
-    data: { name: name.trim(), level, parentId: parentId ?? null, icon: icon || null, themeKey: themeKey || null },
+    data: {
+      name: name.trim(),
+      level,
+      parentId: parentId ?? null,
+      icon: icon || null,
+      themeKey: themeKey || null,
+      order: (max._max.order ?? 0) + 1,
+    },
   });
   return json({ id: created.id }, 201);
 }

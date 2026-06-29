@@ -26,8 +26,8 @@ const FALLBACK_HEALTH: HealthItem[] = [
   { id: 'limp', label: 'خالٍ من العرج' },
 ];
 
-const STEPS = ['النوع', 'اللون', 'السلالة', 'العنوان', 'الصور', 'التفاصيل', 'الصحة', 'البيع'];
-const TITLES = ['نوع الماشية', 'اللون / الصنف', 'السلالة', 'العنوان والوصف', 'صور الحلال', 'التفاصيل', 'الحالة الصحية', 'طريقة البيع'];
+const STEPS = ['التصنيف', 'العنوان', 'الصور', 'التفاصيل', 'الصحة', 'البيع'];
+const TITLES = ['اختر التصنيف', 'العنوان والوصف', 'صور الحلال', 'التفاصيل', 'الحالة الصحية', 'طريقة البيع'];
 
 export default function SellPage() {
   const router = useRouter();
@@ -39,8 +39,7 @@ export default function SellPage() {
   const [error, setError] = useState('');
 
   const [form, setForm] = useState<any>({
-    species: null as Cat | null,
-    color: null as Cat | null,
+    catPath: [] as Cat[],
     categoryId: '',
     title: '', description: '', photos: [] as string[],
     count: 1, sex: 'MIXED', approxWeightKg: '', city: '', region: '',
@@ -118,16 +117,23 @@ export default function SellPage() {
     finally { setBusy(false); }
   };
 
+  // اختيار التصنيف بأي عمق
+  const catOptions: Cat[] = form.catPath.length ? (form.catPath[form.catPath.length - 1].children ?? []) : tree;
+  const chooseCat = (c: Cat) => {
+    const newPath = [...form.catPath, c];
+    if (c.children && c.children.length) setForm((f: any) => ({ ...f, catPath: newPath, categoryId: '' }));
+    else setForm((f: any) => ({ ...f, catPath: newPath, categoryId: c.id }));
+  };
+  const truncateCat = (i: number) => setForm((f: any) => ({ ...f, catPath: f.catPath.slice(0, i), categoryId: '' }));
+
   const canNext = () => {
     switch (step) {
-      case 0: return !!form.species;
-      case 1: return !!form.color;
-      case 2: return !!form.categoryId;
-      case 3: return form.title.length > 2 && form.description.length > 2;
+      case 0: return !!form.categoryId;
+      case 1: return form.title.length > 2 && form.description.length > 2;
+      case 2: return true;
+      case 3: return !!form.city && !!form.region;
       case 4: return true;
-      case 5: return !!form.city && !!form.region;
-      case 6: return true;
-      case 7:
+      case 5:
         if (form.saleType === 'DIRECT') return !!form.price;
         if (form.saleType === 'ONSOOM') return true;
         return !!form.startPrice;
@@ -146,47 +152,49 @@ export default function SellPage() {
       {error && <div className="mb-4 rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 
       <div className="card p-5">
-        {/* 0: النوع */}
+        {/* 0: التصنيف — تنقّل بأي عمق حتى تصل لتصنيف نهائي */}
         {step === 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {tree.map((s) => (
-              <button key={s.id}
-                onClick={() => { set('species', s); set('color', null); set('categoryId', ''); }}
-                className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-5 text-lg font-bold transition ${
-                  form.species?.id === s.id ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>
-                <span className="text-4xl">{s.icon}</span>{s.name}
-              </button>
-            ))}
-          </div>
-        )}
+          <div>
+            {/* مسار الاختيار */}
+            <div className="mb-3 flex flex-wrap items-center gap-1 text-sm">
+              <button onClick={() => truncateCat(0)} className={`font-bold ${form.catPath.length === 0 ? 'text-brand' : 'text-gray-500'}`}>الكل</button>
+              {form.catPath.map((c: Cat, i: number) => (
+                <span key={c.id} className="flex items-center gap-1">
+                  <span className="text-gray-300">›</span>
+                  <button onClick={() => truncateCat(i + 1)} className="font-bold text-gray-600">{c.icon} {c.name}</button>
+                </span>
+              ))}
+            </div>
 
-        {/* 1: اللون/الصنف */}
-        {step === 1 && (
-          <div className="grid grid-cols-2 gap-3">
-            {form.species?.children?.map((c: Cat) => (
-              <button key={c.id} onClick={() => { set('color', c); set('categoryId', ''); }}
-                className={`rounded-2xl border-2 p-4 text-lg font-bold transition ${
-                  form.color?.id === c.id ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{c.name}</button>
-            ))}
-            {(!form.species?.children || form.species.children.length === 0) && (
-              <p className="col-span-2 text-gray-500">لا توجد أصناف — تابع.</p>
+            {catOptions.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {catOptions.map((c) => {
+                  const isLeaf = !c.children || c.children.length === 0;
+                  const selected = form.categoryId === c.id;
+                  return (
+                    <button key={c.id} onClick={() => chooseCat(c)}
+                      className={`flex flex-col items-center gap-1 rounded-2xl border-2 p-4 text-center font-bold transition ${selected ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>
+                      {c.icon && <span className="text-3xl">{c.icon}</span>}
+                      <span>{c.name}</span>
+                      <span className="text-[11px] font-normal text-gray-400">{isLeaf ? (selected ? '✓ محدّد' : 'اختيار') : 'تصنيفات فرعية ›'}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500">لا توجد تصنيفات فرعية.</p>
+            )}
+
+            {form.categoryId && (
+              <p className="mt-4 rounded-2xl bg-green-50 p-3 text-center font-bold text-green-700">
+                ✓ اخترت: {form.catPath.map((c: Cat) => c.name).join(' › ')}
+              </p>
             )}
           </div>
         )}
 
-        {/* 2: السلالة */}
-        {step === 2 && (
-          <div className="grid grid-cols-2 gap-3">
-            {form.color?.children?.map((b: Cat) => (
-              <button key={b.id} onClick={() => set('categoryId', b.id)}
-                className={`rounded-2xl border-2 p-4 text-lg font-bold transition ${
-                  form.categoryId === b.id ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{b.name}</button>
-            ))}
-          </div>
-        )}
-
-        {/* 3: العنوان والوصف */}
-        {step === 3 && (
+        {/* 1: العنوان والوصف */}
+        {step === 1 && (
           <div className="space-y-4">
             <div>
               <label className="mb-2 block font-bold">عنوان الإعلان</label>
@@ -199,8 +207,8 @@ export default function SellPage() {
           </div>
         )}
 
-        {/* 4: الصور */}
-        {step === 4 && (
+        {/* 2: الصور */}
+        {step === 2 && (
           <div>
             <p className="mb-3 text-gray-500">أضف صوراً واضحة للحلال (حتى 8 صور).</p>
             <div className="grid grid-cols-3 gap-3">
@@ -223,8 +231,8 @@ export default function SellPage() {
           </div>
         )}
 
-        {/* 5: التفاصيل */}
-        {step === 5 && (
+        {/* 3: التفاصيل */}
+        {step === 3 && (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div><label className="mb-2 block font-bold">العدد</label>
@@ -250,8 +258,8 @@ export default function SellPage() {
           </div>
         )}
 
-        {/* 6: الصحة */}
-        {step === 6 && (
+        {/* 4: الصحة */}
+        {step === 4 && (
           <div className="space-y-2">
             <p className="mb-3 text-gray-500">حدّد لكل بند: <b className="text-green-700">سليم</b> أو <b className="text-red-600">غير سليم</b> (إفصاح صادق يرفع ثقتك)</p>
             {healthItems.map((h) => {
@@ -277,8 +285,8 @@ export default function SellPage() {
           </div>
         )}
 
-        {/* 7: البيع */}
-        {step === 7 && (
+        {/* 5: البيع */}
+        {step === 5 && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
               {([['DIRECT', '🏷️ سعر ثابت'], ['ONSOOM', '🤝 على السوم'], ['AUCTION', '🔨 مزاد']] as [string, string][]).map(([v, l]) => (

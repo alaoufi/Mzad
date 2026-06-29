@@ -186,8 +186,8 @@ export default function HomePage() {
           <button type="submit" className="btn-primary !px-5">🔍</button>
         </form>
 
-        {/* المستوى 1 */}
-        <Row label={mode === 'SUPPLIES' ? 'الفئة' : 'النوع'}>
+        {/* المستوى 1 (الرأس) */}
+        <Row label={levelLabel(mode, 0)}>
           <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
           {topList.map((c) => (
             <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
@@ -196,24 +196,18 @@ export default function HomePage() {
           ))}
         </Row>
 
-        {/* المستوى 2 */}
-        {path[0]?.children && path[0].children.length > 0 && (
-          <Row label={mode === 'SUPPLIES' ? 'الصنف' : 'اللون / الصنف'}>
-            <Chip active={path.length === 1} accent={theme.accent} onClick={() => reset(1)}>الكل</Chip>
-            {path[0].children.map((c) => (
-              <Chip key={c.id} active={path[1]?.id === c.id} accent={theme.accent} onClick={() => pick(1, c)}>{c.icon} {c.name}</Chip>
-            ))}
-          </Row>
-        )}
-
-        {/* المستوى 3 */}
-        {path[1]?.children && path[1].children.length > 0 && (
-          <Row label="السلالة">
-            <Chip active={path.length === 2} accent={theme.accent} onClick={() => reset(2)}>الكل</Chip>
-            {path[1].children.map((c) => (
-              <Chip key={c.id} active={path[2]?.id === c.id} accent={theme.accent} onClick={() => pick(2, c)}>{c.name}</Chip>
-            ))}
-          </Row>
+        {/* المستويات الأعمق — بأي عدد حسب التصنيف */}
+        {path.map((node, i) =>
+          node.children && node.children.length > 0 ? (
+            <Row key={node.id} label={levelLabel(mode, i + 1)}>
+              <Chip active={path.length === i + 1} accent={theme.accent} onClick={() => reset(i + 1)}>الكل</Chip>
+              {node.children.map((c) => (
+                <Chip key={c.id} active={path[i + 1]?.id === c.id} accent={theme.accent} onClick={() => pick(i + 1, c)}>
+                  {c.icon} {c.name}
+                </Chip>
+              ))}
+            </Row>
+          ) : null,
         )}
 
         {/* النتائج */}
@@ -258,6 +252,11 @@ export default function HomePage() {
       )}
     </div>
   );
+}
+
+function levelLabel(mode: Mode, depth: number): string {
+  if (mode === 'SUPPLIES') return ['الفئة', 'الصنف', 'النوع'][depth] ?? `مستوى ${depth + 1}`;
+  return ['النوع', 'اللون / الصنف', 'السلالة'][depth] ?? `مستوى ${depth + 1}`;
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {

@@ -18,25 +18,30 @@ export async function POST(req: NextRequest) {
 
   let species = 0, types = 0, breeds = 0;
 
+  let spOrder = 0;
   for (const [spName, { icon, groups }] of Object.entries(ANIMAL_CATALOG)) {
-    const sp = await prisma.category.create({ data: { name: spName, level: 'SPECIES', icon } });
+    const sp = await prisma.category.create({ data: { name: spName, level: 'SPECIES', icon, order: spOrder++ } });
     species++;
+    let tOrder = 0;
     for (const [tName, { icon: tIcon, breeds: bs }] of Object.entries(groups)) {
-      const t = await prisma.category.create({ data: { name: tName, level: 'TYPE', parentId: sp.id, icon: tIcon ?? null } });
+      const t = await prisma.category.create({ data: { name: tName, level: 'TYPE', parentId: sp.id, icon: tIcon ?? null, order: tOrder++ } });
       types++;
+      let bOrder = 0;
       for (const bName of bs) {
-        await prisma.category.create({ data: { name: bName, level: 'BREED', parentId: t.id } });
+        await prisma.category.create({ data: { name: bName, level: 'BREED', parentId: t.id, order: bOrder++ } });
         breeds++;
       }
     }
   }
 
   // سوق المستلزمات
-  const root = await prisma.category.create({ data: { name: SUPPLIES_NAME, level: 'SPECIES', icon: SUPPLIES_CATALOG.icon } });
+  const root = await prisma.category.create({ data: { name: SUPPLIES_NAME, level: 'SPECIES', icon: SUPPLIES_CATALOG.icon, order: spOrder } });
+  let cOrder = 0;
   for (const [cat, { icon, items }] of Object.entries(SUPPLIES_CATALOG.groups)) {
-    const c = await prisma.category.create({ data: { name: cat, level: 'TYPE', parentId: root.id, icon } });
+    const c = await prisma.category.create({ data: { name: cat, level: 'TYPE', parentId: root.id, icon, order: cOrder++ } });
+    let iOrder = 0;
     for (const it of items) {
-      await prisma.category.create({ data: { name: it, level: 'BREED', parentId: c.id } });
+      await prisma.category.create({ data: { name: it, level: 'BREED', parentId: c.id, order: iOrder++ } });
     }
   }
 
