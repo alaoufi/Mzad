@@ -19,6 +19,8 @@ interface Cat {
 }
 
 const ICON_SUGGESTIONS = ['🐪', '🐫', '🐐', '🐑', '🐏', '🐄', '🐂', '🐎', '🐴', '🐔', '🦅', '🐓', '🛒', '💊', '🌾', '🧴', '🥛', '🍖', '🏷️', '⭐'];
+// ألوان حافة حسب العمق — توضّح تداخل الفروع بصرياً (تُستخدم عند غياب ثيم خاص)
+const DEPTH_STRIPE = ['#0f7b6c', '#caa45d', '#7c8b9a', '#c98a6b'];
 
 interface Draft { name: string; icon: string; themeKey: string; hidden: boolean }
 const depthLabel = (d: number) => (d === 0 ? 'النوع (الرأس)' : `المستوى ${d + 1}`);
@@ -40,12 +42,22 @@ function NodeRow({ cat, depth, ctx }: { cat: Cat; depth: number; ctx: NodeCtx })
   const sibs = ctx.childrenOf.get(cat.parentId ?? null) ?? [];
   const idx = sibs.findIndex((s) => s.id === cat.id);
   const isOpen = ctx.open[cat.id];
+  // لون الحافة حسب العمق (أو ثيم القسم) لتوضيح التداخل
+  const stripe = cat.themeKey ? themeByKey(cat.themeKey).accent : DEPTH_STRIPE[Math.min(depth, DEPTH_STRIPE.length - 1)];
   return (
-    <div className="rounded-2xl border border-sand-200 bg-white" style={{ marginInlineStart: depth ? 12 : 0 }}>
+    <div className="overflow-hidden rounded-2xl border border-sand-200 bg-white"
+      style={{ marginInlineStart: depth ? 14 : 0, borderInlineStartWidth: 5, borderInlineStartColor: stripe }}>
       <div className={`flex items-center gap-1.5 p-2 ${cat.hidden ? 'opacity-50' : ''}`}>
-        <button onClick={() => ctx.toggle(cat.id)} className="w-5 text-base text-gray-400" disabled={!kids.length}>
-          {kids.length ? (isOpen ? '▾' : '▸') : '•'}
-        </button>
+        {kids.length ? (
+          <button onClick={() => ctx.toggle(cat.id)} title={isOpen ? 'طيّ الفروع' : 'عرض الفروع'}
+            className="flex h-8 items-center gap-1 rounded-lg px-2 text-sm font-extrabold text-white transition active:scale-95"
+            style={{ backgroundColor: isOpen ? stripe : `${stripe}d9` }}>
+            <span className={`text-xs leading-none transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}>▶</span>
+            <span className="text-xs leading-none">{kids.length}</span>
+          </button>
+        ) : (
+          <span className="flex h-8 w-7 items-center justify-center text-sm text-sand-300">•</span>
+        )}
         {cat.icon && <span className="text-lg">{cat.icon}</span>}
         <span className={`flex-1 truncate ${depth === 0 ? 'text-base font-extrabold' : depth === 1 ? 'font-bold text-brand-dark' : ''}`}>
           {cat.name}{cat.hidden && <span className="mr-1 text-[10px] text-red-500">(مخفي)</span>}
@@ -201,7 +213,8 @@ export default function AdminCategoriesPage() {
         <button onClick={() => router.push('/admin')} className="text-sm font-bold text-brand">← اللوحة</button>
       </div>
       <p className="text-sm text-gray-500">
-        أضف رأساً (نوعاً)، ثم تحته أي عدد من المستويات بأي عمق — لكل عنصر اسمه وأيقونته وثيمه. تعديل · ترتيب (▲▼) · إظهار/إخفاء · حذف.
+        أضف رأساً (نوعاً)، ثم تحته أي عدد من المستويات بأي عمق — لكل عنصر اسمه وأيقونته وثيمه.
+        الزر الملوّن ▶ على اليمين يفتح/يطوي الفروع ويظهر عددها. ترتيب (▲▼) · إظهار/إخفاء · حذف.
       </p>
       {error && <div className="rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 

@@ -57,7 +57,19 @@ export default function HomePage() {
   const animals = useMemo(() => tree.filter((s) => s.name !== SUPPLIES_NAME), [tree]);
   const suppliesRoot = useMemo(() => tree.find((s) => s.name === SUPPLIES_NAME), [tree]);
 
-  const topList = mode === 'SUPPLIES' ? suppliesRoot?.children ?? [] : animals;
+  // فهرسة كل عقدة بالـ id + الأب لكل عقدة
+  const catById = useMemo(() => {
+    const m = new Map<string, Cat>();
+    const walk = (n: Cat) => { m.set(n.id, n); n.children?.forEach(walk); };
+    tree.forEach(walk);
+    return m;
+  }, [tree]);
+  const parentOf = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    const walk = (n: Cat, p?: string) => { m.set(n.id, p); n.children?.forEach((c) => walk(c, n.id)); };
+    tree.forEach((t) => walk(t, undefined));
+    return m;
+  }, [tree]);
 
   // تقسيم الاهتمامات: ما يخصّ المستلزمات وما يخصّ المواشي
   const suppliesIds = useMemo(() => {
@@ -69,34 +81,53 @@ export default function HomePage() {
   const animalInterests = useMemo(() => interests.filter((id) => !suppliesIds.has(id)), [interests, suppliesIds]);
   const supplyInterests = useMemo(() => interests.filter((id) => suppliesIds.has(id)), [interests, suppliesIds]);
   const marketInterests = mode === 'SUPPLIES' ? supplyInterests : animalInterests;
-
-  const useInterests = interestActive && path.length === 0 && marketInterests.length > 0;
-
-  // فهرسة الأب لكل عقدة + حساب صلة التصنيف بالاهتمام (لتصفية أزرار التصفّح)
-  const parentOf = useMemo(() => {
-    const m = new Map<string, string | undefined>();
-    const walk = (n: Cat, p?: string) => { m.set(n.id, p); n.children?.forEach((c) => walk(c, n.id)); };
-    tree.forEach((t) => walk(t, undefined));
-    return m;
-  }, [tree]);
   const interestSet = useMemo(() => new Set(marketInterests), [marketInterests]);
-  const interestAncestors = useMemo(() => {
-    const s = new Set<string>();
-    for (const id of marketInterests) { let p = parentOf.get(id); while (p) { s.add(p); p = parentOf.get(p); } }
-    return s;
-  }, [marketInterests, parentOf]);
+
+  // جذور الاهتمام: العُقد المختارة التي لا يوجد لها سلف مختار — منها يبدأ التصفّح، ولا يُعرض ولا يُختار ما فوقها
+  const interestRootCats = useMemo(() => {
+    const set = new Set(marketInterests);
+    return marketInterests
+      .filter((id) => {
+        let p = parentOf.get(id);
+        while (p) { if (set.has(p)) return false; p = parentOf.get(p); }
+        return true;
+      })
+      .map((id) => catById.get(id))
+      .filter(Boolean) as Cat[];
+  }, [marketInterests, parentOf, catById]);
+
+  const useInterestNav = interestActive && marketInterests.length > 0 && interestRootCats.length > 0;
+  const useInterests = useInterestNav && path.length === 0;
+
+  // قائمة المستوى الأول: تبدأ من جذور الاهتمام عند تفعيله، وإلا كل الأنواع
+  const topList = useInterestNav
+    ? interestRootCats
+    : mode === 'SUPPLIES' ? suppliesRoot?.children ?? [] : animals;
+
+  // صلة التصنيف بالاهتمام: صحيح فقط إن كان العنصر اهتماماً مختاراً أو فرعاً منه (صرامة تامة)
   const relevant = (id: string): boolean => {
     if (!interestActive || marketInterests.length === 0) return true;
-    if (interestSet.has(id) || interestAncestors.has(id)) return true;
     let p: string | undefined = id;
     while (p) { if (interestSet.has(p)) return true; p = parentOf.get(p); }
     return false;
   };
 
-  // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة
-  const chain: CatNode[] = mode === 'SUPPLIES'
-    ? [...[...path].reverse(), ...(suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : [])]
-    : [...path].reverse();
+  // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة — تُبنى من سلف العقدة الأعمق
+  const ancestryChain = useMemo(() => {
+    const deepest = path[path.length - 1];
+    if (!deepest) return [] as CatNode[];
+    const out: CatNode[] = [];
+    let cur: string | undefined = deepest.id;
+    while (cur) {
+      const c = catById.get(cur);
+      if (c) out.push({ name: c.name, icon: c.icon ?? null, themeKey: c.themeKey ?? null });
+      cur = parentOf.get(cur);
+    }
+    return out;
+  }, [path, catById, parentOf]);
+  const chain: CatNode[] = ancestryChain.length
+    ? ancestryChain
+    : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
   const theme = resolveTheme(chain);
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
@@ -245,7 +276,9 @@ export default function HomePage() {
 
         {/* المستوى 1 (الرأس) — مصفّى حسب اهتمامك */}
         <Row label={levelLabel(mode, 0)}>
-          <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
+          <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>
+            {useInterestNav ? 'كل ما يهمّني' : 'الكل'}
+          </Chip>
           {topList.filter((c) => relevant(c.id)).map((c) => (
             <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
               {c.icon} {c.name}
