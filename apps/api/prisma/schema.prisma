@@ -332,6 +332,13 @@ model Ad {
   @@index([placement, status])
 }
 
+// إعدادات عامة (مفتاح/قيمة) تُدار من الإدارة — مثل وضع الدخول العام/المتخصص
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 model Favorite {
   id        String   @id @default(uuid())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

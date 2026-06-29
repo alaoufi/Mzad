@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'pending' | 'listings' | 'users'>('pending');
+  const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
 
   const load = () =>
     api<AdminData>('/admin/stats').then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
@@ -31,8 +32,15 @@ export default function AdminPage() {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     load();
+    api<{ entryMode: 'GENERAL' | 'SPECIALIZED' }>('/admin/settings').then((r) => setEntryMode(r.entryMode)).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const changeEntryMode = async (m: 'GENERAL' | 'SPECIALIZED') => {
+    setEntryMode(m);
+    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ entryMode: m }) }); }
+    catch (e: any) { alert(e.message); }
+  };
 
   const setStatus = async (id: string, status: string) => {
     try { await api(`/admin/listings/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); load(); }
@@ -101,6 +109,25 @@ export default function AdminPage() {
             <div className="text-xs text-gray-500">{c.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* وضع الدخول: عام أو متخصص */}
+      <div className="card p-4">
+        <h2 className="mb-1 text-lg font-bold">🚪 وضع الدخول للموقع</h2>
+        <p className="mb-3 text-sm text-gray-500">
+          العام: يتصفّح الزائر كل الأسواق مختلطة. المتخصص: يختار النوع أول دخول ويتصفّح داخله كأنه موقع مستقل بثيمه.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {([['GENERAL', '🌐 عام', 'كل الأنواع مختلطة'], ['SPECIALIZED', '🎯 متخصص', 'يختار النوع أولاً']] as [typeof entryMode, string, string][]).map(
+            ([m, label, hint]) => (
+              <button key={m} onClick={() => changeEntryMode(m)}
+                className={`rounded-2xl border-2 p-3 text-right transition ${entryMode === m ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>
+                <div className="font-bold">{label}</div>
+                <div className="text-xs text-gray-500">{hint}</div>
+              </button>
+            ),
+          )}
+        </div>
       </div>
 
       {/* تبويبات */}

@@ -16,8 +16,12 @@ export default function HomePage() {
   const [path, setPath] = useState<Cat[]>([]);
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
+  const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
 
-  useEffect(() => { api<Cat[]>('/categories').then(setTree).catch(() => {}); }, []);
+  useEffect(() => {
+    api<Cat[]>('/categories').then(setTree).catch(() => {});
+    api<{ entryMode: 'GENERAL' | 'SPECIALIZED' }>('/settings').then((r) => setEntryMode(r.entryMode)).catch(() => {});
+  }, []);
 
   const animals = useMemo(() => tree.filter((s) => s.name !== SUPPLIES_NAME), [tree]);
   const suppliesRoot = useMemo(() => tree.find((s) => s.name === SUPPLIES_NAME), [tree]);
@@ -60,6 +64,41 @@ export default function HomePage() {
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
+
+  // بوابة الدخول المتخصص: يختار الزائر النوع أول دخول ويتصفّح داخله كأنه موقع مستقل
+  const showGate = entryMode === 'SPECIALIZED' && mode !== 'SUPPLIES' && path.length === 0;
+  if (showGate && animals.length > 0) {
+    return (
+      <div className="-mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
+        style={{ background: sceneBackground(resolveTheme([])) }}>
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-6xl">🐾</p>
+          <h1 className="mt-3 text-2xl font-extrabold text-engrave sm:text-3xl">أهلاً بك في مزاد</h1>
+          <p className="mt-2 text-gray-500">اختر النوع الذي تريد تصفّحه — كل نوع بهويته الخاصة وكأنه موقع مستقل.</p>
+          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {animals.map((s) => {
+              const t = resolveTheme([{ name: s.name, themeKey: s.themeKey ?? null }]);
+              return (
+                <button key={s.id} onClick={() => pick(0, s)}
+                  className="group relative overflow-hidden rounded-3xl p-5 text-white shadow-lift transition hover:-translate-y-0.5"
+                  style={{ backgroundImage: gradient(t), boxShadow: `0 22px 44px -20px ${t.from}aa` }}>
+                  <span className="pointer-events-none absolute -left-3 -bottom-4 select-none text-7xl leading-none opacity-15">{s.icon ?? '🐾'}</span>
+                  <span className="relative block text-4xl drop-shadow animate-floaty">{s.icon ?? '🐾'}</span>
+                  <span className="relative mt-2 block text-lg font-extrabold text-emboss-light">{s.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <button onClick={() => setMode('SUPPLIES')}
+            className="mt-5 rounded-2xl bg-white/70 px-5 py-3 text-sm font-bold text-gray-600 ring-1 ring-sand-200 backdrop-blur">
+            🛒 أو تصفّح سوق المستلزمات
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const inSpecialized = entryMode === 'SPECIALIZED' && mode !== 'SUPPLIES';
 
   return (
     <div className="-mx-4 -my-6 min-h-screen px-4 py-6 transition-all duration-500 animate-fadeup"
@@ -111,15 +150,24 @@ export default function HomePage() {
           <button type="submit" className="btn-primary !px-5">🔍</button>
         </form>
 
-        {/* المستوى 1 */}
-        <Row label={mode === 'SUPPLIES' ? 'الفئة' : 'النوع'}>
-          <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
-          {topList.map((c) => (
-            <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
-              {c.icon} {c.name}
-            </Chip>
-          ))}
-        </Row>
+        {/* المستوى 1 — في الوضع المتخصص يُستبدل بزر تغيير النوع */}
+        {inSpecialized ? (
+          <button onClick={() => reset(0)}
+            className="mb-2 flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-bold text-white shadow"
+            style={{ backgroundImage: gradient(theme) }}>
+            <span>{emoji} {path[0]?.name}</span>
+            <span className="opacity-90">↩︎ تغيير النوع</span>
+          </button>
+        ) : (
+          <Row label={mode === 'SUPPLIES' ? 'الفئة' : 'النوع'}>
+            <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
+            {topList.map((c) => (
+              <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent} onClick={() => pick(0, c)}>
+                {c.icon} {c.name}
+              </Chip>
+            ))}
+          </Row>
+        )}
 
         {/* المستوى 2 */}
         {path[0]?.children && path[0].children.length > 0 && (

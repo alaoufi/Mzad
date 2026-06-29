@@ -336,6 +336,15 @@ model Ad {
   @@index([placement, status])
 }
 
+// ───────────────────────── إعدادات المنصة ─────────────────────────
+
+// إعدادات عامة (مفتاح/قيمة) تُدار من الإدارة — مثل وضع الدخول العام/المتخصص
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
 // ───────────────────────── المفضلة ─────────────────────────
 
 model Favorite {
