@@ -88,7 +88,31 @@ export function InterestPicker({
           <h3 className="text-xl font-extrabold text-engrave">{title}</h3>
           <button onClick={onClose} className="text-2xl leading-none text-gray-400">×</button>
         </div>
-        <p className="mb-4 text-sm text-gray-500">{subtitle}</p>
+        <p className="mb-3 text-sm text-gray-500">{subtitle}</p>
+
+        {/* المحدّد حالياً — يُظهر كل اختيار ولو كان داخل فرع مطويّ، ويُزال بنقرة */}
+        {sel.size > 0 && (
+          <div className="mb-4 rounded-2xl border border-brand/30 bg-brand/5 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-extrabold text-brand-dark">المحدّد حالياً ({sel.size})</span>
+              <button onClick={() => setSel(new Set())} className="rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-red-500 ring-1 ring-sand-200">
+                مسح الكل
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {[...sel].map((id) => {
+                const c = byId.get(id);
+                return (
+                  <button key={id} onClick={() => flip(id)}
+                    className="flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-xs font-bold text-white">
+                    <span>{c ? `${c.icon ?? ''} ${c.name}` : 'تصنيف'}</span>
+                    <span className="text-white/80">✕</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           {tree.map((sp) => {
