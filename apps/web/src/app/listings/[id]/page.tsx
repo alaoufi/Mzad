@@ -230,20 +230,36 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         <ListingChat listingId={listing.id} />
         {listing.seller?.id && <SellerReviews sellerId={listing.seller.id} />}
 
-        <button
-          className="w-full text-center text-sm text-gray-400"
-          onClick={async () => {
-            if (!user) { alert('سجّل الدخول أولاً للإبلاغ'); return; }
-            const reason = prompt('سبب الإبلاغ عن هذا الإعلان:');
-            if (!reason?.trim()) return;
-            try {
-              await api('/reports', { method: 'POST', body: JSON.stringify({ targetType: 'listing', targetId: listing.id, reason }) });
-              alert('🚩 شكراً، سيراجع فريق الأمان البلاغ');
-            } catch (e: any) { alert(e.message); }
-          }}
-        >
-          🚩 إبلاغ عن الإعلان
-        </button>
+        <div className="flex items-center justify-center gap-4 text-sm text-gray-400">
+          <button
+            onClick={async () => {
+              if (!user) { alert('سجّل الدخول أولاً للإبلاغ'); return; }
+              const reason = prompt('سبب الإبلاغ عن هذا الإعلان:');
+              if (!reason?.trim()) return;
+              try {
+                await api('/reports', { method: 'POST', body: JSON.stringify({ targetType: 'listing', targetId: listing.id, reason }) });
+                alert('🚩 شكراً، سيراجع فريق الأمان البلاغ');
+              } catch (e: any) { alert(e.message); }
+            }}
+          >
+            🚩 إبلاغ عن الإعلان
+          </button>
+          <span className="text-gray-300">·</span>
+          <button
+            onClick={async () => {
+              if (!user) { alert('سجّل الدخول أولاً'); return; }
+              const reason = prompt('سبب فتح نزاع على هذه الصفقة:');
+              if (!reason?.trim()) return;
+              const detail = prompt('تفاصيل إضافية (اختياري):') || '';
+              try {
+                await api('/disputes', { method: 'POST', body: JSON.stringify({ listingId: listing.id, reason, detail }) });
+                alert('⚖️ تم فتح النزاع، ستراجعه الإدارة. تابعه من «نزاعاتي».');
+              } catch (e: any) { alert(e.message); }
+            }}
+          >
+            ⚖️ فتح نزاع على الصفقة
+          </button>
+        </div>
       </div>
       </div>
     </div>

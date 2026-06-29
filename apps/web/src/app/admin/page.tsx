@@ -107,6 +107,8 @@ export default function AdminPage() {
             className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">🗂️ التصنيفات</button>
           <button onClick={() => router.push('/admin/health')}
             className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">🩺 الحالة الصحية</button>
+          <button onClick={() => router.push('/admin/disputes')}
+            className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">⚖️ النزاعات</button>
           <button onClick={() => router.push('/admin/marketing')}
             className="rounded-xl bg-brand px-3 py-2 text-sm font-bold text-white">📣 التسويق</button>
         </div>

@@ -47,6 +47,7 @@ model User {
   otps            OtpCode[]
   favorites       Favorite[]
   walletTxns      WalletTxn[]
+  disputes        Dispute[]      @relation("DisputeOpener")
 }
 
 // رموز التحقق بالجوال
@@ -134,6 +135,7 @@ model Listing {
   auction Auction?
   conversations Conversation[]
   favorites Favorite[]
+  disputes Dispute[]
 
   @@index([categoryId, status, region])
   @@index([status, createdAt])
@@ -335,6 +337,27 @@ model Ad {
   createdAt   DateTime  @default(now())
 
   @@index([placement, status])
+}
+
+// ───────────────────────── مركز النزاعات ─────────────────────────
+
+// نزاع على صفقة بين طرفين، يُحال للإدارة لاتخاذ قرار
+model Dispute {
+  id         String   @id @default(uuid())
+  listing    Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  listingId  String?
+  openedBy   User     @relation("DisputeOpener", fields: [openedById], references: [id])
+  openedById String
+  againstId  String?  // الطرف الآخر (اختياري)
+  reason     String
+  detail     String?
+  status     String   @default("OPEN") // OPEN / REVIEWING / RESOLVED / REJECTED
+  resolution String?  // قرار الإدارة
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([status, createdAt])
+  @@index([openedById])
 }
 
 // ───────────────────────── المحفظة والسجل المالي ─────────────────────────

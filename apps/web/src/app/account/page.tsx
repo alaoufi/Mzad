@@ -154,6 +154,10 @@ export default function AccountPage() {
         </button>
       </div>
 
+      <button className="card float-box flex w-full items-center justify-center gap-2 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
+        ⚖️ نزاعاتي
+      </button>
+
       {/* روابط اللوحات */}
       {(profile?.role === 'BROKER' || profile?.role === 'ADMIN') && (
         <button className="btn-outline w-full !border-brand !text-brand" onClick={() => router.push('/broker')}>
