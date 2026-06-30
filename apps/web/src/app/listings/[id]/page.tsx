@@ -220,7 +220,13 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
-            <p className="mt-1 text-gray-500">📍 {listing.city} — {listing.region}</p>
+            <p className="mt-1 flex flex-wrap items-center gap-2 text-gray-500">
+              📍 {listing.city} — {listing.region}
+              {listing.lat != null && listing.lng != null && (
+                <a href={`https://maps.google.com/?q=${listing.lat},${listing.lng}`} target="_blank" rel="noopener noreferrer"
+                  className="rounded-lg bg-sand-100 px-2 py-0.5 text-xs font-bold text-brand-dark">🗺️ الموقع على الخريطة</a>
+              )}
+            </p>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-gray-400">
               {listing.createdAt && <span>🗓️ <HijriDate value={listing.createdAt} /></span>}
               {typeof listing.views === 'number' && <span>👁️ {listing.views.toLocaleString('ar-SA')} مشاهدة</span>}

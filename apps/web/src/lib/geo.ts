@@ -10,6 +10,18 @@ export function storedRegion(): string {
 }
 export function clearRegion() { try { localStorage.removeItem(KEY); } catch {} }
 
+// يلتقط إحداثيات GPS الخام (بإذن الزائر) — للموقع الدقيق في الإعلانات
+export function getCoords(): Promise<{ lat: number; lng: number } | null> {
+  return new Promise((resolve) => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
+  });
+}
+
 // يطلب إذن الموقع (آمن) ويحسب أقرب منطقة محلياً (خصوصية تامة) ويخزّن المفتاح
 export function detectRegionViaGPS(): Promise<string | null> {
   return new Promise((resolve) => {

@@ -6,6 +6,9 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { compressImage } from '@/lib/image';
 import { HijriDate } from '@/components/HijriDate';
+import { getCoords } from '@/lib/geo';
+import { nearestRegion, regionName } from '@/lib/ads';
+import { uiToast } from '@/lib/ui';
 
 interface Cat {
   id: string;
@@ -43,9 +46,20 @@ export default function SellPage() {
     categoryId: '',
     title: '', description: '', photos: [] as string[],
     count: 1, sex: 'MIXED', approxWeightKg: '', city: '', region: '',
+    lat: null as number | null, lng: null as number | null,
     saleType: 'DIRECT', price: '', startPrice: '', minIncrement: 500, durationHours: 24, startAt: '', typeId: '',
     health: {} as Record<string, boolean>,
   });
+  const [locBusy, setLocBusy] = useState(false);
+  const captureLocation = async () => {
+    setLocBusy(true);
+    const c = await getCoords();
+    setLocBusy(false);
+    if (!c) { uiToast('تعذّر تحديد الموقع — اسمح بالإذن', 'error'); return; }
+    setForm((f: any) => ({ ...f, lat: c.lat, lng: c.lng }));
+    const rk = nearestRegion(c.lat, c.lng);
+    uiToast(rk ? `📍 تم تحديد الموقع — ${regionName(rk)}` : '📍 تم تحديد الموقع', 'success');
+  };
 
   const isBroker = user?.role === 'BROKER' || user?.role === 'ADMIN';
 
@@ -100,6 +114,7 @@ export default function SellPage() {
         count: Number(form.count) || 1, sex: form.sex,
         approxWeightKg: form.approxWeightKg ? Number(form.approxWeightKg) : undefined,
         city: form.city, region: form.region, saleType: form.saleType, health, media,
+        lat: form.lat ?? undefined, lng: form.lng ?? undefined,
       };
       if (form.saleType === 'DIRECT') {
         body.price = form.price ? Number(form.price) : undefined;
@@ -258,6 +273,28 @@ export default function SellPage() {
                 <input className="input" value={form.city} onChange={(e) => set('city', e.target.value)} /></div>
               <div><label className="mb-2 block font-bold">المنطقة</label>
                 <input className="input" value={form.region} onChange={(e) => set('region', e.target.value)} /></div>
+            </div>
+
+            {/* الموقع على الخريطة — اختياري */}
+            <div className="mt-3 rounded-2xl border-2 border-sand-200 p-3">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="font-bold">📍 الموقع على الخريطة <span className="text-xs font-normal text-gray-400">(اختياري)</span></span>
+                {form.lat != null && (
+                  <button type="button" onClick={() => setForm((f: any) => ({ ...f, lat: null, lng: null }))} className="text-xs font-bold text-red-500">إزالة</button>
+                )}
+              </div>
+              {form.lat != null ? (
+                <div className="flex items-center gap-2 text-sm text-green-700">
+                  ✔ تم تحديد الموقع{(() => { const rk = nearestRegion(form.lat, form.lng); return rk ? ` — ${regionName(rk)}` : ''; })()}
+                  <a href={`https://maps.google.com/?q=${form.lat},${form.lng}`} target="_blank" rel="noopener noreferrer" className="mr-auto rounded-lg bg-sand-100 px-2 py-1 text-xs font-bold text-brand-dark">معاينة</a>
+                </div>
+              ) : (
+                <button type="button" onClick={captureLocation} disabled={locBusy}
+                  className="w-full rounded-xl bg-brand/10 py-2.5 font-bold text-brand disabled:opacity-50">
+                  {locBusy ? 'جارٍ التحديد...' : '🎯 تحديد موقعي بدقّة (GPS)'}
+                </button>
+              )}
+              <p className="mt-1 text-[11px] text-gray-400">يساعد المشترين على معرفة مكان الحلال بدقّة. يتطلّب إذنك.</p>
             </div>
           </div>
         )}
