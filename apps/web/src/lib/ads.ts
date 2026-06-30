@@ -29,3 +29,32 @@ export const COUNTRIES: { code: string; name: string }[] = [
   { code: 'YE', name: 'اليمن' }, { code: 'SD', name: 'السودان' },
 ];
 export const countryName = (code: string) => COUNTRIES.find((c) => c.code === code)?.name ?? code;
+
+// مناطق/مدن للاستهداف الدقيق — يُطابَق ضدّ مدينة الزائر (ترويسة x-vercel-ip-city اللاتينية) عبر المرادفات
+export const REGIONS: { key: string; name: string; aliases: string[] }[] = [
+  { key: 'riyadh', name: 'الرياض', aliases: ['riyadh', 'riad'] },
+  { key: 'makkah', name: 'مكة المكرمة', aliases: ['mecca', 'makkah'] },
+  { key: 'jeddah', name: 'جدة', aliases: ['jeddah', 'jiddah', 'jed'] },
+  { key: 'madinah', name: 'المدينة المنورة', aliases: ['medina', 'madinah'] },
+  { key: 'qassim', name: 'القصيم', aliases: ['buraydah', 'buraidah', 'qassim', 'unayzah', 'unaizah'] },
+  { key: 'eastern', name: 'الشرقية', aliases: ['dammam', 'khobar', 'dhahran', 'hofuf', 'hafuf', 'ahsa', 'jubail', 'qatif'] },
+  { key: 'asir', name: 'عسير', aliases: ['abha', 'khamis'] },
+  { key: 'taif', name: 'الطائف', aliases: ['taif'] },
+  { key: 'tabuk', name: 'تبوك', aliases: ['tabuk'] },
+  { key: 'hail', name: 'حائل', aliases: ['hail', "ha'il"] },
+  { key: 'jazan', name: 'جازان', aliases: ['jazan', 'jizan'] },
+  { key: 'najran', name: 'نجران', aliases: ['najran'] },
+];
+export const regionName = (key: string) => REGIONS.find((r) => r.key === key)?.name ?? key;
+
+// هل تطابق مدينة الزائر اللاتينية أياً من المناطق المستهدفة (مفاتيح مفصولة بفواصل)؟
+export function regionMatches(targetRegionsCsv: string | null | undefined, city: string): boolean {
+  const keys = (targetRegionsCsv || '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (!keys.length) return true;          // بلا استهداف منطقة = كل المناطق
+  if (!city) return true;                 // لا نعرف المدينة = لا نُقصِي
+  const c = city.toLowerCase();
+  return keys.some((key) => {
+    const r = REGIONS.find((x) => x.key === key);
+    return r ? r.aliases.some((al) => c.includes(al)) : c.includes(key.toLowerCase());
+  });
+}

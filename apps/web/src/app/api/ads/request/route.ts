@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
 import { packageByKey } from '@/lib/ads';
+import { notify } from '@/lib/notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,5 +34,12 @@ export async function POST(req: NextRequest) {
       // المدة تبدأ عند موافقة الإدارة (تُضبط حينها)
     },
   });
+
+  // إشعار جميع المشرفين بوصول طلب إعلان جديد
+  try {
+    const admins = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } });
+    await Promise.all(admins.map((a) => notify(a.id, 'AD_REQUEST', `📣 طلب إعلان جديد: ${created.title}`, '/admin/ads')));
+  } catch { /* تجاهل */ }
+
   return json({ id: created.id }, 201);
 }

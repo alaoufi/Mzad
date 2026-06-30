@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { json } from '@/lib/server-auth';
+import { regionMatches } from '@/lib/ads';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,8 +9,9 @@ export const dynamic = 'force-dynamic';
 // إعلانات موضع معيّن (للتبادل في AdBanner) — مع استهداف جغرافي بالـIP وسقف مشاهدات/مدة
 export async function GET(req: NextRequest) {
   const placement = req.nextUrl.searchParams.get('placement') ?? 'HOME_TOP';
-  // بلد الزائر من ترويسات Vercel (إن توفّرت)
+  // بلد ومدينة الزائر من ترويسات Vercel (إن توفّرت)
   const country = (req.headers.get('x-vercel-ip-country') || '').toUpperCase();
+  const city = req.headers.get('x-vercel-ip-city') || '';
   const now = new Date();
   try {
     const rows = await prisma.ad.findMany({
@@ -34,6 +36,8 @@ export async function GET(req: NextRequest) {
         const list = tc.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
         if (list.length && !list.includes(country)) return false;
       }
+      // الاستهداف بالمدينة/المنطقة (إن حُدّد)
+      if (!regionMatches(a.targetRegions, city)) return false;
       return true;
     });
 

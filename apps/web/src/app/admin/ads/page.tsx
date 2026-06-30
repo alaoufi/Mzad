@@ -8,11 +8,17 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { uiToast, uiConfirm } from '@/lib/ui';
 import { compressImage } from '@/lib/image';
-import { AD_PLACEMENTS, AD_PACKAGES, COUNTRIES, placementLabel, packageByKey, countryName, riyals } from '@/lib/ads';
+import { AD_PLACEMENTS, AD_PACKAGES, COUNTRIES, REGIONS, placementLabel, packageByKey, countryName, regionName, riyals } from '@/lib/ads';
+
+const toLocal = (iso?: string | null) => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
 
 interface Ad {
   id: string; title: string; imageUrl?: string | null; link?: string | null; placement: string;
-  status: string; priority: number; advertiser?: string | null; targetCountries?: string | null;
+  status: string; priority: number; advertiser?: string | null; targetCountries?: string | null; targetRegions?: string | null;
   packageKey?: string | null; priceHalalas?: number | null; maxImpressions?: number | null;
   startAt?: string | null; endAt?: string | null; impressions: number; clicks: number;
 }
@@ -26,9 +32,9 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 interface Draft {
   title: string; advertiser: string; placement: string; imageUrl: string; link: string;
-  packageKey: string; countries: string[]; priority: string; status: string;
+  packageKey: string; countries: string[]; regions: string[]; startAt: string; endAt: string; priority: string; status: string;
 }
-const EMPTY: Draft = { title: '', advertiser: '', placement: 'HOME_TOP', imageUrl: '', link: '', packageKey: '', countries: [], priority: '0', status: 'ACTIVE' };
+const EMPTY: Draft = { title: '', advertiser: '', placement: 'HOME_TOP', imageUrl: '', link: '', packageKey: '', countries: [], regions: [], startAt: '', endAt: '', priority: '0', status: 'ACTIVE' };
 
 const daysLeft = (endAt?: string | null) => {
   if (!endAt) return null;
@@ -66,6 +72,8 @@ export default function AdminAdsPage() {
     setDraft({
       title: a.title, advertiser: a.advertiser ?? '', placement: a.placement, imageUrl: a.imageUrl ?? '',
       link: a.link ?? '', packageKey: a.packageKey ?? '', countries: (a.targetCountries || '').split(',').map((s) => s.trim()).filter(Boolean),
+      regions: (a.targetRegions || '').split(',').map((s) => s.trim()).filter(Boolean),
+      startAt: toLocal(a.startAt), endAt: toLocal(a.endAt),
       priority: String(a.priority ?? 0), status: a.status,
     });
   };
@@ -85,6 +93,7 @@ export default function AdminAdsPage() {
     const body = {
       title: draft.title, advertiser: draft.advertiser, placement: draft.placement, imageUrl: draft.imageUrl,
       link: draft.link, packageKey: draft.packageKey, targetCountries: draft.countries.join(','),
+      targetRegions: draft.regions.join(','), startAt: draft.startAt, endAt: draft.endAt,
       priority: draft.priority, status: draft.status,
     };
     try {
@@ -129,6 +138,7 @@ export default function AdminAdsPage() {
             const pct = cap ? Math.min(100, Math.round((a.impressions / cap) * 100)) : 0;
             const ctr = a.impressions ? ((a.clicks / a.impressions) * 100).toFixed(1) : '0';
             const countries = (a.targetCountries || '').split(',').map((s) => s.trim()).filter(Boolean);
+            const regions = (a.targetRegions || '').split(',').map((s) => s.trim()).filter(Boolean);
             return (
               <div key={a.id} className="card p-4">
                 <div className="flex items-start gap-3">
@@ -146,6 +156,7 @@ export default function AdminAdsPage() {
                     </div>
                     <div className="mt-0.5 text-xs text-gray-500">
                       🌍 {countries.length ? countries.map(countryName).join('، ') : 'كل الدول'}
+                      {regions.length > 0 && ` · 📍 ${regions.map(regionName).join('، ')}`}
                       {a.priceHalalas != null && ` · 💰 ${riyals(a.priceHalalas)} ﷼`}
                     </div>
                   </div>
@@ -247,6 +258,31 @@ export default function AdminAdsPage() {
                 })}
               </div>
             </Field>
+
+            <Field label="المناطق/المدن (داخل الدول — فارغ = كل المناطق)">
+              <div className="flex flex-wrap gap-1.5">
+                {REGIONS.map((r) => {
+                  const on = draft.regions.includes(r.key);
+                  return (
+                    <button key={r.key} type="button"
+                      onClick={() => setDraft((d) => ({ ...d, regions: on ? d.regions.filter((x) => x !== r.key) : [...d.regions, r.key] }))}
+                      className={`rounded-full px-3 py-1 text-sm font-bold ring-1 ${on ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>
+                      {r.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="تاريخ البداية (اختياري)">
+                <input type="datetime-local" className="input" value={draft.startAt} onChange={(e) => setDraft((d) => ({ ...d, startAt: e.target.value }))} />
+              </Field>
+              <Field label="تاريخ النهاية (اختياري)">
+                <input type="datetime-local" className="input" value={draft.endAt} onChange={(e) => setDraft((d) => ({ ...d, endAt: e.target.value }))} />
+              </Field>
+            </div>
+            <p className="-mt-1 mb-3 text-[11px] text-gray-400">إن تركت التواريخ فارغة وحدّدت باقة، تُحسب المدة تلقائياً من الباقة.</p>
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="الأولوية">

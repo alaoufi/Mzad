@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { uiToast } from '@/lib/ui';
 import { compressImage } from '@/lib/image';
-import { AD_PLACEMENTS, AD_PACKAGES, COUNTRIES, placementLabel, packageByKey, countryName, riyals } from '@/lib/ads';
+import { AD_PLACEMENTS, AD_PACKAGES, COUNTRIES, REGIONS, placementLabel, packageByKey, countryName, riyals } from '@/lib/ads';
 
 interface Ad {
   id: string; title: string; placement: string; status: string; packageKey?: string | null;
@@ -29,6 +29,7 @@ export default function AdvertisePage() {
   const [placement, setPlacement] = useState('HOME_TOP');
   const [packageKey, setPackageKey] = useState('');
   const [countries, setCountries] = useState<string[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -47,9 +48,9 @@ export default function AdvertisePage() {
     if (!packageKey) { uiToast('اختر باقة'); return; }
     setSaving(true);
     try {
-      await api('/ads/request', { method: 'POST', body: JSON.stringify({ title, link, imageUrl, placement, packageKey, targetCountries: countries.join(',') }) });
+      await api('/ads/request', { method: 'POST', body: JSON.stringify({ title, link, imageUrl, placement, packageKey, targetCountries: countries.join(','), targetRegions: regions.join(',') }) });
       uiToast('✅ تم استلام طلبك — بانتظار موافقة الإدارة', 'success');
-      setTitle(''); setLink(''); setImageUrl(''); setPackageKey(''); setCountries([]);
+      setTitle(''); setLink(''); setImageUrl(''); setPackageKey(''); setCountries([]); setRegions([]);
       load();
     } catch (e: any) { uiToast(e.message); }
     finally { setSaving(false); }
@@ -103,6 +104,16 @@ export default function AdvertisePage() {
               return <button key={c.code} type="button"
                 onClick={() => setCountries((p) => on ? p.filter((x) => x !== c.code) : [...p, c.code])}
                 className={`rounded-full px-3 py-1 text-sm font-bold ring-1 ${on ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>{c.name}</button>;
+            })}
+          </div></div>
+
+        <div><label className="mb-1 block text-sm font-bold text-gray-600">المناطق/المدن (اختياري — فارغ = كل المناطق)</label>
+          <div className="flex flex-wrap gap-1.5">
+            {REGIONS.map((r) => {
+              const on = regions.includes(r.key);
+              return <button key={r.key} type="button"
+                onClick={() => setRegions((p) => on ? p.filter((x) => x !== r.key) : [...p, r.key])}
+                className={`rounded-full px-3 py-1 text-sm font-bold ring-1 ${on ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>{r.name}</button>;
             })}
           </div></div>
 
