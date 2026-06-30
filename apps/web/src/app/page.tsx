@@ -51,7 +51,7 @@ export default function HomePage() {
       if (ct) setTree(JSON.parse(ct));
       const st = sessionStorage.getItem('mzad_settings');
       if (st) { const s = JSON.parse(st); if (s.entryMode) setEntryMode(s.entryMode); if (s.texts) setTxt(s.texts); }
-      setGateDismissed(sessionStorage.getItem('mzad_gate') === '1');
+      setGateDismissed(localStorage.getItem('mzad_gate') === '1');
     } catch {}
     api<Cat[]>('/categories').then((r) => { setTree(r); try { sessionStorage.setItem('mzad_cats', JSON.stringify(r)); } catch {} }).catch(() => {});
     api<{ entryMode: 'GENERAL' | 'SPECIALIZED'; texts?: Record<string, string> }>('/settings').then((r) => { setEntryMode(r.entryMode); if (r.texts) setTxt(r.texts); try { sessionStorage.setItem('mzad_settings', JSON.stringify(r)); } catch {} }).catch(() => {});
@@ -59,11 +59,14 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
-    // الخادم هو مصدر الحقيقة الوحيد للاهتمامات — لا ترطيب من الذاكرة ولا «تعافٍ ذاتي»،
-    // حتى لا تُبعث اهتمامات حذفها المستخدم (الذاكرة قد تكون أقدم من الخادم). طلب واحد، حقيقة واحدة.
+    // الخادم مصدر الحقيقة: عند النجاح نأخذ قيمته (فالحذف يبقى محذوفاً). أمّا عند فشل الشبكة فقط
+    // (اتصال بطيء/متقطّع) نرجع للذاكرة المخزّنة حتى لا تُفقد اهتمامات الزائر فتظهر «كل الإعلانات».
+    const key = `mzad_interests_${user.id}`;
     api<{ interests?: string[] }>('/users/me')
-      .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ints)); } catch {} })
-      .catch(() => {})
+      .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(key, JSON.stringify(ints)); } catch {} })
+      .catch(() => {
+        try { const c = localStorage.getItem(key); if (c) { const a = JSON.parse(c); if (Array.isArray(a) && a.length) setInterests(a); } } catch {}
+      })
       .finally(() => setProfileLoaded(true));
   }, [user]);
 
@@ -263,12 +266,12 @@ export default function HomePage() {
   };
 
   const enterSpecies = (s: Cat) => {
-    if (typeof window !== 'undefined') sessionStorage.setItem('mzad_gate', '1');
+    if (typeof window !== 'undefined') localStorage.setItem('mzad_gate', '1');
     setGateDismissed(true);
     setPath([s]);
   };
   const dismissGate = () => {
-    if (typeof window !== 'undefined') sessionStorage.setItem('mzad_gate', '1');
+    if (typeof window !== 'undefined') localStorage.setItem('mzad_gate', '1');
     setGateDismissed(true);
   };
 
@@ -287,6 +290,9 @@ export default function HomePage() {
             ✏️ حدّد اهتماماتك للبدء
           </button>
           <p className="mt-3 text-xs text-gray-400">يمكنك تعديلها لاحقاً من ملفك في أي وقت.</p>
+          <button onClick={dismissGate} className="mt-4 text-sm font-bold text-gray-400 underline-offset-4 hover:underline">
+            تصفّح بدون تحديد
+          </button>
         </div>
 
         {showPicker && (
