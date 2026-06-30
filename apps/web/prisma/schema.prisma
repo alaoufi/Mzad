@@ -181,6 +181,7 @@ enum MediaType {
   IMAGE
   VIDEO
   VIDEO_360
+  AUDIO
   DOC
 }
 

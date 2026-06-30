@@ -130,7 +130,10 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
   if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 
-  const media = listing.media ?? [];
+  const allMedia = listing.media ?? [];
+  const media = allMedia.filter((m: any) => !m.type || m.type === 'IMAGE' || m.type === 'VIDEO_360');
+  const videoMedia = allMedia.find((m: any) => m.type === 'VIDEO');
+  const audioMedia = allMedia.find((m: any) => m.type === 'AUDIO');
 
   // صلاحيات التعديل والأرشفة
   const isOwner = !!user && user.id === listing.seller?.id;
@@ -211,6 +214,19 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                 alt=""
               />
             ))}
+          </div>
+        )}
+
+        {videoMedia && (
+          <div className="mt-3">
+            <p className="mb-1 text-sm font-bold text-gray-600">🎬 مقطع الفيديو</p>
+            <video src={videoMedia.url} controls playsInline className="w-full rounded-2xl bg-black" />
+          </div>
+        )}
+        {audioMedia && (
+          <div className="mt-3 rounded-2xl bg-sand-50 p-3">
+            <p className="mb-1 text-sm font-bold text-gray-600">🎤 توضيح صوتي من البائع</p>
+            <audio src={audioMedia.url} controls className="w-full" />
           </div>
         )}
       </div>

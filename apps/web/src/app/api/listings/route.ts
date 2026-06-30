@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
       where,
       include: {
         category: true,
-        media: { orderBy: { order: 'asc' }, take: 1 },
+        media: { where: { type: 'IMAGE' }, orderBy: { order: 'asc' }, take: 1 },
         auction: { select: { id: true, status: true, endAt: true, highestBidId: true, startPrice: true } },
         seller: { select: { id: true, name: true, trustScore: true, identityStatus: true } },
       },

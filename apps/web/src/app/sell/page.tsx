@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -25,6 +25,7 @@ const FALLBACK_HEALTH: HealthItem[] = [
 
 // إطار حسب الحالة: مطلوب=أحمر (أخضر عند التعبئة)، اختياري=أخضر
 const tone = (req: boolean, filled = false) => (req ? (filled ? '!border-green-400' : '!border-red-300') : '!border-green-300');
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 export default function SellPage() {
   const router = useRouter();
@@ -82,6 +83,37 @@ export default function SellPage() {
     finally { setUploading(false); }
   };
 
+  // فيديو
+  const [videoUrl, setVideoUrl] = useState('');
+  const pickVideo = (files: FileList | null) => {
+    const f = files?.[0]; if (!f) return;
+    if (f.size > 15 * 1024 * 1024) { uiToast('الفيديو كبير — اختر مقطعاً أقصر (حتى 15MB)', 'error'); return; }
+    const r = new FileReader(); r.onloadend = () => setVideoUrl(String(r.result)); r.readAsDataURL(f);
+  };
+
+  // تسجيل صوتي
+  const [audioUrl, setAudioUrl] = useState('');
+  const [recording, setRecording] = useState(false);
+  const [recSecs, setRecSecs] = useState(0);
+  const recRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<any>(null);
+  const stopRec = () => { clearInterval(timerRef.current); setRecording(false); try { recRef.current?.stop(); } catch {} };
+  const startRec = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream); chunksRef.current = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || 'audio/webm' });
+        const r = new FileReader(); r.onloadend = () => setAudioUrl(String(r.result)); r.readAsDataURL(blob);
+      };
+      recRef.current = mr; mr.start(); setRecording(true); setRecSecs(0);
+      timerRef.current = setInterval(() => setRecSecs((s) => { if (s >= 90) { stopRec(); return s; } return s + 1; }), 1000);
+    } catch { uiToast('تعذّر الوصول للميكروفون — اسمح بالإذن', 'error'); }
+  };
+
   // التصنيف: تسطيح للبحث + ثيم لكل بطاقة
   const allCats = useMemo(() => {
     const out: { cat: Cat; path: Cat[] }[] = [];
@@ -131,7 +163,11 @@ export default function SellPage() {
       const health = Object.entries(form.health)
         .filter(([, value]) => value !== undefined && value !== null)
         .map(([key, value]) => ({ key, value, label: labelOf(key) }));
-      const media = form.photos.map((url: string) => ({ url, type: 'IMAGE' }));
+      const media = [
+        ...form.photos.map((url: string) => ({ url, type: 'IMAGE' })),
+        ...(videoUrl ? [{ url: videoUrl, type: 'VIDEO' }] : []),
+        ...(audioUrl ? [{ url: audioUrl, type: 'AUDIO' }] : []),
+      ];
       let city = form.city.trim(), region = form.region.trim();
       if (hasLoc) { region = detectedRegion; city = form.city.trim() || detectedRegion; }
       const body: any = {
@@ -271,6 +307,41 @@ export default function SellPage() {
             </label>
           )}
         </div>
+      </Section>
+
+      {/* فيديو — اختياري */}
+      <Section title="🎬 مقطع فيديو" badge="opt" hint="مقطع قصير يوضّح الحلال (حتى 15MB).">
+        {videoUrl ? (
+          <div className="space-y-2">
+            <video src={videoUrl} controls className="w-full rounded-2xl bg-black" />
+            <button onClick={() => setVideoUrl('')} className="text-sm font-bold text-red-500">🗑️ إزالة الفيديو</button>
+          </div>
+        ) : (
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-green-300 py-6 font-bold text-gray-600 hover:border-brand">
+            <span className="text-3xl">🎬</span>
+            <span>اختر مقطع فيديو</span>
+            <input type="file" accept="video/*" className="hidden" onChange={(e) => pickVideo(e.target.files)} />
+          </label>
+        )}
+      </Section>
+
+      {/* مقطع صوتي توضيحي — اختياري */}
+      <Section title="🎤 مقطع صوتي توضيحي" badge="opt" hint="سجّل توضيحاً صوتياً عن الحلال (اختياري).">
+        {audioUrl ? (
+          <div className="space-y-2">
+            <audio src={audioUrl} controls className="w-full" />
+            <button onClick={() => { setAudioUrl(''); }} className="text-sm font-bold text-red-500">🗑️ حذف وإعادة التسجيل</button>
+          </div>
+        ) : recording ? (
+          <div className="flex items-center gap-3 rounded-2xl bg-red-50 p-3">
+            <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+            <span className="font-bold text-red-600">{mmss(recSecs)}</span>
+            <span className="text-sm text-gray-500">جارٍ التسجيل…</span>
+            <button onClick={stopRec} className="btn-primary mr-auto !min-h-0 !px-5 !py-2">إيقاف</button>
+          </div>
+        ) : (
+          <button onClick={startRec} className="w-full rounded-2xl bg-brand/10 py-3 font-bold text-brand">🎤 ابدأ التسجيل</button>
+        )}
       </Section>
 
       {/* التفاصيل — اختياري */}
