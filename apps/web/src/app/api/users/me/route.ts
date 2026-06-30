@@ -23,6 +23,11 @@ export async function GET(req: NextRequest) {
       identityStatus: true,
       trustScore: true,
       interests: true,
+      bio: true,
+      experienceYears: true,
+      bankName: true,
+      bankAccount: true,
+      iban: true,
       createdAt: true,
       _count: { select: { listings: true, reviewsReceived: true } },
     },
@@ -35,6 +40,26 @@ export async function GET(req: NextRequest) {
     _count: true,
   });
 
+  // إحصائيات تاريخه في السوق: مبيعات / مشتريات / مزايدات / عروض
+  const [sales, offers, auctionsListed, myBids] = await Promise.all([
+    // مبيعاته: إعلاناته التي بيعت
+    prisma.listing.count({ where: { sellerId: auth.sub, status: 'SOLD' } }),
+    // عروضه: إعلانات البيع المباشر التي طرحها
+    prisma.listing.count({ where: { sellerId: auth.sub, saleType: 'DIRECT' } }),
+    // مزاداته: إعلانات المزاد التي طرحها
+    prisma.listing.count({ where: { sellerId: auth.sub, saleType: 'AUCTION' } }),
+    // مزايداته: معرّفات مزايداته لحساب المشتريات (المزادات التي فاز بها)
+    prisma.bid.findMany({ where: { bidderId: auth.sub }, select: { id: true, auctionId: true } }),
+  ]);
+
+  const bidsCount = myBids.length;
+  const auctionsBidIn = new Set(myBids.map((b) => b.auctionId)).size;
+  // مشترياته: المزادات المنتهية التي كانت مزايدته فيها هي الأعلى
+  const myBidIds = myBids.map((b) => b.id);
+  const purchases = myBidIds.length
+    ? await prisma.auction.count({ where: { status: 'ENDED', highestBidId: { in: myBidIds } } })
+    : 0;
+
   return json({
     ...user,
     ratings: {
@@ -42,6 +67,7 @@ export async function GET(req: NextRequest) {
       avgDescMatch: reviews._avg.descMatch ?? 0,
       count: reviews._count,
     },
+    stats: { sales, purchases, bids: bidsCount, auctionsBidIn, offers, auctionsListed },
   });
 }
 

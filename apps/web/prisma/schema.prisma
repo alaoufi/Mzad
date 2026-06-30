@@ -40,6 +40,12 @@ model User {
   brokerCategories String[]      @default([]) // نطاق الدلال: التصنيفات المُسندة إليه
   brokerSharePct  Float?         // نسبة الدلال من العمولة (تجاوز للنسبة العامة)
   active          Boolean        @default(true) // تفعيل/تعطيل الحساب (للدلالين خاصة)
+  // بيانات اختيارية يضيفها الزائر عند التسجيل
+  bio             String?        // تعريف بنفسه
+  experienceYears Int?           // سنوات الخبرة في سوق الحلال
+  bankName        String?        // اسم البنك
+  bankAccount     String?        // رقم الحساب
+  iban            String?        // الآيبان
   createdAt       DateTime       @default(now())
 
   listings        Listing[]

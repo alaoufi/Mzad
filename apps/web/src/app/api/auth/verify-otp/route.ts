@@ -6,8 +6,18 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const { phone, code, name } = await req.json();
+  const { phone, code, name, profile } = await req.json();
   const normalized = normalizePhone(phone ?? '');
+
+  // بيانات اختيارية يضيفها الزائر عند التسجيل
+  const optional: any = {};
+  if (profile && typeof profile === 'object') {
+    if (typeof profile.bio === 'string' && profile.bio.trim()) optional.bio = profile.bio.trim().slice(0, 500);
+    if (Number.isFinite(profile.experienceYears) && profile.experienceYears >= 0) optional.experienceYears = Math.min(80, Math.floor(profile.experienceYears));
+    if (typeof profile.bankName === 'string' && profile.bankName.trim()) optional.bankName = profile.bankName.trim().slice(0, 60);
+    if (typeof profile.bankAccount === 'string' && profile.bankAccount.trim()) optional.bankAccount = profile.bankAccount.trim().slice(0, 40);
+    if (typeof profile.iban === 'string' && profile.iban.trim()) optional.iban = profile.iban.trim().replace(/\s+/g, '').slice(0, 40);
+  }
 
   const otp = await prisma.otpCode.findFirst({
     where: { phone: normalized, code, consumed: false, expiresAt: { gt: new Date() } },
@@ -30,14 +40,21 @@ export async function POST(req: NextRequest) {
         isPhoneVerified: true,
         role: isAdmin ? 'ADMIN' : 'USER',
         accountType: isAdmin ? 'SUPER_ADMIN' : 'SHOPPER',
+        ...optional,
       },
     });
   } else {
+    // عند العودة: نملأ فقط الحقول الفارغة بما أدخله الآن (لا نطمس بياناته السابقة)
+    const fill: any = {};
+    for (const k of ['bio', 'experienceYears', 'bankName', 'bankAccount', 'iban'] as const) {
+      if (optional[k] !== undefined && (user as any)[k] == null) fill[k] = optional[k];
+    }
     user = await prisma.user.update({
       where: { id: user.id },
       data: {
         isPhoneVerified: true,
         ...(isAdmin && user.role !== 'ADMIN' ? { role: 'ADMIN', accountType: 'SUPER_ADMIN' } : {}),
+        ...fill,
       },
     });
   }

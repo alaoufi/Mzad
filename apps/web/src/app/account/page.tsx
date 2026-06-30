@@ -20,9 +20,12 @@ interface Profile {
   identityStatus: string;
   trustScore: number;
   interests?: string[];
+  bio?: string | null;
+  experienceYears?: number | null;
   createdAt?: string;
   _count: { listings: number; reviewsReceived: number };
   ratings: { avgRating: number; avgDescMatch: number; count: number };
+  stats?: { sales: number; purchases: number; bids: number; auctionsBidIn: number; offers: number; auctionsListed: number };
 }
 
 
@@ -99,7 +102,11 @@ export default function AccountPage() {
               {profile?.identityStatus === 'VERIFIED' && (
                 <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">✔ موثّق بالهوية</span>
               )}
+              {!!profile?.experienceYears && (
+                <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">🏅 خبرة {profile.experienceYears} سنة</span>
+              )}
             </div>
+            {profile?.bio && <p className="mt-2 text-sm leading-relaxed text-white/85">{profile.bio}</p>}
             {profile?.createdAt && (
               <div className="mt-1 text-xs text-white/70">عضو منذ: <HijriDate value={profile.createdAt} short /></div>
             )}
@@ -113,6 +120,21 @@ export default function AccountPage() {
         <Stat label="التقييم" value={profile?.ratings.count ? `${profile.ratings.avgRating.toFixed(1)} ⭐` : '—'} />
         <Stat label="مطابقة الوصف"
           value={profile?.ratings.avgDescMatch ? `${Math.round((profile.ratings.avgDescMatch / 5) * 100)}%` : '—'} />
+      </div>
+
+      {/* تاريخي في السوق — إحصائيات كاملة */}
+      <div className="card p-4">
+        <h2 className="mb-3 flex items-center gap-2 text-base font-extrabold text-engrave">📊 تاريخي في السوق</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="مبيعاتي" value={profile?.stats?.sales ?? 0} />
+          <Stat label="مشترياتي" value={profile?.stats?.purchases ?? 0} />
+          <Stat label="مزايداتي" value={profile?.stats?.bids ?? 0} />
+          <Stat label="عروضي" value={profile?.stats?.offers ?? 0} />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Stat label="مزاداتي المطروحة" value={profile?.stats?.auctionsListed ?? 0} />
+          <Stat label="مزادات شاركت فيها" value={profile?.stats?.auctionsBidIn ?? 0} />
+        </div>
       </div>
 
       {/* بطاقة التوثيق */}

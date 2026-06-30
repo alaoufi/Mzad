@@ -230,12 +230,19 @@ export default function HomePage() {
   useEffect(() => { if (tree.length && profileLoaded) load(); /* eslint-disable-next-line */ },
     [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, hasCuratedInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
 
-  // فتح السوق المناسب تلقائياً: إن كانت كل اهتمامات المستخدم في المستلزمات → سوق المستلزمات (مرّة واحدة)
-  const modeInitRef = useRef(false);
+  // السوق الافتراضي يتبع الاهتمام تلقائياً حتى يختار المستخدم يدوياً (chooseMode).
+  // اشتقاق مستمرّ — لا «طلقة واحدة» — حتى لا يحرق سباقُ التحميل قرارَه على بيانات ناقصة ويعلق على السوق الخطأ.
+  const userPickedMode = useRef(false);
+  const [modeDecided, setModeDecided] = useState(false);
+  const chooseMode = (m: Mode) => { userPickedMode.current = true; setMode(m); };
   useEffect(() => {
-    if (modeInitRef.current || !profileLoaded || !tree.length) return;
-    modeInitRef.current = true;
-    if (animalInterests.length === 0 && supplyInterests.length > 0) setMode('SUPPLIES');
+    if (!profileLoaded || !tree.length) return;
+    if (!userPickedMode.current) {
+      const wantSupplies = animalInterests.length === 0 && supplyInterests.length > 0;
+      const target: Mode = wantSupplies ? 'SUPPLIES' : 'DIRECT';
+      setMode((prev) => (prev === target || prev === 'AUCTION' ? prev : target));
+    }
+    setModeDecided(true);
   }, [profileLoaded, tree.length, animalInterests.length, supplyInterests.length]);
 
   const deepest = path[path.length - 1];
@@ -324,13 +331,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
+    <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 pb-6 pt-2 transition-all duration-500 animate-fadeup"
       style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
         {/* صفّ واحد أنيق تحت الهيدر: شرائح التصنيف + الترتيب */}
         <div className="mb-3 flex items-center gap-2">
           <div className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto py-0.5">
-            {(!profileLoaded || !tree.length) ? (
+            {(!profileLoaded || !tree.length || !modeDecided) ? (
               [0, 1, 2].map((i) => <div key={i} className="h-8 w-20 shrink-0 animate-pulse rounded-full bg-black/5" />)
             ) : (() => {
               const deepest = path[path.length - 1];
@@ -365,10 +372,13 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* ٢) المبدّل المدمج: عروض / مزادات + مستلزمات — أصغر ارتفاعاً */}
-        {mode === 'SUPPLIES' ? (
+        {/* ٢) المبدّل المدمج: عروض / مزادات + مستلزمات — أصغر ارتفاعاً.
+            لا نعرضه قبل استقرار السوق الافتراضي (modeDecided) كي لا يومض السوق الخطأ. */}
+        {!modeDecided ? (
+          <div className="mb-3 h-12 animate-pulse rounded-2xl bg-black/5" />
+        ) : mode === 'SUPPLIES' ? (
           <>
-            <button onClick={() => setMode('DIRECT')}
+            <button onClick={() => chooseMode('DIRECT')}
               className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
               → العودة لأسواق المواشي
             </button>
@@ -378,7 +388,7 @@ export default function HomePage() {
           <div className="mb-3 flex items-center gap-2">
             <div className="grid flex-1 grid-cols-2 gap-1 rounded-2xl bg-white/80 p-1 ring-1 ring-black/[0.04]">
               {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
-                <button key={m} onClick={() => setMode(m)}
+                <button key={m} onClick={() => chooseMode(m)}
                   className={`rounded-xl py-2 text-sm font-bold transition ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
                   style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
                   {label}
@@ -386,7 +396,7 @@ export default function HomePage() {
               ))}
             </div>
             {suppliesRoot && (
-              <button onClick={() => setMode('SUPPLIES')} title="سوق المستلزمات"
+              <button onClick={() => chooseMode('SUPPLIES')} title="سوق المستلزمات"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm ring-1 ring-sand-200">
                 🛒
               </button>
