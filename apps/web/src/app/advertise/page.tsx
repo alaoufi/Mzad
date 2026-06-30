@@ -6,7 +6,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { uiToast } from '@/lib/ui';
 import { compressImage } from '@/lib/image';
-import { AD_PLACEMENTS, AD_PACKAGES, COUNTRIES, REGIONS, placementLabel, packageByKey, countryName, riyals } from '@/lib/ads';
+import { AD_PLACEMENTS, AD_PACKAGES, COUNTRIES, REGIONS, placementLabel, packageByKey, countryName, regionName, riyals } from '@/lib/ads';
+import { detectRegionViaGPS, storedRegion } from '@/lib/geo';
 
 interface Ad {
   id: string; title: string; placement: string; status: string; packageKey?: string | null;
@@ -36,6 +37,16 @@ export default function AdvertisePage() {
   const [saving, setSaving] = useState(false);
 
   const [geo, setGeo] = useState<{ countryName?: string | null; city?: string | null; regionName?: string | null; detected?: boolean } | null>(null);
+  const [gpsRegion, setGpsRegion] = useState('');
+  const [gpsBusy, setGpsBusy] = useState(false);
+  useEffect(() => { setGpsRegion(storedRegion()); }, []);
+  const detectGps = async () => {
+    setGpsBusy(true);
+    const key = await detectRegionViaGPS();
+    setGpsBusy(false);
+    if (key) { setGpsRegion(key); uiToast(`📍 منطقتك بدقّة: ${regionName(key)}`, 'success'); }
+    else uiToast('تعذّر تحديد الموقع — تأكّد من السماح بالإذن', 'error');
+  };
   const load = () => api<{ ads: Ad[] }>('/ads/mine').then((r) => setMine(r.ads)).catch(() => {});
   useEffect(() => { if (user) load(); }, [user]);
   useEffect(() => { api<{ id: string; name: string; icon?: string | null }[]>('/categories').then(setSections).catch(() => {}); }, []);
@@ -122,13 +133,19 @@ export default function AdvertisePage() {
             })}
           </div></div>
 
-        {geo && (
-          <div className="rounded-2xl bg-sand-50 p-3 text-center text-xs text-gray-500">
-            {geo.detected
-              ? <>📍 موقعك المكتشف الآن: <b className="text-gray-700">{geo.regionName || geo.city || geo.countryName || 'غير معروف'}</b>{geo.countryName ? ` (${geo.countryName})` : ''}</>
-              : '📍 تعذّر اكتشاف الموقع في هذه البيئة (يعمل بدقّة على الموقع المنشور).'}
-          </div>
-        )}
+        <div className="rounded-2xl bg-sand-50 p-3 text-center text-xs text-gray-500">
+          {gpsRegion ? (
+            <>📍 منطقتك بدقّة (GPS): <b className="text-brand-dark">{regionName(gpsRegion)}</b></>
+          ) : geo?.detected ? (
+            <>📍 موقعك التقريبي (IP): <b className="text-gray-700">{geo.regionName || geo.city || geo.countryName || 'غير معروف'}</b></>
+          ) : '📍 الموقع غير معروف بعد.'}
+          <button type="button" onClick={detectGps} disabled={gpsBusy}
+            className="mt-2 block w-full rounded-xl bg-brand/10 py-2 font-bold text-brand disabled:opacity-50">
+            {gpsBusy ? 'جارٍ التحديد...' : '🎯 حدّد موقعي بدقّة (GPS)'}
+          </button>
+          <p className="mt-1 text-[10px] text-gray-400">يتطلّب إذنك، ويُحسب محلياً على جهازك بلا إرسال إحداثيات.</p>
+        </div>
+
 
         <div><label className="mb-1 block text-sm font-bold text-gray-600">المناطق/المدن (اختياري — فارغ = كل المناطق)</label>
           <div className="flex flex-wrap gap-1.5">

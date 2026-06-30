@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { storedRegion } from '@/lib/geo';
 
 interface Ad { id: string; title: string; imageUrl?: string | null; link?: string | null; advertiser?: string | null }
 
@@ -23,7 +24,8 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
   const cats = (categoryIds || []).filter(Boolean).join(',');
 
   useEffect(() => {
-    const qs = cats ? `&cats=${encodeURIComponent(cats)}` : '';
+    const region = storedRegion();
+    const qs = `${cats ? `&cats=${encodeURIComponent(cats)}` : ''}${region ? `&region=${encodeURIComponent(region)}` : ''}`;
     api<{ ads: Ad[] }>(`/ads?placement=${placement}${qs}`).then((r) => { setAds(r.ads || []); setI(0); }).catch(() => {});
   }, [placement, cats]);
 

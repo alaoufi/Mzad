@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { json } from '@/lib/server-auth';
-import { regionMatches } from '@/lib/ads';
+import { regionMatches, regionCityCode } from '@/lib/ads';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,8 +11,11 @@ export async function GET(req: NextRequest) {
   const placement = req.nextUrl.searchParams.get('placement') ?? 'HOME_TOP';
   // بلد ومدينة الزائر من ترويسات Vercel (إن توفّرت)
   const country = (req.headers.get('x-vercel-ip-country') || '').toUpperCase();
-  const city = req.headers.get('x-vercel-ip-city') || '';
-  const regionCode = req.headers.get('x-vercel-ip-country-region') || '';
+  // منطقة دقيقة من GPS الزائر (إن شاركها) تتجاوز تقدير الـIP
+  const gpsRegion = req.nextUrl.searchParams.get('region') || '';
+  const gps = gpsRegion ? regionCityCode(gpsRegion) : null;
+  const city = gps ? gps.city : (req.headers.get('x-vercel-ip-city') || '');
+  const regionCode = gps ? gps.code : (req.headers.get('x-vercel-ip-country-region') || '');
   // سياق التصنيفات الحالي (التصنيف وأسلافه) لمطابقة الاستهداف بالقسم
   const ctx = (req.nextUrl.searchParams.get('cats') || '').split(',').map((s) => s.trim()).filter(Boolean);
   const now = new Date();
