@@ -9,6 +9,7 @@ import { HijriDate } from '@/components/HijriDate';
 import { getCoords } from '@/lib/geo';
 import { nearestRegion, regionName } from '@/lib/ads';
 import { resolveTheme, gradient } from '@/lib/themes';
+import { InterestPicker } from '@/components/InterestPicker';
 import { uiToast } from '@/lib/ui';
 
 interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[] }
@@ -66,10 +67,17 @@ export default function SellPage() {
   const [commission, setCommission] = useState({ marketCommissionPct: 0, commissionNote: '', zeroCommissionNote: '' });
   const [reqFields, setReqFields] = useState<string[]>([]);
   const req = (k: string) => reqFields.includes(k);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [showInterestPicker, setShowInterestPicker] = useState(false);
+  const saveInterests = async (ids: string[]) => {
+    setInterests(ids); setShowInterestPicker(false);
+    try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); } catch {}
+  };
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
     api<{ items: HealthItem[] }>('/health-items').then((r) => { if (r.items?.length) setHealthItems(r.items); }).catch(() => {});
+    api<{ interests?: string[] }>('/users/me').then((r) => setInterests(r.interests ?? [])).catch(() => {});
     api<{ marketCommissionPct: number; commissionNote: string; zeroCommissionNote: string; reqFields?: string[] }>('/settings')
       .then((r) => { setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '', zeroCommissionNote: r.zeroCommissionNote ?? '' }); setReqFields(r.reqFields ?? []); }).catch(() => {});
   }, []);
@@ -126,8 +134,30 @@ export default function SellPage() {
     walk(tree, []);
     return out;
   }, [tree]);
-  const searchResults = catSearch.trim() ? allCats.filter((x) => x.cat.name.includes(catSearch.trim())).slice(0, 30) : [];
-  const catOptions: Cat[] = form.catPath.length ? (form.catPath[form.catPath.length - 1].children ?? []) : tree;
+  // تصفية حسب اهتمامات المستخدم: تظهر العقد المختارة وفروعها وأسلافها (للتنقّل)
+  const parentOf = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    const walk = (n: Cat, p?: string) => { m.set(n.id, p); n.children?.forEach((c) => walk(c, n.id)); };
+    tree.forEach((t) => walk(t, undefined));
+    return m;
+  }, [tree]);
+  const interestSet = useMemo(() => new Set(interests), [interests]);
+  const ancestorOfInterest = useMemo(() => {
+    const s = new Set<string>();
+    for (const id of interests) { let p = parentOf.get(id); while (p) { s.add(p); p = parentOf.get(p); } }
+    return s;
+  }, [interests, parentOf]);
+  const relevant = (id: string): boolean => {
+    if (!interests.length) return true;
+    if (interestSet.has(id) || ancestorOfInterest.has(id)) return true;
+    let p: string | undefined = parentOf.get(id);
+    while (p) { if (interestSet.has(p)) return true; p = parentOf.get(p); }
+    return false;
+  };
+
+  const searchResults = catSearch.trim() ? allCats.filter((x) => x.cat.name.includes(catSearch.trim()) && relevant(x.cat.id)).slice(0, 30) : [];
+  const catOptionsAll: Cat[] = form.catPath.length ? (form.catPath[form.catPath.length - 1].children ?? []) : tree;
+  const catOptions = catOptionsAll.filter((c) => relevant(c.id));
   const chooseCat = (c: Cat) => {
     const newPath = [...form.catPath, c];
     setForm((f: any) => ({ ...f, catPath: newPath, categoryId: c.children && c.children.length ? '' : c.id }));
@@ -235,6 +265,10 @@ export default function SellPage() {
 
       {/* التصنيف — بحث + بطاقات ملوّنة */}
       <Section title="🗂️ التصنيف" badge="req" tint="bg-amber-50 border-amber-200">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-xs font-bold text-gray-500">{interests.length ? '✦ من اهتماماتك فقط' : 'كل التصنيفات'}</span>
+          <button type="button" onClick={() => setShowInterestPicker(true)} className="flex shrink-0 items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs font-bold text-brand ring-1 ring-sand-200">✎ تعديل الاهتمامات</button>
+        </div>
         <div className="relative mb-3">
           <input className={`input !pr-10 ${tone(true, !!form.categoryId)}`} placeholder="🔍 ابحث عن تصنيف بالاسم..." value={catSearch} onChange={(e) => setCatSearch(e.target.value)} />
         </div>
@@ -285,7 +319,11 @@ export default function SellPage() {
                   );
                 })}
               </div>
-            ) : <p className="text-gray-500">لا توجد تصنيفات فرعية.</p>}
+            ) : (
+              <p className="rounded-2xl bg-white/70 p-3 text-center text-sm text-gray-500">
+                {interests.length ? 'لا تطابق اهتماماتك هنا — عدّل اهتماماتك بالأعلى لعرض أصناف أخرى.' : 'لا توجد تصنيفات فرعية.'}
+              </p>
+            )}
           </>
         )}
         {form.categoryId && <p className="mt-3 rounded-2xl bg-green-50 p-2 text-center font-bold text-green-700">✓ {form.catPath.map((c: Cat) => c.name).join(' › ')}</p>}
@@ -450,6 +488,16 @@ export default function SellPage() {
 
       <button onClick={submit} disabled={!canSubmit || busy} className="btn-gold w-full !py-4 text-lg disabled:opacity-40">{busy ? 'جارٍ النشر...' : '✔ نشر الإعلان'}</button>
       {!canSubmit && <p className="text-center text-xs text-gray-500">أكمل الحقول ذات الإطار الأحمر: التصنيف، العنوان، الوصف، الموقع، والسعر.</p>}
+
+      {showInterestPicker && (
+        <InterestPicker
+          initial={interests}
+          title="اهتماماتي"
+          subtitle="اختر الأصناف التي تبيعها لتظهر لك عند إضافة الإعلان. الفارغ يعرض كل التصنيفات."
+          onSave={saveInterests}
+          onClose={() => setShowInterestPicker(false)}
+        />
+      )}
     </div>
   );
 }
