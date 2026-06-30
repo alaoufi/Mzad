@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { api, ListingSummary } from '@/lib/api';
+import { uiToast } from '@/lib/ui';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
@@ -236,9 +237,14 @@ export default function HomePage() {
     setInterests(ids);
     setInterestActive(ids.length > 0);
     setShowPicker(false);
-    if (user) {
-      try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ids)); } catch {}
-      try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); } catch {}
+    if (!user) { uiToast('سجّل الدخول لحفظ اهتماماتك', 'info'); return; }
+    try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ids)); } catch {}
+    // الحفظ مرئي: نؤكّد نجاحه أو نُظهر فشله (بدل ابتلاع الخطأ) — حتى لا يبقى الاهتمام محلياً فقط
+    try {
+      await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) });
+      uiToast(ids.length ? '✓ حُفظت اهتماماتك' : 'تم مسح الاهتمامات', 'success');
+    } catch (e: any) {
+      uiToast(`تعذّر حفظ الاهتمامات: ${e?.message ?? 'خطأ'} — حاول مجدداً`, 'error');
     }
   };
   const skipInterests = () => {
