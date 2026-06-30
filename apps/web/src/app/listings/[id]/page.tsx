@@ -128,7 +128,21 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   useHeaderSection(`سوق ${marketName}`, emoji, crumb, motif, mood, skin.font, theme.bg);
 
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
-  if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
+  if (!listing) return (
+    <div className="grid animate-pulse gap-6 lg:grid-cols-2">
+      <div className="space-y-2">
+        <div className="card aspect-[4/3] bg-black/5" />
+        <div className="flex gap-2">{[0, 1, 2].map((i) => <div key={i} className="h-16 w-16 rounded-xl bg-black/5" />)}</div>
+      </div>
+      <div className="space-y-4">
+        <div className="h-7 w-3/4 rounded-lg bg-black/5" />
+        <div className="h-4 w-1/3 rounded bg-black/5" />
+        <div className="card h-20 bg-black/5" />
+        <div className="card h-28 bg-black/5" />
+        <div className="h-12 rounded-2xl bg-black/5" />
+      </div>
+    </div>
+  );
 
   const allMedia = listing.media ?? [];
   const media = allMedia.filter((m: any) => !m.type || m.type === 'IMAGE' || m.type === 'VIDEO_360');
@@ -207,8 +221,10 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               <img
                 key={i}
                 src={m.url}
+                loading="lazy"
+                decoding="async"
                 onClick={() => setActiveImg(i)}
-                className={`h-20 w-20 cursor-pointer rounded-xl object-cover ${
+                className={`h-20 w-20 shrink-0 cursor-pointer rounded-xl object-cover ${
                   i === activeImg ? 'ring-2 ring-brand' : ''
                 }`}
                 alt=""
