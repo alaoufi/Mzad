@@ -57,10 +57,15 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
-    // اهتمامات مخزّنة لكل مستخدم → عرض فوري للتصفّح ثم تحديث صامت
+    // اهتمامات مخزّنة لكل مستخدم → عرض فوري للتصفّح ثم تحديث صامت.
+    // لا نعتبر الملف «جاهزاً» إلا إذا كان المخزّن غير فارغ — حتى لا تُجلب «كل المواشي»
+    // بناءً على ذاكرة قديمة فارغة بينما لدى الزائر اهتمام فعلي (يسبّب ظهور إعلانات ثم اختفاءها).
     try {
       const cached = localStorage.getItem(`mzad_interests_${user.id}`);
-      if (cached) { setInterests(JSON.parse(cached)); setProfileLoaded(true); }
+      if (cached) {
+        const arr = JSON.parse(cached);
+        if (Array.isArray(arr) && arr.length) { setInterests(arr); setProfileLoaded(true); }
+      }
     } catch {}
     api<{ interests?: string[] }>('/users/me')
       .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ints)); } catch {} })
@@ -224,7 +229,10 @@ export default function HomePage() {
     setInterests(ids);
     setInterestActive(ids.length > 0);
     setShowPicker(false);
-    if (user) { try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); } catch {} }
+    if (user) {
+      try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ids)); } catch {}
+      try { await api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: ids }) }); } catch {}
+    }
   };
   const skipInterests = () => {
     if (typeof window !== 'undefined') localStorage.setItem('mazad_interest_skip', '1');
