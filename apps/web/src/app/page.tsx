@@ -147,12 +147,10 @@ export default function HomePage() {
     return false;
   };
 
-  // سلسلة التصنيفات (من الأعمق للأعلى) لحلّ الثيم والأيقونة — تُبنى من سلف العقدة الأعمق
-  const ancestryChain = useMemo(() => {
-    const deepest = path[path.length - 1];
-    if (!deepest) return [] as CatNode[];
+  // سلسلة تصنيفات (من الأعمق للأعلى) لأي معرّف — لحلّ الثيم والأيقونة
+  const chainFromId = (id?: string): CatNode[] => {
     const out: CatNode[] = [];
-    let cur: string | undefined = deepest.id;
+    let cur: string | undefined = id;
     while (cur) {
       const c = catById.get(cur);
       if (c) out.push({
@@ -163,7 +161,16 @@ export default function HomePage() {
       cur = parentOf.get(cur);
     }
     return out;
-  }, [path, catById, parentOf]);
+  };
+  // عند التصفّح: من المسار. وعند الاهتمام بلا تصفّح: من اهتمام واحد (فيتلوّن الثيم بهويته كما كان سابقاً).
+  const ancestryChain = useMemo(() => {
+    const deepest = path[path.length - 1];
+    if (deepest) return chainFromId(deepest.id);
+    if (marketInterests.length === 1) return chainFromId(marketInterests[0]);
+    if (interestRootCats.length === 1) return chainFromId(interestRootCats[0].id);
+    return [] as CatNode[];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, marketInterests.join(','), interestRootCats, catById, parentOf]);
   const chain: CatNode[] = ancestryChain.length
     ? ancestryChain
     : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
@@ -182,7 +189,7 @@ export default function HomePage() {
   const theme = resolveTheme(chain);
   const skin = resolveSkin(chain);
   const { motif, layoutKey, cardStyle, mood } = skin;
-  const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
+  const emoji = chain.length ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
 
   // هل لدى المستخدم اهتمامات؟ — لا نعتمد على شجرة العميل (قد تكون قديمة) حتى لا ينكسر الفلتر
