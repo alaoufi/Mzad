@@ -57,15 +57,25 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
-    // الذاكرة تُستخدم فقط لترطيب شريط التصفّح فوراً (بلا وميض في القوائم) — لكن جلب الإعلانات
-    // ينتظر تأكيد الخادم للاهتمامات (profileLoaded). هكذا يحدث طلب واحد بحقيقة واحدة،
-    // فلا يقع طلبان متناقضان (اهتمام ثم «كل المواشي») يسبّبان ظهور حالة ثم اختفاءها.
-    try {
-      const cached = localStorage.getItem(`mzad_interests_${user.id}`);
-      if (cached) { const arr = JSON.parse(cached); if (Array.isArray(arr) && arr.length) setInterests(arr); }
-    } catch {}
+    // الذاكرة تُستخدم لترطيب شريط التصفّح فوراً (بلا وميض) — لكن جلب الإعلانات ينتظر تأكيد الخادم
+    // (profileLoaded): طلب واحد بحقيقة واحدة، فلا طلبان متناقضان (اهتمام ثم «كل المواشي»).
+    const key = `mzad_interests_${user.id}`;
+    let cacheInts: string[] = [];
+    try { const c = localStorage.getItem(key); if (c) { const a = JSON.parse(c); if (Array.isArray(a)) cacheInts = a; } } catch {}
+    if (cacheInts.length) setInterests(cacheInts);
     api<{ interests?: string[] }>('/users/me')
-      .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ints)); } catch {} })
+      .then((r) => {
+        const serverInts = r.interests ?? [];
+        // تعافٍ ذاتي: إن كان الخادم بلا اهتمامات والذاكرة تحوي اختيار المستخدم (حفظ سابق فشل صامتاً)
+        // نُعيد حفظه للخادم — فيُضبط الفلتر فوراً دون أن يُعيد المستخدم الاختيار.
+        if (serverInts.length === 0 && cacheInts.length > 0) {
+          setInterests(cacheInts);
+          api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: cacheInts }) }).catch(() => {});
+        } else {
+          setInterests(serverInts);
+          try { localStorage.setItem(key, JSON.stringify(serverInts)); } catch {}
+        }
+      })
       .catch(() => {})
       .finally(() => setProfileLoaded(true));
   }, [user]);
