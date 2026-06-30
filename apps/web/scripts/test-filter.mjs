@@ -40,7 +40,19 @@ async function main() {
   }
 
   // 3) سيناريوهات الاختبار
-  const wad7 = findId('وضح'), ibil = findId('إبل'), ghanam = findId('غنم'), najdi = findId('نجدي أسود') || findId('نجدي'), vetPh = findId('صيدلية بيطرية');
+  const wad7 = findId('وضح'), ibil = findId('إبل'), ghanam = findId('غنم'), najdi = findId('نجدي أسود') || findId('نجدي'), vetPh = findId('صيدلية بيطرية'), neaimi = findId('نعيمي');
+
+  // اختبار الشريط الترويجي: يجب ألّا يعرض أي عنصر خارج اهتمام الزائر (مثل خيول لمن اختار نعيمي)
+  const checkPromos = async (interests) => {
+    if (!interests.length) return { verdict: 'PASS', detail: 'بلا اهتمام — الترويج مسموح' };
+    const okNames = new Set(interests.flatMap(i => subtree(i)).map(id => nameOf.get(id)));
+    const res = await j('/promos?cats=' + encodeURIComponent(interests.join(',')));
+    const promos = res.promos || [];
+    const leaks = promos.filter(p => p.categoryName && !okNames.has(p.categoryName));
+    return leaks.length
+      ? { verdict: 'FAIL ❌', detail: 'تسرّب ترويج: ' + leaks.map(l => `${l.title}[${l.categoryName}]`).join(', ') }
+      : { verdict: 'PASS', detail: `${promos.length} عنصر ترويج، كلها داخل الاهتمام ✓` };
+  };
   const scenarios = [
     { name: 'اهتمام وضح فقط', interests: [wad7].filter(Boolean), mode: 'DIRECT' },
     { name: 'اهتمام إبل (نوع كامل)', interests: [ibil].filter(Boolean), mode: 'DIRECT' },
@@ -49,6 +61,7 @@ async function main() {
     { name: 'اهتمام مستلزمات (سوق المستلزمات)', interests: [vetPh].filter(Boolean), mode: 'SUPPLIES' },
     { name: 'اهتمام مستلزمات لكن سوق المواشي (يجب فارغ)', interests: [vetPh].filter(Boolean), mode: 'DIRECT' },
     { name: 'اهتمامان وضح+نجدي', interests: [wad7, najdi].filter(Boolean), mode: 'DIRECT' },
+    { name: 'اهتمام نعيمي (يجب ألّا تظهر خيول في الترويج)', interests: [neaimi].filter(Boolean), mode: 'DIRECT' },
     { name: 'بلا اهتمام (يُسمح بعرض الكل)', interests: [], mode: 'DIRECT' },
   ];
 
@@ -73,7 +86,11 @@ async function main() {
       }
     }
     if (verdict.startsWith('PASS')) pass++; else fail++;
-    console.log(`${verdict}  | ${s.name}\n        ${detail}`);
+    console.log(`${verdict}  | ${s.name}\n        القائمة: ${detail}`);
+    // فحص الشريط الترويجي لنفس السيناريو
+    const pr = await checkPromos(s.interests);
+    if (pr.verdict.startsWith('PASS')) pass++; else fail++;
+    console.log(`${pr.verdict}  | ${s.name}\n        الترويج: ${pr.detail}`);
   }
   console.log(`\n=== النتيجة: ${pass} نجح / ${fail} فشل من ${pass + fail} ===`);
   process.exit(fail ? 1 : 0);

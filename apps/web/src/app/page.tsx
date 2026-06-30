@@ -35,6 +35,7 @@ export default function HomePage() {
   const [interestActive, setInterestActive] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileOk, setProfileOk] = useState(false); // نجح تحميل بيانات المستخدم فعلاً (لا فشل شبكة)
 
   // وضع الدخول (عام/متخصص) — بوابة اختيار النوع أول دخول
   const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
@@ -52,12 +53,12 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!user) { setProfileLoaded(true); return; }
+    if (!user) { setProfileLoaded(true); setProfileOk(true); return; }
     // الخادم مصدر الحقيقة: عند النجاح نأخذ قيمته (فالحذف يبقى محذوفاً). أمّا عند فشل الشبكة فقط
-    // (اتصال بطيء/متقطّع) نرجع للذاكرة المخزّنة حتى لا تُفقد اهتمامات الزائر فتظهر «كل الإعلانات».
+    // (اتصال بطيء/متقطّع) نرجع للذاكرة المخزّنة ولا نُظهر نافذة الاهتمامات (لأننا لا نعرف الحقيقة).
     const key = `mzad_interests_${user.id}`;
     api<{ interests?: string[] }>('/users/me')
-      .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(key, JSON.stringify(ints)); } catch {} })
+      .then((r) => { const ints = r.interests ?? []; setInterests(ints); setProfileOk(true); try { localStorage.setItem(key, JSON.stringify(ints)); } catch {} })
       .catch(() => {
         try { const c = localStorage.getItem(key); if (c) { const a = JSON.parse(c); if (Array.isArray(a) && a.length) setInterests(a); } } catch {}
       })
@@ -76,10 +77,10 @@ export default function HomePage() {
 
   // عرض رسالة «ما يهمّك» أول دخول للمسجّلين بلا اهتمامات
   useEffect(() => {
-    if (!profileLoaded || !user) return;
+    if (!profileLoaded || !profileOk || !user) return;
     const skipped = typeof window !== 'undefined' && localStorage.getItem('mazad_interest_skip');
     if (interests.length === 0 && !skipped) setShowPicker(true);
-  }, [profileLoaded, user, interests.length]);
+  }, [profileLoaded, profileOk, user, interests.length]);
 
   const animals = useMemo(() => tree.filter((s) => s.name !== SUPPLIES_NAME), [tree]);
   const suppliesRoot = useMemo(() => tree.find((s) => s.name === SUPPLIES_NAME), [tree]);
@@ -170,6 +171,9 @@ export default function HomePage() {
     while (cur) { ids.push(cur); cur = parentOf.get(cur); }
     return ids;
   }, [path, parentOf]);
+  // سياق الإعلانات والترويج: عند التصفّح نستخدم المسار، وإلا اهتمامات السوق — فالشريط الترويجي
+  // يحترم اهتمام الزائر بصرامة (لا يعرض خيولاً لمن اختار نعيمي). فارغ فقط لمن بلا اهتمام.
+  const adCtx = path.length ? categoryCtx : marketInterests;
   const theme = resolveTheme(chain);
   const skin = resolveSkin(chain);
   const { motif, layoutKey, cardStyle, mood } = skin;
@@ -230,7 +234,7 @@ export default function HomePage() {
 
   // بوابة الترحيب: تظهر للمسجّلين/الزوار بلا اهتمامات (وضع متخصص)
   const showGate = entryMode === 'SPECIALIZED' && !gateDismissed && mode !== 'SUPPLIES'
-    && path.length === 0 && interests.length === 0 && animals.length > 0 && profileLoaded;
+    && path.length === 0 && interests.length === 0 && animals.length > 0 && profileLoaded && profileOk;
 
   // دمج هوية القسم داخل الهيدر — نُفرّغه أثناء البوابة حتى لا يتداخل عنوانها مع «عروض المواشي»
   const headerEmoji = emoji === '🐾' ? '🐪' : emoji;
@@ -310,11 +314,11 @@ export default function HomePage() {
               className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
               → العودة لأسواق المواشي
             </button>
-            <AdBanner placement="SUPPLIES_TOP" categoryIds={categoryCtx} />
+            <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />
           </>
         ) : (
           <>
-            <AdBanner placement="HOME_TOP" categoryIds={categoryCtx} />
+            <AdBanner placement="HOME_TOP" categoryIds={adCtx} />
 
             {/* المبدّل الرئيسي: عروض / مزادات + مدخل المستلزمات الصغير */}
             <div className="mb-3 flex items-center gap-2">
@@ -407,7 +411,7 @@ export default function HomePage() {
         </div>
 
         {/* إعلان أعلى القوائم */}
-        <AdBanner placement="MARKET_TOP" categoryIds={categoryCtx} />
+        <AdBanner placement="MARKET_TOP" categoryIds={adCtx} />
 
         {/* النتائج */}
         <div className="mt-3">
@@ -426,7 +430,7 @@ export default function HomePage() {
             <div className={`grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`}>
               {listings.map((l, i) => (
                 <Fragment key={l.id}>
-                  {i === Math.min(4, listings.length - 1) && <div className="col-span-full"><AdBanner placement="HOME_MID" categoryIds={categoryCtx} /></div>}
+                  {i === Math.min(4, listings.length - 1) && <div className="col-span-full"><AdBanner placement="HOME_MID" categoryIds={adCtx} /></div>}
                   {LAYOUTS[layoutKey]?.featured && i === 0 && !path.length ? (
                     <div className="col-span-2 animate-fadeup" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}><ListingCard listing={l} featured /></div>
                   ) : (
