@@ -37,8 +37,25 @@ function make(label: string, family: string, h: number, s: number, l: number): T
   };
 }
 
+// بانٍ تدرّج مزدوج (لونان مختلفان) — لثيمات فاخرة مرسومة يدوياً، أوضح حيويةً
+function duo(
+  label: string, h1: number, s1: number, l1: number, h2: number, s2: number, l2: number,
+  ha: number, sa: number, la: number,
+): Theme {
+  return {
+    label, family: 'ثيمات فاخرة',
+    from: hslToHex(h1, s1, l1),
+    to: hslToHex(h2, s2, l2),
+    accent: hslToHex(ha, sa, la),
+    bg: hslToHex(ha, Math.min(Math.round(sa * 0.3), 28), 96),
+    surface: hslToHex(ha, Math.min(Math.round(sa * 0.2), 18), 98),
+    glow: `hsla(${ha}, ${sa}%, ${la}%, 0.16)`,
+  };
+}
+
 // أقسام لونية، لكل قسم درجات متقاربة. لكل درجة تُولّد نسختان (عادية وغامقة).
 export const FAMILIES = [
+  'ثيمات فاخرة',
   'ذهبي وترابي', 'برتقالي وأحمر', 'وردي وبنفسجي', 'بنفسجي وأزرق',
   'أزرق وسماوي', 'أخضر وفيروزي', 'محايد وداكن',
 ];
@@ -66,13 +83,35 @@ const NAMED: Record<string, Theme> = {
 
 const generated: Record<string, Theme> = {};
 for (const family of FAMILIES) {
-  FAMILY_BASES[family].forEach(([label, h, s], i) => {
+  FAMILY_BASES[family]?.forEach(([label, h, s]) => {
     generated[`g_${h}_${s}_n`] = make(label, family, h, s, 50);
     generated[`g_${h}_${s}_d`] = make(`${label} غامق`, family, h, s, 38);
   });
 }
 
-export const THEMES: Record<string, Theme> = { ...NAMED, ...generated };
+// ثيمات فاخرة بتدرّجات مزدوجة مرسومة يدوياً — حيوية لكنها مريحة للعين
+const LUX: Record<string, Theme> = {
+  lux_sunset:   duo('صحراء الغروب', 28, 88, 56, 332, 70, 56, 15, 85, 52),
+  lux_najdi:    duo('ليل نجدي', 235, 58, 30, 268, 55, 46, 226, 70, 56),
+  lux_oasis:    duo('واحة', 180, 62, 40, 150, 56, 46, 166, 64, 40),
+  lux_sand:     duo('رمال ذهبية', 45, 80, 56, 33, 82, 50, 40, 85, 48),
+  lux_redsea:   duo('البحر الأحمر', 8, 78, 56, 186, 60, 46, 2, 76, 52),
+  lux_emerald:  duo('زمرّد ملكي', 162, 62, 38, 186, 56, 44, 158, 66, 38),
+  lux_taif:     duo('وردة الطائف', 340, 66, 60, 356, 60, 56, 336, 70, 52),
+  lux_coffee:   duo('قهوة عربية', 25, 48, 38, 32, 56, 48, 22, 52, 40),
+  lux_dawn:     duo('فجر', 20, 82, 66, 282, 46, 66, 14, 76, 58),
+  lux_ruby:     duo('ياقوت', 346, 66, 46, 356, 62, 44, 348, 70, 46),
+  lux_azure:    duo('لازورد', 206, 72, 52, 226, 62, 50, 210, 76, 48),
+  lux_lavender: duo('خزامى', 256, 46, 58, 276, 50, 56, 262, 56, 52),
+  lux_mint:     duo('نعناع بارد', 160, 52, 56, 186, 56, 56, 168, 56, 46),
+  lux_berry:    duo('توت بري', 330, 56, 46, 290, 46, 44, 320, 60, 46),
+  lux_aurora:   duo('شفق قطبي', 170, 62, 46, 266, 56, 54, 190, 66, 46),
+  lux_ocean:    duo('محيط عميق', 220, 56, 32, 196, 56, 44, 206, 66, 42),
+  lux_honey:    duo('عسل وكراميل', 42, 82, 56, 30, 56, 46, 38, 76, 48),
+  lux_dusk:     duo('سماء المغيب', 215, 56, 56, 30, 78, 62, 220, 60, 50),
+};
+
+export const THEMES: Record<string, Theme> = { ...LUX, ...NAMED, ...generated };
 
 export const THEME_LIST = Object.entries(THEMES).map(([key, t]) => ({ key, ...t }));
 
@@ -80,8 +119,9 @@ export const DEFAULT_THEME: Theme = THEMES['brand'];
 export const SUPPLIES_NAME = 'مستلزمات الحلال';
 
 const SPECIES_DEFAULT: Record<string, string> = {
-  'إبل': 'sand-gold', 'خيل': 'royal-purple', 'غنم': 'meadow-green',
-  'ماعز': 'terracotta', 'بقر': 'taupe', 'مستلزمات الحلال': 'teal-supply',
+  'إبل': 'lux_sand', 'خيل': 'lux_najdi', 'غنم': 'lux_oasis',
+  'ماعز': 'lux_coffee', 'بقر': 'lux_honey', 'دجاج': 'lux_dawn', 'طيور': 'lux_aurora',
+  'مستلزمات الحلال': 'lux_mint',
 };
 
 export function themeByKey(key?: string | null): Theme {
