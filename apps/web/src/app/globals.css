@@ -4,6 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* تغميق النصوص الخافتة والصغيرة لوضوح أعلى (خاصة لكبار السن) — تتجاوز درجات Tailwind */
+@layer utilities {
+  .text-gray-300 { color: #6b7280; }
+  .text-gray-400 { color: #4b5563; }
+  .text-gray-500 { color: #374151; }
+  /* النصوص الصغيرة جداً تصبح أوضح بوزن أعلى قليلاً */
+  .text-\[10px\], .text-\[11px\], .text-xs { font-weight: 600; }
+}
+
 @layer base {
   html {
     direction: rtl;
