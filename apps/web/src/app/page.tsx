@@ -325,52 +325,43 @@ export default function HomePage() {
     <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
-        {/* ١) شرائح التصنيف/الاهتمام في الأعلى */}
-        {(!profileLoaded || !tree.length) ? (
-          <div className="mb-2 flex gap-1.5 pb-1">
-            {[0, 1, 2].map((i) => <div key={i} className="h-8 w-20 animate-pulse rounded-full bg-black/5" />)}
+        {/* صفّ واحد أنيق تحت الهيدر: شرائح التصنيف + الترتيب */}
+        <div className="mb-3 flex items-center gap-2">
+          <div className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto py-0.5">
+            {(!profileLoaded || !tree.length) ? (
+              [0, 1, 2].map((i) => <div key={i} className="h-8 w-20 shrink-0 animate-pulse rounded-full bg-black/5" />)
+            ) : (() => {
+              const deepest = path[path.length - 1];
+              const options = (deepest ? (deepest.children ?? []) : topList).filter((c) => relevant(c.id));
+              return (
+                <>
+                  {path.map((node, i) => (
+                    <button key={node.id} onClick={() => reset(i)}
+                      className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
+                      style={{ backgroundColor: theme.accent, color: '#fff' }}>
+                      <CatGlyph name={node.name} icon={node.icon} size={18} /> {node.name} <span className="opacity-80">✕</span>
+                    </button>
+                  ))}
+                  {options.map((c) => (
+                    <button key={c.id} onClick={() => pick(path.length, c)}
+                      className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
+                      <CatGlyph name={c.name} icon={c.icon} size={18} /> {c.name}
+                    </button>
+                  ))}
+                </>
+              );
+            })()}
           </div>
-        ) : (() => {
-          const deepest = path[path.length - 1];
-          const options = (deepest ? (deepest.children ?? []) : topList).filter((c) => relevant(c.id));
-          if (path.length === 0 && options.length === 0) return null;
-          return (
-            <div className="no-scrollbar mb-2 flex items-center gap-1.5 overflow-x-auto pb-1">
-              {path.map((node, i) => (
-                <button key={node.id} onClick={() => reset(i)}
-                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1 !text-sm shadow-sm"
-                  style={{ backgroundColor: theme.accent, color: '#fff' }}>
-                  <CatGlyph name={node.name} icon={node.icon} size={18} /> {node.name} <span className="opacity-80">✕</span>
-                </button>
-              ))}
-              {options.map((c) => (
-                <button key={c.id} onClick={() => pick(path.length, c)}
-                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1 !text-sm shadow-sm">
-                  <CatGlyph name={c.name} icon={c.icon} size={18} /> {c.name}
-                </button>
-              ))}
-            </div>
-          );
-        })()}
-
-        {/* الترتيب — أعلى مع الشرائح (فوق العروض/المزادات)، يظهر عند وجود نتائج فقط */}
-        {!loading && listings.length > 0 && (
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <span className="text-sm font-extrabold" style={{ color: 'var(--th-accent, #0f7b6c)' }}>
-              {`${listings.length.toLocaleString('ar-SA')} ${mode === 'AUCTION' ? 'مزاد' : mode === 'SUPPLIES' ? 'منتج' : 'عرض'}`}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-gray-400">ترتيب:</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value)}
-                className="rounded-xl border border-sand-200 bg-white px-2.5 py-1 text-sm font-bold text-gray-700">
-                <option value="recent">الأحدث</option>
-                <option value="views">الأكثر مشاهدة</option>
-                <option value="price_asc">الأقل سعراً</option>
-                <option value="price_desc">الأعلى سعراً</option>
-              </select>
-            </div>
-          </div>
-        )}
+          {!loading && listings.length > 0 && (
+            <select value={sort} onChange={(e) => setSort(e.target.value)}
+              className="shrink-0 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700 shadow-sm">
+              <option value="recent">الأحدث</option>
+              <option value="views">الأكثر مشاهدة</option>
+              <option value="price_asc">الأقل سعراً</option>
+              <option value="price_desc">الأعلى سعراً</option>
+            </select>
+          )}
+        </div>
 
         {/* ٢) المبدّل المدمج: عروض / مزادات + مستلزمات — أصغر ارتفاعاً */}
         {mode === 'SUPPLIES' ? (
