@@ -33,6 +33,7 @@ export function ListingCard({
     <div className="flex h-full min-h-[8rem] items-center justify-center text-5xl">{listing.category?.icon ?? '🐾'}</div>
   );
 
+  // شارات فوق الصورة (للتصميم المتراكب فقط)
   const badges = (
     <>
       {isAuction && (
@@ -50,33 +51,45 @@ export function ListingCard({
     </>
   );
 
-  const priceBig = (
+  // صفّ الحالة أسفل الصورة (الصورة تبقى صافية): قلب + شارات الحالة + توثيق — ترتيب نظيف
+  const statusRow = (
+    <div className="mb-2 flex items-center gap-1.5">
+      <HeartButton id={listing.id} className="!h-8 !w-8 !text-base shrink-0" />
+      {isAuction && (endingSoon
+        ? <span className="animate-pulse rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-extrabold text-white">⏰ ينتهي قريباً</span>
+        : <span className="rounded-full bg-gradient-to-l from-gold to-amber-500 px-2 py-0.5 text-[11px] font-bold text-white">🔨 مزاد</span>)}
+      {listing.seller?.identityStatus === 'VERIFIED' && (
+        <span className="mr-auto rounded-full bg-brand/10 px-2 py-0.5 text-[11px] font-extrabold text-brand-dark">✔ موثّق</span>
+      )}
+    </div>
+  );
+
+  // السعر فقط إن وُجد رقم (لا نعرض «على السوم» — تُرى داخل الإعلان) + عدّاد المزاد
+  const priceBig = (priceLabel || (isAuction && listing.auction)) ? (
     <div className="flex items-end justify-between gap-2">
       <div>
-        {(isAuction || isOnsoom) && <div className="text-[11px] text-gray-400">{isOnsoom ? 'يبدأ من' : 'أعلى مزايدة'}</div>}
-        <div className="text-lg font-extrabold leading-none text-brand-dark">
-          {priceLabel ? <>{priceLabel} <span className="text-sm">﷼</span></> : 'على السوم'}
-        </div>
+        {priceLabel && (isAuction || isOnsoom) && <div className="text-[11px] text-gray-400">{isOnsoom ? 'يبدأ من' : 'أعلى مزايدة'}</div>}
+        {priceLabel && <div className="text-lg font-extrabold leading-none text-brand-dark">{priceLabel} <span className="text-sm">﷼</span></div>}
       </div>
       {isAuction && listing.auction && (
         <span className={`rounded-lg px-2 py-1 text-xs font-bold ${endingSoon ? 'animate-pulse bg-red-100 text-red-700' : 'bg-sand-100 text-brand-dark'}`}>⏱ <Countdown endAt={listing.auction.endAt} /></span>
       )}
     </div>
-  );
+  ) : null;
 
   // ★ بطاقة مميّزة عريضة (صورة جانبية)
   if (featured) {
     return (
       <Link href={`/listings/${listing.id}`} className="card-3d group flex overflow-hidden">
-        <div className="relative h-full min-h-[9.5rem] w-2/5 shrink-0 bg-sand-100">{picture}{badges}</div>
+        <div className="h-full min-h-[9.5rem] w-2/5 shrink-0 overflow-hidden bg-sand-100">{picture}</div>
         <div className="flex flex-1 flex-col justify-center p-4">
+          {statusRow}
           <span className="mb-1 w-fit rounded-full px-2 py-0.5 text-[11px] font-extrabold"
             style={{ backgroundColor: 'color-mix(in srgb, var(--th-accent, #0f7b6c) 14%, white)', color: 'var(--th-accent, #0f7b6c)' }}>★ مميّز</span>
           <h3 className="line-clamp-2 text-lg font-extrabold text-engrave">{listing.title}</h3>
-          {loc && <p className="mt-0.5 truncate text-sm text-gray-500">📍 {loc}</p>}
-          <div className="mt-3 text-2xl font-extrabold leading-none text-brand-dark">
-            {priceLabel ? <>{priceLabel} <span className="text-base">﷼</span></> : 'على السوم'}
-          </div>
+          {priceLabel && (
+            <div className="mt-3 text-2xl font-extrabold leading-none text-brand-dark">{priceLabel} <span className="text-base">﷼</span></div>
+          )}
         </div>
       </Link>
     );
@@ -92,10 +105,7 @@ export function ListingCard({
           {badges}
           <div className="absolute inset-x-0 bottom-0 p-3 text-white">
             <h3 className="line-clamp-1 text-base font-extrabold drop-shadow">{listing.title}</h3>
-            {loc && <p className="truncate text-xs text-white/80">📍 {loc}</p>}
-            <div className="mt-1 text-lg font-extrabold drop-shadow">
-              {priceLabel ? <>{priceLabel} <span className="text-sm">﷼</span></> : 'على السوم'}
-            </div>
+            {priceLabel && <div className="mt-1 text-lg font-extrabold drop-shadow">{priceLabel} <span className="text-sm">﷼</span></div>}
           </div>
         </div>
       </Link>
@@ -106,13 +116,11 @@ export function ListingCard({
   if (variant === 'polaroid') {
     return (
       <Link href={`/listings/${listing.id}`} className="card-3d group block bg-white p-2">
-        <div className="relative aspect-square overflow-hidden rounded-[inherit] bg-sand-100">{picture}{badges}</div>
+        <div className="aspect-square overflow-hidden rounded-[inherit] bg-sand-100">{picture}</div>
         <div className="px-1 pb-1 pt-2 text-center">
+          {statusRow}
           <h3 className="line-clamp-1 text-sm font-extrabold text-engrave">{listing.title}</h3>
-          {loc && <p className="truncate text-xs text-gray-400">📍 {loc}</p>}
-          <div className="mt-1 text-base font-extrabold leading-none text-brand-dark">
-            {priceLabel ? <>{priceLabel} <span className="text-xs">﷼</span></> : 'على السوم'}
-          </div>
+          {priceLabel && <div className="mt-1 text-base font-extrabold leading-none text-brand-dark">{priceLabel} <span className="text-xs">﷼</span></div>}
         </div>
       </Link>
     );
@@ -122,23 +130,23 @@ export function ListingCard({
   if (variant === 'ticket') {
     return (
       <Link href={`/listings/${listing.id}`} className="card-3d group block">
-        <div className="relative aspect-[4/3] bg-sand-100">{picture}{badges}</div>
+        <div className="aspect-[4/3] overflow-hidden bg-sand-100">{picture}</div>
         <div className="border-t-2 border-dashed border-sand-200 p-3">
+          {statusRow}
           <h3 className="line-clamp-1 text-base font-bold text-engrave">{listing.title}</h3>
-          {loc && <p className="mt-0.5 truncate text-sm text-gray-500">📍 {loc}</p>}
           <div className="mt-2">{priceBig}</div>
         </div>
       </Link>
     );
   }
 
-  // كلاسيكي
+  // كلاسيكي — الصورة صافية، والحالة والترتيب أسفلها
   return (
     <Link href={`/listings/${listing.id}`} className="card-3d group block">
-      <div className="relative aspect-[4/3] bg-sand-100">{picture}{badges}</div>
+      <div className="aspect-[4/3] overflow-hidden bg-sand-100">{picture}</div>
       <div className="p-3">
+        {statusRow}
         <h3 className="line-clamp-1 text-base font-bold text-engrave">{listing.title}</h3>
-        {loc && <p className="mt-0.5 truncate text-sm text-gray-500">📍 {loc}</p>}
         <div className="mt-2">{priceBig}</div>
       </div>
     </Link>

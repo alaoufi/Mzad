@@ -21,6 +21,11 @@ export function ActiveThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [section, setSection] = useState<HeaderSection | null>(null);
 
+  // ترطيب الثيم المحفوظ فوراً عند الإقلاع — يمنع وميض الثيم الافتراضي (الأخضر) قبل تحميل الاهتمام
+  useEffect(() => {
+    try { const t = sessionStorage.getItem('mzad_theme'); if (t) setTheme(JSON.parse(t)); } catch {}
+  }, []);
+
   // لون شريط المتصفّح يتبع ثيم الصفحة الحالية حتى لا يتنافر أعلى الشاشة مع المحتوى
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -38,10 +43,15 @@ export function ActiveThemeProvider({ children }: { children: ReactNode }) {
 
 export const useActiveTheme = () => useContext(Ctx);
 
-// خطّاف للصفحات المُثيّمة: يضبط ثيم الموقع كله ويعيده للافتراضي عند المغادرة
-export function usePageTheme(theme: Theme) {
+// خطّاف للصفحات المُثيّمة: يضبط ثيم الموقع كله ويعيده للافتراضي عند المغادرة.
+// لا يُطبّق الثيم إلا حين يكون جاهزاً (ready) حتى لا يطمس الثيم الافتراضي الثيمَ المحفوظ ويسبّب وميضاً.
+export function usePageTheme(theme: Theme, ready = true) {
   const { setTheme } = useActiveTheme();
-  useEffect(() => { setTheme(theme); }, [theme, setTheme]);
+  useEffect(() => {
+    if (!ready) return;
+    setTheme(theme);
+    try { sessionStorage.setItem('mzad_theme', JSON.stringify(theme)); } catch {}
+  }, [theme, ready, setTheme]);
   useEffect(() => () => setTheme(DEFAULT_THEME), [setTheme]);
 }
 

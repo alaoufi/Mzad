@@ -190,7 +190,9 @@ export default function HomePage() {
   const skin = resolveSkin(chain);
   const { motif, layoutKey, cardStyle, mood } = skin;
   const emoji = chain.length ? resolveIcon(chain) : '🐾';
-  usePageTheme(theme);
+  // الثيم لا يُطبَّق إلا بعد جهوزية الاهتمام والشجرة — مع ترطيب الثيم المحفوظ، فلا وميض أخضر
+  const themeReady = profileLoaded && tree.length > 0;
+  usePageTheme(theme, themeReady);
 
   // هل لدى المستخدم اهتمامات؟ — لا نعتمد على شجرة العميل (قد تكون قديمة) حتى لا ينكسر الفلتر
   const hasCuratedInterests = interestActive && interests.length > 0;
@@ -321,47 +323,9 @@ export default function HomePage() {
 
   return (
     <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
-      style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
+      style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
-        {mode === 'SUPPLIES' ? (
-          <>
-            <button onClick={() => setMode('DIRECT')}
-              className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
-              → العودة لأسواق المواشي
-            </button>
-            <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />
-          </>
-        ) : (
-          <>
-            {/* المبدّل الرئيسي: عروض / مزادات + مدخل المستلزمات الصغير */}
-            <div className="mb-3 flex items-center gap-2">
-              <div className="grid flex-1 grid-cols-2 gap-2 rounded-3xl bg-white/80 p-1.5 ring-1 ring-black/[0.04]">
-                {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
-                  <button key={m} onClick={() => setMode(m)}
-                    className={`rounded-2xl py-3 text-sm font-bold transition sm:text-base ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
-                    style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {suppliesRoot && (
-                <button onClick={() => setMode('SUPPLIES')} title="سوق المستلزمات"
-                  className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm ring-1 ring-sand-200">
-                  🛒
-                </button>
-              )}
-            </div>
-          </>
-        )}
-
-        {q && (
-          <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
-            <span className="font-bold text-gray-600">نتائج البحث: «{q}»</span>
-            <button onClick={() => setSearchTerm('')} className="mr-auto rounded-lg bg-sand-100 px-2 py-1 text-xs font-bold text-gray-500">✕ مسح</button>
-          </div>
-        )}
-
-        {/* تصفّح مدمج في سطر واحد: مسار مختار (يُزال بنقرة ✕) + خيارات المستوى الحالي */}
+        {/* ١) شرائح التصنيف/الاهتمام في الأعلى */}
         {(!profileLoaded || !tree.length) ? (
           <div className="mb-2 flex gap-1.5 pb-1">
             {[0, 1, 2].map((i) => <div key={i} className="h-8 w-20 animate-pulse rounded-full bg-black/5" />)}
@@ -374,14 +338,14 @@ export default function HomePage() {
             <div className="no-scrollbar mb-2 flex items-center gap-1.5 overflow-x-auto pb-1">
               {path.map((node, i) => (
                 <button key={node.id} onClick={() => reset(i)}
-                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
+                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1 !text-sm shadow-sm"
                   style={{ backgroundColor: theme.accent, color: '#fff' }}>
                   <CatGlyph name={node.name} icon={node.icon} size={18} /> {node.name} <span className="opacity-80">✕</span>
                 </button>
               ))}
               {options.map((c) => (
                 <button key={c.id} onClick={() => pick(path.length, c)}
-                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
+                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1 !text-sm shadow-sm">
                   <CatGlyph name={c.name} icon={c.icon} size={18} /> {c.name}
                 </button>
               ))}
@@ -389,22 +353,58 @@ export default function HomePage() {
           );
         })()}
 
-        {/* عدد النتائج + الفرز — لا يظهر إلا عند وجود نتائج فعلاً (لا يطفو فوق حالة فارغة) */}
+        {/* الترتيب — أعلى مع الشرائح (فوق العروض/المزادات)، يظهر عند وجود نتائج فقط */}
         {!loading && listings.length > 0 && (
-          <div className="mt-4 flex items-center justify-between gap-2">
+          <div className="mb-3 flex items-center justify-between gap-2">
             <span className="text-sm font-extrabold" style={{ color: 'var(--th-accent, #0f7b6c)' }}>
               {`${listings.length.toLocaleString('ar-SA')} ${mode === 'AUCTION' ? 'مزاد' : mode === 'SUPPLIES' ? 'منتج' : 'عرض'}`}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className="text-xs font-bold text-gray-400">ترتيب:</span>
               <select value={sort} onChange={(e) => setSort(e.target.value)}
-                className="rounded-xl border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700">
+                className="rounded-xl border border-sand-200 bg-white px-2.5 py-1 text-sm font-bold text-gray-700">
                 <option value="recent">الأحدث</option>
                 <option value="views">الأكثر مشاهدة</option>
                 <option value="price_asc">الأقل سعراً</option>
                 <option value="price_desc">الأعلى سعراً</option>
               </select>
             </div>
+          </div>
+        )}
+
+        {/* ٢) المبدّل المدمج: عروض / مزادات + مستلزمات — أصغر ارتفاعاً */}
+        {mode === 'SUPPLIES' ? (
+          <>
+            <button onClick={() => setMode('DIRECT')}
+              className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
+              → العودة لأسواق المواشي
+            </button>
+            <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />
+          </>
+        ) : (
+          <div className="mb-3 flex items-center gap-2">
+            <div className="grid flex-1 grid-cols-2 gap-1 rounded-2xl bg-white/80 p-1 ring-1 ring-black/[0.04]">
+              {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
+                <button key={m} onClick={() => setMode(m)}
+                  className={`rounded-xl py-2 text-sm font-bold transition ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
+                  style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {suppliesRoot && (
+              <button onClick={() => setMode('SUPPLIES')} title="سوق المستلزمات"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm ring-1 ring-sand-200">
+                🛒
+              </button>
+            )}
+          </div>
+        )}
+
+        {q && (
+          <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
+            <span className="font-bold text-gray-600">نتائج البحث: «{q}»</span>
+            <button onClick={() => setSearchTerm('')} className="mr-auto rounded-lg bg-sand-100 px-2 py-1 text-xs font-bold text-gray-500">✕ مسح</button>
           </div>
         )}
 
