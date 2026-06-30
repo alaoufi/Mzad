@@ -58,25 +58,10 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
-    // الذاكرة تُستخدم لترطيب شريط التصفّح فوراً (بلا وميض) — لكن جلب الإعلانات ينتظر تأكيد الخادم
-    // (profileLoaded): طلب واحد بحقيقة واحدة، فلا طلبان متناقضان (اهتمام ثم «كل المواشي»).
-    const key = `mzad_interests_${user.id}`;
-    let cacheInts: string[] = [];
-    try { const c = localStorage.getItem(key); if (c) { const a = JSON.parse(c); if (Array.isArray(a)) cacheInts = a; } } catch {}
-    if (cacheInts.length) setInterests(cacheInts);
+    // الخادم هو مصدر الحقيقة الوحيد للاهتمامات — لا ترطيب من الذاكرة ولا «تعافٍ ذاتي»،
+    // حتى لا تُبعث اهتمامات حذفها المستخدم (الذاكرة قد تكون أقدم من الخادم). طلب واحد، حقيقة واحدة.
     api<{ interests?: string[] }>('/users/me')
-      .then((r) => {
-        const serverInts = r.interests ?? [];
-        // تعافٍ ذاتي: إن كان الخادم بلا اهتمامات والذاكرة تحوي اختيار المستخدم (حفظ سابق فشل صامتاً)
-        // نُعيد حفظه للخادم — فيُضبط الفلتر فوراً دون أن يُعيد المستخدم الاختيار.
-        if (serverInts.length === 0 && cacheInts.length > 0) {
-          setInterests(cacheInts);
-          api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: cacheInts }) }).catch(() => {});
-        } else {
-          setInterests(serverInts);
-          try { localStorage.setItem(key, JSON.stringify(serverInts)); } catch {}
-        }
-      })
+      .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ints)); } catch {} })
       .catch(() => {})
       .finally(() => setProfileLoaded(true));
   }, [user]);
