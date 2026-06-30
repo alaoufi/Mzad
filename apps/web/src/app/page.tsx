@@ -42,15 +42,28 @@ export default function HomePage() {
   const [trustInfo, setTrustInfo] = useState<{ ic: string; title: string; body: string } | null>(null);
 
   useEffect(() => {
-    api<Cat[]>('/categories').then(setTree).catch(() => {});
-    api<{ entryMode: 'GENERAL' | 'SPECIALIZED'; texts?: Record<string, string> }>('/settings').then((r) => { setEntryMode(r.entryMode); if (r.texts) setTxt(r.texts); }).catch(() => {});
-    if (typeof window !== 'undefined') setGateDismissed(sessionStorage.getItem('mzad_gate') === '1');
+    // ترطيب فوري من ذاكرة الجلسة (تصنيفات/نصوص نادراً ما تتغيّر) ثم تحديث صامت بالخلفية —
+    // فلا تظهر هياكل تحميل عند العودة للرئيسية، والتصفّح يفتح فوراً
+    try {
+      const ct = sessionStorage.getItem('mzad_cats');
+      if (ct) setTree(JSON.parse(ct));
+      const st = sessionStorage.getItem('mzad_settings');
+      if (st) { const s = JSON.parse(st); if (s.entryMode) setEntryMode(s.entryMode); if (s.texts) setTxt(s.texts); }
+      setGateDismissed(sessionStorage.getItem('mzad_gate') === '1');
+    } catch {}
+    api<Cat[]>('/categories').then((r) => { setTree(r); try { sessionStorage.setItem('mzad_cats', JSON.stringify(r)); } catch {} }).catch(() => {});
+    api<{ entryMode: 'GENERAL' | 'SPECIALIZED'; texts?: Record<string, string> }>('/settings').then((r) => { setEntryMode(r.entryMode); if (r.texts) setTxt(r.texts); try { sessionStorage.setItem('mzad_settings', JSON.stringify(r)); } catch {} }).catch(() => {});
   }, []);
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
+    // اهتمامات مخزّنة لكل مستخدم → عرض فوري للتصفّح ثم تحديث صامت
+    try {
+      const cached = localStorage.getItem(`mzad_interests_${user.id}`);
+      if (cached) { setInterests(JSON.parse(cached)); setProfileLoaded(true); }
+    } catch {}
     api<{ interests?: string[] }>('/users/me')
-      .then((r) => setInterests(r.interests ?? []))
+      .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ints)); } catch {} })
       .catch(() => {})
       .finally(() => setProfileLoaded(true));
   }, [user]);
