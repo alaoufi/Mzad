@@ -8,7 +8,7 @@ import { compressImage } from '@/lib/image';
 import { HijriDate } from '@/components/HijriDate';
 import { getCoords } from '@/lib/geo';
 import { nearestRegion, regionName } from '@/lib/ads';
-import { resolveTheme, gradient } from '@/lib/themes';
+import { resolveTheme, gradient, catImageIcon } from '@/lib/themes';
 import { InterestPicker } from '@/components/InterestPicker';
 import { TEXT_DEFAULTS } from '@/lib/texts';
 import { uiToast } from '@/lib/ui';
@@ -374,7 +374,12 @@ export default function SellPage() {
                     <button key={c.id} onClick={() => chooseCat(c)}
                       className={`relative flex flex-col items-center gap-1 overflow-hidden rounded-2xl p-4 text-center font-bold text-white shadow-sm transition active:scale-95 ${selected ? 'ring-4 ring-white' : ''}`}
                       style={{ backgroundImage: gradient(t), boxShadow: `0 10px 24px -14px ${t.from}` }}>
-                      <span className="text-3xl drop-shadow">{c.icon ?? '🐾'}</span>
+                      {catImageIcon(c.name) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={catImageIcon(c.name)!} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-white/70 drop-shadow" />
+                      ) : (
+                        <span className="text-3xl drop-shadow">{c.icon ?? '🐾'}</span>
+                      )}
                       <span className="text-emboss-light">{c.name}</span>
                       <span className="rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">{isLeaf ? (selected ? '✓ محدّد' : 'اختيار') : 'فروع ›'}</span>
                     </button>

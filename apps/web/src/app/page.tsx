@@ -7,6 +7,7 @@ import { uiToast } from '@/lib/ui';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
+import { CatGlyph } from '@/components/CatGlyph';
 import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, skinVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
@@ -367,15 +368,15 @@ export default function HomePage() {
             <div className="no-scrollbar mb-2 flex items-center gap-1.5 overflow-x-auto pb-1">
               {path.map((node, i) => (
                 <button key={node.id} onClick={() => reset(i)}
-                  className="chip shrink-0 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
+                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
                   style={{ backgroundColor: theme.accent, color: '#fff' }}>
-                  {node.icon} {node.name} <span className="opacity-80">✕</span>
+                  <CatGlyph name={node.name} icon={node.icon} size={18} /> {node.name} <span className="opacity-80">✕</span>
                 </button>
               ))}
               {options.map((c) => (
                 <button key={c.id} onClick={() => pick(path.length, c)}
-                  className="chip shrink-0 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
-                  {c.icon} {c.name}
+                  className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
+                  <CatGlyph name={c.name} icon={c.icon} size={18} /> {c.name}
                 </button>
               ))}
             </div>

@@ -118,6 +118,20 @@ export const THEME_LIST = Object.entries(THEMES).map(([key, t]) => ({ key, ...t 
 export const DEFAULT_THEME: Theme = THEMES['brand'];
 export const SUPPLIES_NAME = 'مستلزمات الحلال';
 
+// أيقونات صور حقيقية لبعض الأنواع (بدل الإيموجي) — تُطابَق بالاسم
+export const CAT_IMAGE_ICONS: Record<string, string> = {
+  'إبل': '/icons/ibil.jpg',
+  'غنم': '/icons/ghanam.jpg',
+};
+export const catImageIcon = (name?: string | null): string | null =>
+  (name && CAT_IMAGE_ICONS[name.trim()]) || null;
+// مطابقة بالنص: يعيد صورة النوع إن ورد اسمه داخل النص (مثل «عروض إبل»)
+export const catImageIconForText = (text?: string | null): string | null => {
+  if (!text) return null;
+  for (const key of Object.keys(CAT_IMAGE_ICONS)) if (text.includes(key)) return CAT_IMAGE_ICONS[key];
+  return null;
+};
+
 const SPECIES_DEFAULT: Record<string, string> = {
   'إبل': 'lux_sand', 'خيل': 'lux_najdi', 'غنم': 'lux_oasis',
   'ماعز': 'lux_coffee', 'بقر': 'lux_honey', 'دجاج': 'lux_dawn', 'طيور': 'lux_aurora',

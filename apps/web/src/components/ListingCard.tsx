@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ListingSummary } from '@/lib/api';
 import { Countdown } from './Countdown';
 import { isOpenEnd } from '@/lib/auction';
+import { catImageIcon } from '@/lib/themes';
 import { HeartButton } from '@/lib/favorites';
 
 export type CardVariant = 'classic' | 'overlay' | 'polaroid' | 'ticket';
@@ -24,6 +25,10 @@ export function ListingCard({
     // eslint-disable-next-line @next/next/no-img-element
     <img src={img} alt={listing.title} loading="lazy" decoding="async"
       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+  ) : catImageIcon(listing.category?.name) ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={catImageIcon(listing.category?.name)!} alt={listing.category?.name ?? ''} loading="lazy" decoding="async"
+      className="h-full w-full object-cover" />
   ) : (
     <div className="flex h-full min-h-[8rem] items-center justify-center text-5xl">{listing.category?.icon ?? '🐾'}</div>
   );

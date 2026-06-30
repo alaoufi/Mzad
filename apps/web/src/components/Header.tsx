@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { useActiveTheme } from '@/lib/theme-context';
-import { heroEdgePath } from '@/lib/themes';
+import { heroEdgePath, catImageIconForText } from '@/lib/themes';
 import { setSearchTerm } from '@/lib/search';
 import { DarkToggle } from '@/components/DarkToggle';
 
@@ -103,7 +103,13 @@ export function Header() {
       {/* سطر هوية القسم — مدموج داخل الهيدر بدل اللافتة المنفصلة */}
       {section?.label && (
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-2">
-          <span className="text-xl drop-shadow">{section.emoji}</span>
+          {catImageIconForText(section.label) ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={catImageIconForText(section.label)!} alt="" width={26} height={26}
+              className="h-[26px] w-[26px] shrink-0 rounded-full object-cover ring-2 ring-white/60 drop-shadow" />
+          ) : (
+            <span className="text-xl drop-shadow">{section.emoji}</span>
+          )}
           <h1 className="truncate text-base font-extrabold text-emboss-light"
             style={{ fontFamily: section.font ?? 'inherit' }}>{section.label}</h1>
           <div className="mr-auto flex shrink-0 items-center gap-1.5">
