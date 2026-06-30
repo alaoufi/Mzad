@@ -285,11 +285,20 @@ export default function HomePage() {
               );
             })}
           </div>
-          <button onClick={dismissGate}
-            className="mt-6 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-gray-600 ring-1 ring-sand-200">
-            🌐 أو تصفّح كل الأنواع
+          <button onClick={() => setShowPicker(true)}
+            className="mt-6 rounded-2xl bg-white px-6 py-3 text-sm font-extrabold text-brand-dark ring-1 ring-sand-200">
+            ✏️ حدّد اهتماماتك بدقّة (نوع / لون / سلالة)
           </button>
+          <p className="mt-2 text-xs text-gray-400">نعرض لك ما يهمّك فقط — يمكنك تعديله لاحقاً من ملفك.</p>
         </div>
+
+        {showPicker && (
+          <InterestPicker
+            initial={interests}
+            onSave={saveInterests}
+            onClose={() => setShowPicker(false)}
+          />
+        )}
       </div>
     );
   }
