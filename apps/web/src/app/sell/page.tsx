@@ -192,6 +192,24 @@ export default function SellPage() {
     } catch {}
   }, [tree, catById, parentOf]);
 
+  // أقل زيادة مقترحة ذكياً ≈ ٥٪ من سعر البداية مقرّبة لرقم لطيف
+  const niceIncrement = (price: number) => {
+    if (!price || price <= 0) return 0;
+    const steps = [50, 100, 250, 500, 1000, 2500, 5000, 10000];
+    const raw = price * 0.05;
+    let best = 50;
+    for (const s of steps) if (s <= raw) best = s;
+    return best;
+  };
+
+  // اقتراح ذكي للعنوان من التصنيف المختار + العدد — تسهيل وجذب
+  const suggestTitle = useMemo(() => {
+    if (!form.catPath.length) return '';
+    const base = form.catPath.map((c: Cat) => c.name).slice(-2).join(' ');
+    const cnt = Number(form.count) || 0;
+    return `${cnt > 1 ? cnt + ' من ' : ''}${base}`.trim();
+  }, [form.catPath, form.count]);
+
   const searchResults = catSearch.trim() ? allCats.filter((x) => x.cat.name.includes(catSearch.trim()) && relevant(x.cat.id)).slice(0, 30) : [];
   const deepestCat: Cat | undefined = form.catPath[form.catPath.length - 1];
   const catOptions: Cat[] = form.catPath.length
@@ -375,8 +393,14 @@ export default function SellPage() {
 
       {/* العنوان والوصف — مطلوب */}
       <Section title="✍️ العنوان والوصف" badge="req" tint="bg-emerald-50 border-emerald-200">
-        <input maxLength={120} className={`input mb-3 ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
-        <textarea maxLength={2000} className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder={`الوصف * — ${t('sellDescPlaceholder')}`} value={form.description} onChange={(e) => set('description', e.target.value)} />
+        <input maxLength={120} className={`input ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
+        {suggestTitle && form.title.trim().length < 3 && (
+          <button type="button" onClick={() => set('title', suggestTitle)}
+            className="mt-2 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-extrabold text-emerald-800 ring-1 ring-emerald-200 transition active:scale-95">
+            ✨ اقتراح: «{suggestTitle}» — اضغط للتعبئة
+          </button>
+        )}
+        <textarea maxLength={2000} className={`input mt-3 min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder={`الوصف * — ${t('sellDescPlaceholder')}`} value={form.description} onChange={(e) => set('description', e.target.value)} />
 
         {/* تنبيه مهم — بارز ثلاثي الأبعاد عائم، سطر واحد */}
         <div className="mt-3 animate-floaty whitespace-nowrap overflow-hidden text-ellipsis rounded-xl bg-gradient-to-b from-amber-200 to-amber-100 px-3 py-1.5 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
@@ -530,6 +554,18 @@ export default function SellPage() {
               <div><label className="mb-2 block font-bold">المدة (ساعات)</label>
                 <input type="number" className={`input ${tone(false)}`} value={form.durationHours} onChange={(e) => set('durationHours', e.target.value)} /></div>
             </div>
+            <div className="flex flex-wrap gap-2">
+              {([['٢٤ ساعة', 24], ['يومان', 48], ['٣ أيام', 72], ['أسبوع', 168]] as [string, number][]).map(([l, h]) => (
+                <button key={h} type="button" onClick={() => set('durationHours', h)}
+                  className={`rounded-full px-3 py-1.5 text-sm font-bold ring-1 transition active:scale-95 ${Number(form.durationHours) === h ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>{l}</button>
+              ))}
+            </div>
+            {(() => { const sug = niceIncrement(Number(form.startPrice) || 0); return sug && Number(form.minIncrement) !== sug ? (
+              <button type="button" onClick={() => set('minIncrement', sug)}
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-sm font-extrabold text-emerald-800 ring-1 ring-emerald-200 transition active:scale-95">
+                ✨ أقل زيادة مقترحة: {sug.toLocaleString('ar-SA')} ﷼ — اضغط للتطبيق
+              </button>
+            ) : null; })()}
             {isBroker && (
               <div>
                 <label className="mb-2 block font-bold">🗓️ موعد بداية المزاد (للدلال — اختياري)</label>
