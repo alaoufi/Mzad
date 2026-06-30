@@ -10,6 +10,7 @@ export function ListingCard({
   listing, featured, variant = 'classic',
 }: { listing: ListingSummary; featured?: boolean; variant?: CardVariant }) {
   const img = listing.media?.[0]?.url;
+  const loc = listing.city?.trim();
   const isAuction = listing.saleType === 'AUCTION';
   const isOnsoom = !isAuction && !!listing.auction && isOpenEnd(listing.auction.endAt);
   const priceNum = isAuction || isOnsoom ? Number(listing.auction?.startPrice ?? 0) : Number(listing.price ?? 0);
@@ -21,7 +22,7 @@ export function ListingCard({
 
   const picture = img ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={img} alt={listing.title}
+    <img src={img} alt={listing.title} loading="lazy" decoding="async"
       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
   ) : (
     <div className="flex h-full min-h-[8rem] items-center justify-center text-5xl">{listing.category?.icon ?? '🐾'}</div>
@@ -67,7 +68,7 @@ export function ListingCard({
           <span className="mb-1 w-fit rounded-full px-2 py-0.5 text-[11px] font-extrabold"
             style={{ backgroundColor: 'color-mix(in srgb, var(--th-accent, #0f7b6c) 14%, white)', color: 'var(--th-accent, #0f7b6c)' }}>★ مميّز</span>
           <h3 className="line-clamp-2 text-lg font-extrabold text-engrave">{listing.title}</h3>
-          <p className="mt-0.5 truncate text-sm text-gray-500">📍 {listing.city}</p>
+          {loc && <p className="mt-0.5 truncate text-sm text-gray-500">📍 {loc}</p>}
           <div className="mt-3 text-2xl font-extrabold leading-none text-brand-dark">
             {priceLabel ? <>{priceLabel} <span className="text-base">﷼</span></> : 'على السوم'}
           </div>
@@ -86,7 +87,7 @@ export function ListingCard({
           {badges}
           <div className="absolute inset-x-0 bottom-0 p-3 text-white">
             <h3 className="line-clamp-1 text-base font-extrabold drop-shadow">{listing.title}</h3>
-            <p className="truncate text-xs text-white/80">📍 {listing.city}</p>
+            {loc && <p className="truncate text-xs text-white/80">📍 {loc}</p>}
             <div className="mt-1 text-lg font-extrabold drop-shadow">
               {priceLabel ? <>{priceLabel} <span className="text-sm">﷼</span></> : 'على السوم'}
             </div>
@@ -103,7 +104,7 @@ export function ListingCard({
         <div className="relative aspect-square overflow-hidden rounded-[inherit] bg-sand-100">{picture}{badges}</div>
         <div className="px-1 pb-1 pt-2 text-center">
           <h3 className="line-clamp-1 text-sm font-extrabold text-engrave">{listing.title}</h3>
-          <p className="truncate text-xs text-gray-400">📍 {listing.city}</p>
+          {loc && <p className="truncate text-xs text-gray-400">📍 {loc}</p>}
           <div className="mt-1 text-base font-extrabold leading-none text-brand-dark">
             {priceLabel ? <>{priceLabel} <span className="text-xs">﷼</span></> : 'على السوم'}
           </div>
@@ -119,7 +120,7 @@ export function ListingCard({
         <div className="relative aspect-[4/3] bg-sand-100">{picture}{badges}</div>
         <div className="border-t-2 border-dashed border-sand-200 p-3">
           <h3 className="line-clamp-1 text-base font-bold text-engrave">{listing.title}</h3>
-          <p className="mt-0.5 truncate text-sm text-gray-500">📍 {listing.city}</p>
+          {loc && <p className="mt-0.5 truncate text-sm text-gray-500">📍 {loc}</p>}
           <div className="mt-2">{priceBig}</div>
         </div>
       </Link>
@@ -132,7 +133,7 @@ export function ListingCard({
       <div className="relative aspect-[4/3] bg-sand-100">{picture}{badges}</div>
       <div className="p-3">
         <h3 className="line-clamp-1 text-base font-bold text-engrave">{listing.title}</h3>
-        <p className="mt-0.5 truncate text-sm text-gray-500">📍 {listing.city}</p>
+        {loc && <p className="mt-0.5 truncate text-sm text-gray-500">📍 {loc}</p>}
         <div className="mt-2">{priceBig}</div>
       </div>
     </Link>
