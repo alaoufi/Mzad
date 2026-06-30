@@ -78,8 +78,14 @@ export default function HomePage() {
   // عرض رسالة «ما يهمّك» أول دخول للمسجّلين بلا اهتمامات
   useEffect(() => {
     if (!profileLoaded || !profileOk || !user) return;
-    const skipped = typeof window !== 'undefined' && localStorage.getItem('mazad_interest_skip');
-    if (interests.length === 0 && !skipped) setShowPicker(true);
+    if (interests.length > 0) return;
+    // نسأل عن الاهتمامات مرّة واحدة فقط لكل جهاز — لا نُزعج كل تحديث. يبقى التعديل متاحاً من زر «تعديل الاهتمامات».
+    let asked = false, skipped = false;
+    try { asked = !!localStorage.getItem('mzad_asked_interests'); skipped = !!localStorage.getItem('mazad_interest_skip'); } catch {}
+    if (!asked && !skipped) {
+      setShowPicker(true);
+      try { localStorage.setItem('mzad_asked_interests', '1'); } catch {}
+    }
   }, [profileLoaded, profileOk, user, interests.length]);
 
   const animals = useMemo(() => tree.filter((s) => s.name !== SUPPLIES_NAME), [tree]);
