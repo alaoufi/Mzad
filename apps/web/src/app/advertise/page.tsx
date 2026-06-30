@@ -35,9 +35,11 @@ export default function AdvertisePage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  const [geo, setGeo] = useState<{ countryName?: string | null; city?: string | null; regionName?: string | null; detected?: boolean } | null>(null);
   const load = () => api<{ ads: Ad[] }>('/ads/mine').then((r) => setMine(r.ads)).catch(() => {});
   useEffect(() => { if (user) load(); }, [user]);
   useEffect(() => { api<{ id: string; name: string; icon?: string | null }[]>('/categories').then(setSections).catch(() => {}); }, []);
+  useEffect(() => { api<any>('/geo').then(setGeo).catch(() => {}); }, []);
 
   const pickImage = async (f: FileList | null) => {
     if (!f?.length) return;
@@ -119,6 +121,14 @@ export default function AdvertisePage() {
                 className={`rounded-full px-3 py-1 text-sm font-bold ring-1 ${on ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>{c.name}</button>;
             })}
           </div></div>
+
+        {geo && (
+          <div className="rounded-2xl bg-sand-50 p-3 text-center text-xs text-gray-500">
+            {geo.detected
+              ? <>📍 موقعك المكتشف الآن: <b className="text-gray-700">{geo.regionName || geo.city || geo.countryName || 'غير معروف'}</b>{geo.countryName ? ` (${geo.countryName})` : ''}</>
+              : '📍 تعذّر اكتشاف الموقع في هذه البيئة (يعمل بدقّة على الموقع المنشور).'}
+          </div>
+        )}
 
         <div><label className="mb-1 block text-sm font-bold text-gray-600">المناطق/المدن (اختياري — فارغ = كل المناطق)</label>
           <div className="flex flex-wrap gap-1.5">

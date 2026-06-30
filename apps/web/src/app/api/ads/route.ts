@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   // بلد ومدينة الزائر من ترويسات Vercel (إن توفّرت)
   const country = (req.headers.get('x-vercel-ip-country') || '').toUpperCase();
   const city = req.headers.get('x-vercel-ip-city') || '';
+  const regionCode = req.headers.get('x-vercel-ip-country-region') || '';
   // سياق التصنيفات الحالي (التصنيف وأسلافه) لمطابقة الاستهداف بالقسم
   const ctx = (req.nextUrl.searchParams.get('cats') || '').split(',').map((s) => s.trim()).filter(Boolean);
   const now = new Date();
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
         if (list.length && !list.includes(country)) return false;
       }
       // الاستهداف بالمدينة/المنطقة (إن حُدّد)
-      if (!regionMatches(a.targetRegions, city)) return false;
+      if (!regionMatches(a.targetRegions, city, regionCode)) return false;
       // الاستهداف بالقسم: يظهر فقط إن طابق التصنيف الحالي (أو أحد أسلافه)
       const tcat = (a.targetCategories || '').trim();
       if (tcat) {
