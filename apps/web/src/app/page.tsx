@@ -9,6 +9,7 @@ import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, them
 import { usePageTheme } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
+import { CategoryHero } from '@/components/CategoryHero';
 
 interface Cat {
   id: string; name: string; icon?: string; themeKey?: string | null;
@@ -233,18 +234,10 @@ export default function HomePage() {
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme, motif), ...themeVars(theme, shapeKey) }}>
-      {/* بصمة شكلية للنوع — صورة ظلّية خافتة تعزّز هوية القسم */}
-      <div aria-hidden className="pointer-events-none absolute -left-8 top-20 select-none text-[200px] leading-none opacity-[0.05] blur-[1px]">
-        {emoji === '🐾' ? '🐪' : emoji}
-      </div>
       <div className="relative">
-        {/* سطر سياق مدمج بدل الهيرو الكبير — تعديل الاهتمامات من الملف الشخصي فقط */}
-        <div className="mb-3 flex items-center gap-2">
-          <h1 className="flex items-center gap-2 text-xl font-extrabold">
-            <span className="text-2xl">{emoji === '🐾' ? '🐪' : emoji}</span>
-            <span style={{ color: 'var(--th-accent, #0f7b6c)' }}>{title}</span>
-          </h1>
-        </div>
+        {/* ترويسة القسم — هوية كاملة بحافة مقصوصة حسب النمط */}
+        <CategoryHero theme={theme} motif={motif} emoji={emoji === '🐾' ? '🐪' : emoji} title={title}
+          subtitle={loading ? undefined : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`} />
 
         {mode === 'SUPPLIES' ? (
           <>

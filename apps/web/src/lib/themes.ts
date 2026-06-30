@@ -255,6 +255,29 @@ export const CARD_OPTIONS = [
   { key: 'polaroid', label: 'بولارويد' }, { key: 'ticket', label: 'تذكرة' },
 ];
 
+// طبقة نمط الشكل بلون مخصّص (للترويسات والزخارف) — صورة + مقاس التكرار
+export function motifPattern(motif: string, color: string): { image: string; size: string } {
+  const p = (PATTERNS[motif] ?? PATTERNS.bloom)(color);
+  return { image: svgBg(p.svg), size: p.size };
+}
+
+// حافة مقصوصة لأسفل الترويسة بشكل يناسب النمط (مسار SVG ضمن 1440×48، يُملأ بلون الصفحة)
+const HERO_EDGES: Record<string, string> = {
+  wave: 'M0 48 L0 22 C240 0 480 44 720 22 C960 0 1200 44 1440 22 L1440 48 Z',
+  zigzag: 'M0 48 L0 26 L120 8 L240 26 L360 8 L480 26 L600 8 L720 26 L840 8 L960 26 L1080 8 L1200 26 L1320 8 L1440 26 L1440 48 Z',
+  scallop: 'M0 48 L0 26 Q60 0 120 26 T240 26 T360 26 T480 26 T600 26 T720 26 T840 26 T960 26 T1080 26 T1200 26 T1320 26 T1440 26 L1440 48 Z',
+  slant: 'M0 48 L0 32 L1440 8 L1440 48 Z',
+  flat: 'M0 48 L0 18 L1440 18 L1440 48 Z',
+  curve: 'M0 48 L0 30 Q720 -6 1440 30 L1440 48 Z',
+};
+const MOTIF_EDGE: Record<string, string> = {
+  dunes: 'wave', waves: 'wave', peaks: 'zigzag', scales: 'scallop',
+  motion: 'slant', grid: 'flat', hills: 'curve', spots: 'curve', bloom: 'curve',
+};
+export function heroEdgePath(motif: string): string {
+  return HERO_EDGES[MOTIF_EDGE[motif] ?? 'curve'] ?? HERO_EDGES.curve;
+}
+
 // خلفية المشهد — نمط شكلي مميّز للنوع + نفحات لونية هادئة فوق قاعدة فاتحة
 export function sceneBackground(t: Theme, motif: string = 'bloom'): string {
   const p = (PATTERNS[motif] ?? PATTERNS.bloom)(t.accent);
