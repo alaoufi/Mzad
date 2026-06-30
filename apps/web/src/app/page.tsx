@@ -108,24 +108,12 @@ export default function HomePage() {
     if (suppliesRoot) walk(suppliesRoot);
     return ids;
   }, [suppliesRoot]);
-  // نتجاهل أي معرّف اهتمام لم يعد موجوداً في الشجرة (مخلّفات إعادة بناء التصنيفات) — وإلا انكسر الفلتر
-  const animalInterests = useMemo(() => interests.filter((id) => catById.has(id) && !suppliesIds.has(id)), [interests, suppliesIds, catById]);
-  const supplyInterests = useMemo(() => interests.filter((id) => catById.has(id) && suppliesIds.has(id)), [interests, suppliesIds, catById]);
+  // تقسيم السوق فقط (مواشٍ/مستلزمات) عبر جذر المستلزمات الثابت — بلا فلترة بشجرة العميل (قد تكون قديمة).
+  // معرّفات الاهتمام تُرسل كما هي للخادم الذي يتحقّق منها بنفسه (subtree)، فلا تُسقَط معرّفات صحيحة.
+  const animalInterests = useMemo(() => interests.filter((id) => !suppliesIds.has(id)), [interests, suppliesIds]);
+  const supplyInterests = useMemo(() => interests.filter((id) => suppliesIds.has(id)), [interests, suppliesIds]);
   const marketInterests = mode === 'SUPPLIES' ? supplyInterests : animalInterests;
   const interestSet = useMemo(() => new Set(marketInterests), [marketInterests]);
-
-  // تنظيف ذاتي: إزالة معرّفات الاهتمام الميتة (غير الموجودة في الشجرة) من الحساب والذاكرة نهائياً
-  const cleanedRef = useRef(false);
-  useEffect(() => {
-    if (cleanedRef.current || !tree.length || !profileLoaded || !user || !interests.length) return;
-    const valid = interests.filter((id) => catById.has(id));
-    if (valid.length !== interests.length) {
-      cleanedRef.current = true;
-      setInterests(valid);
-      try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(valid)); } catch {}
-      api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: valid }) }).catch(() => {});
-    }
-  }, [tree.length, profileLoaded, user, interests, catById]);
 
   // جذور الاهتمام: العُقد المختارة التي لا يوجد لها سلف مختار — منها يبدأ التصفّح، ولا يُعرض ولا يُختار ما فوقها
   const interestRootCats = useMemo(() => {
@@ -191,8 +179,8 @@ export default function HomePage() {
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
 
-  // هل لدى المستخدم اهتمامات صالحة (موجودة في الشجرة)؟ — يحدّد هل نفلتر بصرامة
-  const hasCuratedInterests = interestActive && interests.some((id) => catById.has(id));
+  // هل لدى المستخدم اهتمامات؟ — لا نعتمد على شجرة العميل (قد تكون قديمة) حتى لا ينكسر الفلتر
+  const hasCuratedInterests = interestActive && interests.length > 0;
 
   const load = () => {
     setLoading(true);
