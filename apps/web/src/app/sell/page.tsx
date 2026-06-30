@@ -186,7 +186,6 @@ export default function SellPage() {
   const cardTheme = (c: Cat) => resolveTheme([{ name: c.name, themeKey: c.themeKey ?? null }, ...[...form.catPath].reverse().map((p: Cat) => ({ name: p.name, themeKey: p.themeKey ?? null }))]);
 
   const hasLoc = form.lat != null;
-  const locationOk = hasLoc || (!!form.city.trim() && !!form.region.trim());
   const priceOk = form.saleType === 'DIRECT' ? !!form.price : form.saleType === 'ONSOOM' ? true : !!form.startPrice;
   const healthAllSet = healthItems.every((h) => form.health[h.id] !== undefined);
   const reqOk =
@@ -194,7 +193,7 @@ export default function SellPage() {
     (!req('video') || !!videoUrl) &&
     (!req('audio') || !!audioUrl) &&
     (!req('health') || healthAllSet);
-  const canSubmit = !!form.categoryId && form.title.trim().length > 2 && form.description.trim().length > 2 && locationOk && priceOk && reqOk;
+  const canSubmit = !!form.categoryId && form.title.trim().length > 2 && form.description.trim().length > 2 && priceOk && reqOk;
 
   if (!user) {
     return (
@@ -518,7 +517,7 @@ export default function SellPage() {
       </Section>
 
       <button onClick={submit} disabled={!canSubmit || busy} className="btn-gold w-full !py-4 text-lg disabled:opacity-40">{busy ? 'جارٍ النشر...' : '✔ نشر الإعلان'}</button>
-      {!canSubmit && <p className="text-center text-xs text-gray-500">أكمل الحقول ذات الإطار الأحمر: التصنيف، العنوان، الوصف، الموقع، والسعر.</p>}
+      {!canSubmit && <p className="text-center text-xs text-gray-500">أكمل الحقول ذات الإطار الأحمر: التصنيف، العنوان، الوصف، وطريقة البيع.</p>}
 
       {showInterestPicker && (
         <InterestPicker

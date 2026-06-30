@@ -118,7 +118,8 @@ export async function POST(req: NextRequest) {
   if (!user) return json({ message: 'يجب تسجيل الدخول' }, 401);
 
   const dto = await req.json();
-  if (!dto.title || !dto.categoryId || !dto.city || !dto.region || !dto.saleType) {
+  // الموقع اختياري — لا نشترط المدينة/المنطقة
+  if (!dto.title || !dto.categoryId || !dto.saleType) {
     return json({ message: 'بيانات ناقصة' }, 400);
   }
 
@@ -138,8 +139,8 @@ export async function POST(req: NextRequest) {
       productionStatus: dto.productionStatus ?? null,
       saleType: dto.saleType,
       price: dto.price != null ? new Prisma.Decimal(dto.price) : null,
-      city: dto.city,
-      region: dto.region,
+      city: dto.city ?? '',
+      region: dto.region ?? '',
       lat: dto.lat ?? null,
       lng: dto.lng ?? null,
       hidePhone: !!dto.hidePhone,
