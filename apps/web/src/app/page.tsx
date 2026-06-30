@@ -191,16 +191,26 @@ export default function HomePage() {
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
 
+  // هل لدى المستخدم اهتمامات صالحة (موجودة في الشجرة)؟ — يحدّد هل نفلتر بصرامة
+  const hasCuratedInterests = interestActive && interests.some((id) => catById.has(id));
+
   const load = () => {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
-    // الفلترة تعتمد على معرّفات الاهتمام المختارة مباشرةً — لا على الجذور المشتقّة (قد تكون فارغة لحظياً
-    // أثناء تحديث شجرة التصنيفات) فيتسرّب «كل المواشي». هكذا نسبة الخطأ صفر.
-    if (path.length) params.set('categoryId', path[path.length - 1].id);
-    else if (interestActive && marketInterests.length) params.set('categoryIds', marketInterests.join(','));
-    else if (mode === 'SUPPLIES') { if (suppliesRoot) params.set('categoryId', suppliesRoot.id); }
-    else if (suppliesRoot) params.set('exclude', suppliesRoot.id);
+    // فلترة صارمة من الـ API على معرّفات الاهتمام مباشرةً — بلا أي fallback يعرض الكل.
+    if (path.length) {
+      params.set('categoryId', path[path.length - 1].id);
+    } else if (marketInterests.length) {
+      params.set('categoryIds', marketInterests.join(','));
+    } else if (hasCuratedInterests) {
+      // لديه اهتمامات لكن لا شيء منها في هذا السوق → نتائج فارغة فعلاً، لا «كل الإعلانات»
+      setListings([]); setLoading(false); return;
+    } else if (mode === 'SUPPLIES') {
+      if (suppliesRoot) params.set('categoryId', suppliesRoot.id);
+    } else if (suppliesRoot) {
+      params.set('exclude', suppliesRoot.id);
+    }
     if (q) params.set('q', q);
     if (sort !== 'recent') params.set('sort', sort);
     api<{ items: ListingSummary[] }>(`/listings?${params}`)
@@ -210,9 +220,17 @@ export default function HomePage() {
   };
 
   useEffect(() => { setPath([]); }, [mode]);
-  // لا نجلب النتائج حتى تجهز الاهتمامات (وإلا تظهر نتائج «كل المواشي» ثم تتغيّر)
+  // لا نجلب النتائج حتى تكتمل الاهتمامات (profileLoaded) — التسلسل: مستخدم → اهتمامات → استعلام
   useEffect(() => { if (tree.length && profileLoaded) load(); /* eslint-disable-next-line */ },
-    [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, useInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
+    [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, hasCuratedInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
+
+  // فتح السوق المناسب تلقائياً: إن كانت كل اهتمامات المستخدم في المستلزمات → سوق المستلزمات (مرّة واحدة)
+  const modeInitRef = useRef(false);
+  useEffect(() => {
+    if (modeInitRef.current || !profileLoaded || !tree.length) return;
+    modeInitRef.current = true;
+    if (animalInterests.length === 0 && supplyInterests.length > 0) setMode('SUPPLIES');
+  }, [profileLoaded, tree.length, animalInterests.length, supplyInterests.length]);
 
   const deepest = path[path.length - 1];
   // اسم القسم في العنوان: التصنيف المفتوح، أو اسم الاهتمام الوحيد، أو «ما يهمّك» عند تعدّده
