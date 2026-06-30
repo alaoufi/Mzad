@@ -18,23 +18,23 @@ const Ctx = createContext<{
 });
 
 export function ActiveThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
+  // نقرأ الثيم المحفوظ مباشرةً عند أول تصيير على العميل — فلا يبدأ بالأخضر الافتراضي ثم يتغيّر
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      try { const t = sessionStorage.getItem('mzad_theme'); if (t) return JSON.parse(t); } catch {}
+    }
+    return DEFAULT_THEME;
+  });
   const [section, setSection] = useState<HeaderSection | null>(null);
 
-  // ترطيب الثيم المحفوظ فوراً عند الإقلاع — يمنع وميض الثيم الافتراضي (الأخضر) قبل تحميل الاهتمام
-  useEffect(() => {
-    try { const t = sessionStorage.getItem('mzad_theme'); if (t) setTheme(JSON.parse(t)); } catch {}
-  }, []);
-
-  // لون شريط المتصفّح يتبع ثيم الصفحة الحالية حتى لا يتنافر أعلى الشاشة مع المحتوى
+  // متغيّرات شريط الهيدر + لون شريط المتصفّح يتبعان الثيم الحالي (يُضبطان مبكراً عبر سكربت الإقلاع أيضاً)
   useEffect(() => {
     if (typeof document === 'undefined') return;
+    const s = document.documentElement.style;
+    s.setProperty('--th-band-from', theme.from);
+    s.setProperty('--th-band-to', theme.to);
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'theme-color';
-      document.head.appendChild(meta);
-    }
+    if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
     meta.content = theme.from || '#0f7b6c';
   }, [theme]);
 

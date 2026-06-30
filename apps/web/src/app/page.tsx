@@ -414,7 +414,7 @@ export default function HomePage() {
             <div className="card mx-auto my-6 max-w-sm p-8 text-center">
               {heroImg ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={heroImg} alt="" className="mx-auto h-24 w-24 rounded-full object-cover shadow ring-2 ring-black/5" />
+                <img src={heroImg} alt="" className="mx-auto h-24 w-24 rounded-full object-cover shadow" />
               ) : (
                 <p className="text-7xl drop-shadow">{emoji === '🐾' ? '🐪' : emoji}</p>
               )}

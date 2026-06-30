@@ -35,7 +35,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 text-white shadow-lg transition-all duration-500"
-      style={{ backgroundImage: `linear-gradient(120deg, ${theme.from}, ${theme.to})` }}>
+      style={{ backgroundImage: `linear-gradient(120deg, var(--th-band-from, ${theme.from}), var(--th-band-to, ${theme.to}))` }}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           {!isHome && (
@@ -47,7 +47,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold text-emboss-light">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icons/ibil.jpg" alt="مزاد" width={36} height={36}
-              className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white/60 drop-shadow" />
+              className="h-9 w-9 shrink-0 rounded-full object-cover drop-shadow" />
             <span>مزاد</span>
           </Link>
         </div>
@@ -109,7 +109,7 @@ export function Header() {
             return img ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={img} alt="" width={26} height={26}
-                className="h-[26px] w-[26px] shrink-0 rounded-full object-cover ring-2 ring-white/60 drop-shadow" />
+                className="h-[26px] w-[26px] shrink-0 rounded-full object-cover drop-shadow" />
             ) : (
               <span className="text-xl drop-shadow">{section.emoji}</span>
             );

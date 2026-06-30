@@ -23,6 +23,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl">
       <body>
+        {/* تطبيق الثيم المحفوظ قبل الرسم — يمنع وميض الثيم الأخضر الافتراضي عند التحديث */}
+        <script dangerouslySetInnerHTML={{ __html: "try{var t=JSON.parse(sessionStorage.getItem('mzad_theme')||'null');if(t&&t.from){var s=document.documentElement.style;s.setProperty('--th-band-from',t.from);s.setProperty('--th-band-to',t.to);var m=document.querySelector('meta[name=\\'theme-color\\']');if(m)m.content=t.from;}}catch(e){}" }} />
         <AuthProvider>
           <FavoritesProvider>
             <ActiveThemeProvider>
