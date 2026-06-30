@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
@@ -325,6 +325,9 @@ export default function HomePage() {
           </select>
         </div>
 
+        {/* إعلان أعلى القوائم */}
+        <AdBanner placement="MARKET_TOP" categoryIds={categoryCtx} />
+
         {/* النتائج */}
         <div className="mt-3">
           {loading ? (
@@ -338,15 +341,16 @@ export default function HomePage() {
             </div>
           ) : (
             <div className={`grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`}>
-              {listings.map((l, i) =>
-                LAYOUTS[layoutKey]?.featured && i === 0 && !path.length ? (
-                  <div key={l.id} className="col-span-2">
-                    <ListingCard listing={l} featured />
-                  </div>
-                ) : (
-                  <ListingCard key={l.id} listing={l} variant={cardStyle} />
-                )
-              )}
+              {listings.map((l, i) => (
+                <Fragment key={l.id}>
+                  {i === Math.min(4, listings.length - 1) && <div className="col-span-full"><AdBanner placement="HOME_MID" categoryIds={categoryCtx} /></div>}
+                  {LAYOUTS[layoutKey]?.featured && i === 0 && !path.length ? (
+                    <div className="col-span-2"><ListingCard listing={l} featured /></div>
+                  ) : (
+                    <ListingCard listing={l} variant={cardStyle} />
+                  )}
+                </Fragment>
+              ))}
             </div>
           )}
         </div>
