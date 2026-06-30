@@ -220,7 +220,7 @@ export default function HomePage() {
     && path.length === 0 && interests.length === 0 && animals.length > 0;
   if (showGate) {
     return (
-      <div className="-mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
+      <div className="scene-root -mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
         style={{ background: sceneBackground(resolveTheme([]), 'bloom'), ...themeVars(resolveTheme([])) }}>
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-6xl">🐾</p>
@@ -249,7 +249,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
+    <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
       <div className="relative">
         {mode === 'SUPPLIES' ? (

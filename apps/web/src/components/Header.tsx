@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useActiveTheme } from '@/lib/theme-context';
 import { heroEdgePath } from '@/lib/themes';
 import { setSearchTerm } from '@/lib/search';
+import { DarkToggle } from '@/components/DarkToggle';
 
 export function Header() {
   const { user } = useAuth();
@@ -51,6 +52,7 @@ export function Header() {
         </div>
 
         <nav className="flex items-center gap-2">
+          <DarkToggle />
           <button onClick={() => setSearchOpen((o) => !o)} aria-label="بحث"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl ring-1 ring-white/20 hover:bg-white/25">
             🔍

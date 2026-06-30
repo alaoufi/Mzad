@@ -144,7 +144,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const canArchive = isOwner || isStaff;
 
   return (
-    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
+    <div className="scene-root -mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
       {listing.status === 'DRAFT' && (
         <div className="mb-4 rounded-2xl bg-amber-50 p-3 text-center font-bold text-amber-800">
           ⏳ إعلانك بانتظار موافقة الإدارة قبل ظهوره للجميع

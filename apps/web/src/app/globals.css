@@ -107,3 +107,25 @@
 
   @keyframes shimmer { 100% { transform: translateX(-100%); } }
 }
+
+/* ───────── الوضع الليلي (اختياري — يُفعّل بإضافة .dark على html) ───────── */
+html.dark body { background-color: #0e1116; color: #e6e9ef; background-image: none; }
+.dark .scene-root { background: linear-gradient(180deg, #0e1116, #141b24) !important; }
+.dark .card { background-color: #181f2b !important; color: #e6e9ef; --card-ring: rgba(255, 255, 255, 0.08) !important; }
+.dark .input { background-color: #1b2330 !important; color: #e6e9ef !important; border-color: #2b3545 !important; }
+.dark .input::placeholder { color: #8893a4 !important; }
+.dark .chip { background-color: #1b2330; color: #e6e9ef; }
+.dark .glass { background-color: rgba(24, 31, 43, 0.9) !important; }
+.dark .bg-white { background-color: #181f2b !important; }
+.dark .bg-white\/70, .dark .bg-white\/80, .dark .bg-white\/85, .dark .bg-white\/90 { background-color: rgba(24, 31, 43, 0.85) !important; }
+.dark .bg-sand-50 { background-color: #151b24 !important; }
+.dark .bg-sand-100 { background-color: #1e2632 !important; }
+.dark .text-gray-800 { color: #e6e9ef !important; }
+.dark .text-gray-700 { color: #d6dbe4 !important; }
+.dark .text-gray-600 { color: #c2cad6 !important; }
+.dark .text-gray-500 { color: #aab4c2 !important; }
+.dark .text-gray-400 { color: #8a96a6 !important; }
+.dark .text-engrave { color: #f1f5f9 !important; text-shadow: none !important; }
+.dark .border-sand-200 { border-color: #2b3545 !important; }
+.dark .ring-sand-200 { --tw-ring-color: #2b3545 !important; }
+.dark select.input option { background-color: #181f2b; color: #e6e9ef; }

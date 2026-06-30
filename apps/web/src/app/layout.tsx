@@ -22,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ar" dir="rtl">
       <body>
+        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('mzad_dark')==='1')document.documentElement.classList.add('dark')}catch(e){}" }} />
         <AuthProvider>
           <FavoritesProvider>
             <ActiveThemeProvider>
