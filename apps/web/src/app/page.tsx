@@ -182,8 +182,10 @@ export default function HomePage() {
     setLoading(true);
     const params = new URLSearchParams();
     params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
+    // الفلترة تعتمد على معرّفات الاهتمام المختارة مباشرةً — لا على الجذور المشتقّة (قد تكون فارغة لحظياً
+    // أثناء تحديث شجرة التصنيفات) فيتسرّب «كل المواشي». هكذا نسبة الخطأ صفر.
     if (path.length) params.set('categoryId', path[path.length - 1].id);
-    else if (useInterests) params.set('categoryIds', marketInterests.join(','));
+    else if (interestActive && marketInterests.length) params.set('categoryIds', marketInterests.join(','));
     else if (mode === 'SUPPLIES') { if (suppliesRoot) params.set('categoryId', suppliesRoot.id); }
     else if (suppliesRoot) params.set('exclude', suppliesRoot.id);
     if (q) params.set('q', q);
