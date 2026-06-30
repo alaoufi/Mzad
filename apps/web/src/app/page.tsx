@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, ListingSummary } from '@/lib/api';
 import { uiToast } from '@/lib/ui';
@@ -122,10 +122,24 @@ export default function HomePage() {
     if (suppliesRoot) walk(suppliesRoot);
     return ids;
   }, [suppliesRoot]);
-  const animalInterests = useMemo(() => interests.filter((id) => !suppliesIds.has(id)), [interests, suppliesIds]);
-  const supplyInterests = useMemo(() => interests.filter((id) => suppliesIds.has(id)), [interests, suppliesIds]);
+  // نتجاهل أي معرّف اهتمام لم يعد موجوداً في الشجرة (مخلّفات إعادة بناء التصنيفات) — وإلا انكسر الفلتر
+  const animalInterests = useMemo(() => interests.filter((id) => catById.has(id) && !suppliesIds.has(id)), [interests, suppliesIds, catById]);
+  const supplyInterests = useMemo(() => interests.filter((id) => catById.has(id) && suppliesIds.has(id)), [interests, suppliesIds, catById]);
   const marketInterests = mode === 'SUPPLIES' ? supplyInterests : animalInterests;
   const interestSet = useMemo(() => new Set(marketInterests), [marketInterests]);
+
+  // تنظيف ذاتي: إزالة معرّفات الاهتمام الميتة (غير الموجودة في الشجرة) من الحساب والذاكرة نهائياً
+  const cleanedRef = useRef(false);
+  useEffect(() => {
+    if (cleanedRef.current || !tree.length || !profileLoaded || !user || !interests.length) return;
+    const valid = interests.filter((id) => catById.has(id));
+    if (valid.length !== interests.length) {
+      cleanedRef.current = true;
+      setInterests(valid);
+      try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(valid)); } catch {}
+      api('/users/me', { method: 'PATCH', body: JSON.stringify({ interests: valid }) }).catch(() => {});
+    }
+  }, [tree.length, profileLoaded, user, interests, catById]);
 
   // جذور الاهتمام: العُقد المختارة التي لا يوجد لها سلف مختار — منها يبدأ التصفّح، ولا يُعرض ولا يُختار ما فوقها
   const interestRootCats = useMemo(() => {
