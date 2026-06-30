@@ -183,7 +183,10 @@ export default function HomePage() {
   // هل لدى المستخدم اهتمامات؟ — لا نعتمد على شجرة العميل (قد تكون قديمة) حتى لا ينكسر الفلتر
   const hasCuratedInterests = interestActive && interests.length > 0;
 
+  const loadSeq = useRef(0);
   const load = () => {
+    // تسلسل الطلبات: لا يُطبَّق إلا ناتج آخر طلب — فلا يطمس طلبٌ قديم (وصل متأخّراً) نتيجةَ الفلتر الصحيحة.
+    const seq = ++loadSeq.current;
     setLoading(true);
     const params = new URLSearchParams();
     params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
@@ -203,9 +206,9 @@ export default function HomePage() {
     if (q) params.set('q', q);
     if (sort !== 'recent') params.set('sort', sort);
     api<{ items: ListingSummary[] }>(`/listings?${params}`)
-      .then((r) => setListings(r.items))
-      .catch(() => setListings([]))
-      .finally(() => setLoading(false));
+      .then((r) => { if (seq === loadSeq.current) setListings(r.items); })
+      .catch(() => { if (seq === loadSeq.current) setListings([]); })
+      .finally(() => { if (seq === loadSeq.current) setLoading(false); });
   };
 
   useEffect(() => { setPath([]); }, [mode]);
