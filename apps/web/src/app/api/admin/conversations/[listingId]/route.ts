@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, { params }: { params: { listingId: s
       id: c.id,
       isPublic: c.isPublic,
       buyerName: c.buyerId ? (nameOf.get(c.buyerId) ?? 'مشتري') : null,
-      messages: c.messages.map((m) => ({ id: m.id, senderName: m.sender.name, body: m.body, createdAt: m.createdAt })),
+      messages: c.messages.map((m) => ({ id: m.id, senderName: m.sender.name, type: m.type, body: m.body, mediaUrl: m.mediaUrl, transcript: m.transcript, createdAt: m.createdAt })),
     })),
   });
 }

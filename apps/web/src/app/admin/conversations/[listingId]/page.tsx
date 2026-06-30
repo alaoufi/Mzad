@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { HijriDate } from '@/components/HijriDate';
 
-interface Msg { id: string; senderName: string; body: string; createdAt: string }
+interface Msg { id: string; senderName: string; type?: string; body: string; mediaUrl?: string | null; transcript?: string | null; createdAt: string }
 interface Conv { id: string; isPublic: boolean; buyerName: string | null; messages: Msg[] }
 interface Data { listing: { id: string; title: string; sellerName: string }; conversations: Conv[] }
 
@@ -68,7 +68,17 @@ export default function AdminConversationsPage({ params }: { params: { listingId
                     <span className="text-xs font-bold text-brand-dark">{m.senderName}</span>
                     <span className="text-[10px] text-gray-400"><HijriDate value={m.createdAt} short /></span>
                   </div>
-                  <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-gray-800">{m.body}</p>
+                  {m.type === 'IMAGE' && m.mediaUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.mediaUrl} alt="صورة" className="mt-1 max-h-56 rounded-xl" />
+                  ) : m.type === 'VOICE' && m.mediaUrl ? (
+                    <div className="mt-1">
+                      <audio controls src={m.mediaUrl} className="h-9 w-full max-w-xs" />
+                      {m.transcript && <p className="mt-1 text-sm text-gray-700">📝 {m.transcript}</p>}
+                    </div>
+                  ) : (
+                    <p className="mt-0.5 whitespace-pre-wrap break-words text-sm text-gray-800">{m.body}</p>
+                  )}
                 </div>
               ))}
             </div>

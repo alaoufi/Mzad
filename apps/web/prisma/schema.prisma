@@ -293,6 +293,8 @@ model Message {
   senderId       String
   type           MessageType  @default(TEXT)
   body           String
+  mediaUrl       String?
+  transcript     String?
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])
