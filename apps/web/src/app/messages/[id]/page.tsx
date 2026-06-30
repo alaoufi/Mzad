@@ -140,7 +140,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     try { recRef.current?.stop(); } catch {}
   };
 
-  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
+  if (!ready) return null;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

@@ -39,6 +39,7 @@ export default function HomePage() {
   const [gateDismissed, setGateDismissed] = useState(true);
   const [txt, setTxt] = useState<Record<string, string>>({});
   const tx = (k: string, def: string) => txt[k]?.trim() || def;
+  const [trustInfo, setTrustInfo] = useState<{ ic: string; title: string; body: string } | null>(null);
 
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
@@ -288,10 +289,16 @@ export default function HomePage() {
         {/* شريط الثقة — يطمئن الزائر ويعطي إحساساً راقياً (في الجذر فقط) */}
         {mode !== 'SUPPLIES' && path.length === 0 && !q && profileLoaded && (
           <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-0.5">
-            {[['✅', tx('trust1', 'بائعون موثّقون')], ['🤝', tx('trust2', 'تفاوض مباشر')], ['⚖️', tx('trust3', 'حماية النزاعات')], ['🔒', tx('trust4', 'مراسلات خاصة')]].map(([ic, label]) => (
-              <div key={label} className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-white/85 px-3 py-1.5 text-xs font-extrabold text-gray-700 shadow-sm ring-1 ring-black/[0.04]">
+            {([
+              ['✅', tx('trust1', 'بائعون موثّقون'), 'نراجع بيانات البائع قبل توثيقه، وتظهر شارة «موثّق» على إعلاناته لتطمئن قبل التواصل.'],
+              ['🤝', tx('trust2', 'تفاوض مباشر'), 'تتواصل مع البائع مباشرة وتتفق على السعر والتسليم بينكما — بلا وسيط وبلا عمولة.'],
+              ['⚖️', tx('trust3', 'حماية النزاعات'), 'إن حدث خلاف بعد الاتفاق يمكنك فتح بلاغ، وتتابعه إدارة المنصّة للوصول إلى حل عادل.'],
+              ['🔒', tx('trust4', 'مراسلات خاصة'), 'محادثاتك مع البائع خاصة ومحفوظة داخل المنصّة، ولا يظهر رقمك إلا إذا شاركته بنفسك.'],
+            ] as [string, string, string][]).map(([ic, label, body]) => (
+              <button key={label} type="button" onClick={() => setTrustInfo({ ic, title: label, body })}
+                className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-white/85 px-3 py-1.5 text-xs font-extrabold text-gray-700 shadow-sm ring-1 ring-black/[0.04] transition active:scale-95">
                 <span className="text-base">{ic}</span> {label}
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -389,6 +396,17 @@ export default function HomePage() {
           onClose={() => setShowPicker(false)}
           onSkip={interests.length === 0 ? skipInterests : undefined}
         />
+      )}
+
+      {trustInfo && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center" onClick={() => setTrustInfo(null)}>
+          <div className="card w-full max-w-sm animate-fadeup p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-sand-100 text-4xl">{trustInfo.ic}</div>
+            <h3 className="mb-2 text-lg font-extrabold text-gray-800">{trustInfo.title}</h3>
+            <p className="text-sm leading-relaxed text-gray-600">{trustInfo.body}</p>
+            <button onClick={() => setTrustInfo(null)} className="btn-primary mt-5 w-full">فهمت 👍</button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -29,7 +29,7 @@ export default function AdStatsPage({ params }: { params: { id: string } }) {
       .finally(() => setLoading(false));
   }, [user, params.id]);
 
-  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
+  if (!ready) return null;
   if (!user) return <p className="py-10 text-center text-gray-500">سجّل الدخول بحساب مشرف</p>;
   if (loading) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
   if (error || !ad) return <div className="card p-8 text-center"><p className="text-5xl">🚫</p><p className="mt-3 font-bold">{error || 'غير موجود'}</p></div>;
