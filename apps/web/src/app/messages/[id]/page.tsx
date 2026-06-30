@@ -17,7 +17,7 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [data, setData] = useState<Data | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -140,6 +140,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     try { recRef.current?.stop(); } catch {}
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

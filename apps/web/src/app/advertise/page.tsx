@@ -22,7 +22,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 export default function AdvertisePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [mine, setMine] = useState<Ad[]>([]);
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
@@ -72,6 +72,7 @@ export default function AdvertisePage() {
     finally { setSaving(false); }
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

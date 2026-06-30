@@ -30,7 +30,7 @@ const time = (s: string) => {
 
 export default function MessagesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [convs, setConvs] = useState<Conv[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +42,7 @@ export default function MessagesPage() {
       .finally(() => setLoading(false));
   }, [user]);
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

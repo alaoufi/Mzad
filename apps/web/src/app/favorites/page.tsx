@@ -8,7 +8,7 @@ import { ListingCard } from '@/components/ListingCard';
 
 export default function FavoritesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [items, setItems] = useState<ListingSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +18,7 @@ export default function FavoritesPage() {
       .then((r) => setItems(r.items)).catch(() => {}).finally(() => setLoading(false));
   }, [user]);
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

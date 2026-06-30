@@ -24,7 +24,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 export default function BrokerPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [items, setItems] = useState<BAuction[]>([]);
   const [earnings, setEarnings] = useState(0);
   const [error, setError] = useState('');

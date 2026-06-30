@@ -28,7 +28,7 @@ const TXN_META: Record<string, { label: string; icon: string }> = {
 
 export default function WalletPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [balance, setBalance] = useState(0);
   const [txns, setTxns] = useState<Txn[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +55,7 @@ export default function WalletPage() {
     finally { setBusy(false); }
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

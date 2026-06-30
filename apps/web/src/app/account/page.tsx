@@ -28,7 +28,7 @@ interface Profile {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, ready } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [listings, setListings] = useState<ListingSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +66,7 @@ export default function AccountPage() {
     finally { setVerifying(false); }
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

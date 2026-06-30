@@ -31,7 +31,7 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 
 export default function SellPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [tree, setTree] = useState<Cat[]>([]);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -195,6 +195,7 @@ export default function SellPage() {
     (!req('health') || healthAllSet);
   const canSubmit = !!form.categoryId && form.title.trim().length > 2 && form.description.trim().length > 2 && priceOk && reqOk;
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">
