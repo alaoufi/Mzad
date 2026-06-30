@@ -350,8 +350,8 @@ export default function SellPage() {
 
       {/* العنوان والوصف — مطلوب */}
       <Section title="✍️ العنوان والوصف" badge="req" tint="bg-emerald-50 border-emerald-200">
-        <input className={`input mb-3 ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
-        <textarea className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder={`الوصف * — ${t('sellDescPlaceholder')}`} value={form.description} onChange={(e) => set('description', e.target.value)} />
+        <input maxLength={120} className={`input mb-3 ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
+        <textarea maxLength={2000} className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder={`الوصف * — ${t('sellDescPlaceholder')}`} value={form.description} onChange={(e) => set('description', e.target.value)} />
 
         {/* تنبيه مهم — بارز ثلاثي الأبعاد عائم، سطر واحد */}
         <div className="mt-3 animate-floaty whitespace-nowrap overflow-hidden text-ellipsis rounded-xl bg-gradient-to-b from-amber-200 to-amber-100 px-3 py-1.5 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
@@ -448,7 +448,7 @@ export default function SellPage() {
         {/* حقل حرّ: عيوب لم تُذكر أعلاه */}
         <div className="mt-3">
           <label className="mb-1 block text-sm font-bold text-gray-700">{t('sellDefectsTitle')}</label>
-          <textarea className="input min-h-[70px]" placeholder={t('sellDefectsPlaceholder')} value={defectsNote} onChange={(e) => setDefectsNote(e.target.value)} />
+          <textarea maxLength={1000} className="input min-h-[70px]" placeholder={t('sellDefectsPlaceholder')} value={defectsNote} onChange={(e) => setDefectsNote(e.target.value)} />
         </div>
       </Section>
 

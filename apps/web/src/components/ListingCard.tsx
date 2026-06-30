@@ -14,6 +14,10 @@ export function ListingCard({
   const isOnsoom = !isAuction && !!listing.auction && isOpenEnd(listing.auction.endAt);
   const priceNum = isAuction || isOnsoom ? Number(listing.auction?.startPrice ?? 0) : Number(listing.price ?? 0);
   const priceLabel = priceNum > 0 ? priceNum.toLocaleString('ar-SA') : null;
+  // مزاد على وشك الانتهاء (أقل من 3 ساعات وغير مفتوح)
+  const endAt = isAuction ? listing.auction?.endAt : undefined;
+  const msLeft = endAt && !isOpenEnd(endAt) ? new Date(endAt).getTime() - Date.now() : Infinity;
+  const endingSoon = isAuction && msLeft > 0 && msLeft < 3 * 60 * 60 * 1000;
 
   const picture = img ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -26,7 +30,9 @@ export function ListingCard({
   const badges = (
     <>
       {isAuction && (
-        <span className="float-box absolute right-2 top-2 rounded-full bg-gradient-to-l from-gold to-amber-500 px-2.5 py-1 text-xs font-bold text-white">🔨 مزاد</span>
+        endingSoon
+          ? <span className="absolute right-2 top-2 animate-pulse rounded-full bg-red-600 px-2.5 py-1 text-xs font-extrabold text-white shadow-lg ring-2 ring-white/40">⏰ ينتهي قريباً</span>
+          : <span className="float-box absolute right-2 top-2 rounded-full bg-gradient-to-l from-gold to-amber-500 px-2.5 py-1 text-xs font-bold text-white">🔨 مزاد</span>
       )}
       {isOnsoom && (
         <span className="float-box absolute right-2 top-2 rounded-full bg-brand px-2.5 py-1 text-xs font-bold text-white">🤝 على السوم</span>
@@ -47,7 +53,7 @@ export function ListingCard({
         </div>
       </div>
       {isAuction && listing.auction && (
-        <span className="rounded-lg bg-sand-100 px-2 py-1 text-xs font-bold text-brand-dark">⏱ <Countdown endAt={listing.auction.endAt} /></span>
+        <span className={`rounded-lg px-2 py-1 text-xs font-bold ${endingSoon ? 'animate-pulse bg-red-100 text-red-700' : 'bg-sand-100 text-brand-dark'}`}>⏱ <Countdown endAt={listing.auction.endAt} /></span>
       )}
     </div>
   );
