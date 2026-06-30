@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { storedRegion } from '@/lib/geo';
+import { PromoStrip } from './PromoStrip';
 
 interface Ad { id: string; title: string; imageUrl?: string | null; link?: string | null; advertiser?: string | null }
 
@@ -20,13 +21,18 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
   const router = useRouter();
   const [ads, setAds] = useState<Ad[]>([]);
   const [i, setI] = useState(0);
+  const [loaded, setLoaded] = useState(false);
   const seen = useRef<Set<string>>(new Set());
   const cats = (categoryIds || []).filter(Boolean).join(',');
 
   useEffect(() => {
     const region = storedRegion();
     const qs = `${cats ? `&cats=${encodeURIComponent(cats)}` : ''}${region ? `&region=${encodeURIComponent(region)}` : ''}`;
-    api<{ ads: Ad[] }>(`/ads?placement=${placement}${qs}`).then((r) => { setAds(r.ads || []); setI(0); }).catch(() => {});
+    setLoaded(false);
+    api<{ ads: Ad[] }>(`/ads?placement=${placement}${qs}`)
+      .then((r) => { setAds(r.ads || []); setI(0); })
+      .catch(() => setAds([]))
+      .finally(() => setLoaded(true));
   }, [placement, cats]);
 
   // تبادل الإعلانات كل 7 ثوانٍ
@@ -41,7 +47,8 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
     if (ad && !seen.current.has(ad.id)) { seen.current.add(ad.id); track(ad.id, 'IMPRESSION'); }
   }, [ad]);
 
-  if (!ad) return null;
+  // لا إعلان مدفوع → بطاقة ترويجية (مزادات نشطة + عروض مميّزة). لا نعرض شيئاً قبل اكتمال الجلب لمنع الوميض.
+  if (!ad) return loaded ? <PromoStrip categoryIds={categoryIds} /> : null;
 
   // النقر على الإعلان: يفتح الرابط إن وُجد، وإلا يعرض الإعلان
   const openMain = () => {
