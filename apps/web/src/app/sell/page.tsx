@@ -205,7 +205,7 @@ export default function SellPage() {
       {error && <div className="rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 
       {/* الموقع أولاً */}
-      <Section title="📍 موقع الحلال" badge="opt" hint="حدّد موقعك بدقّة ليصل المشترون إليك — أو أدخل المدينة يدوياً.">
+      <Section title="📍 موقع الحلال" badge="opt" tint="bg-sky-50 border-sky-200" hint="حدّد موقعك بدقّة ليصل المشترون إليك — أو أدخل المدينة يدوياً.">
         {hasLoc ? (
           <div className="rounded-2xl border-2 border-green-300 bg-green-50 p-3">
             <div className="flex items-center gap-2 font-bold text-green-700">
@@ -234,7 +234,7 @@ export default function SellPage() {
       </Section>
 
       {/* التصنيف — بحث + بطاقات ملوّنة */}
-      <Section title="🗂️ التصنيف" badge="req">
+      <Section title="🗂️ التصنيف" badge="req" tint="bg-amber-50 border-amber-200">
         <div className="relative mb-3">
           <input className={`input !pr-10 ${tone(true, !!form.categoryId)}`} placeholder="🔍 ابحث عن تصنيف بالاسم..." value={catSearch} onChange={(e) => setCatSearch(e.target.value)} />
         </div>
@@ -292,13 +292,13 @@ export default function SellPage() {
       </Section>
 
       {/* العنوان والوصف — مطلوب */}
-      <Section title="✍️ العنوان والوصف" badge="req">
+      <Section title="✍️ العنوان والوصف" badge="req" tint="bg-emerald-50 border-emerald-200">
         <input className={`input mb-3 ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
         <textarea className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder="الوصف * — اكتب وصفاً صادقاً للحلال..." value={form.description} onChange={(e) => set('description', e.target.value)} />
       </Section>
 
       {/* الصور */}
-      <Section title="📷 الصور" badge={req('photos') ? 'req' : 'opt'} hint="حتى 8 صور واضحة.">
+      <Section title="📷 الصور" badge={req('photos') ? 'req' : 'opt'} tint="bg-violet-50 border-violet-200" hint="حتى 8 صور واضحة.">
         <div className="grid grid-cols-3 gap-3">
           {form.photos.map((src: string, i: number) => (
             <div key={i} className="relative aspect-square overflow-hidden rounded-2xl ring-2 ring-green-200">
@@ -318,7 +318,7 @@ export default function SellPage() {
       </Section>
 
       {/* فيديو */}
-      <Section title="🎬 مقطع فيديو" badge={req('video') ? 'req' : 'opt'} hint="مقطع قصير يوضّح الحلال (حتى 15MB).">
+      <Section title="🎬 مقطع فيديو" badge={req('video') ? 'req' : 'opt'} tint="bg-rose-50 border-rose-200" hint="مقطع قصير يوضّح الحلال (حتى 15MB).">
         {videoUrl ? (
           <div className="space-y-2">
             <video src={videoUrl} controls className="w-full rounded-2xl bg-black" />
@@ -334,7 +334,7 @@ export default function SellPage() {
       </Section>
 
       {/* مقطع صوتي توضيحي */}
-      <Section title="🎤 مقطع صوتي توضيحي" badge={req('audio') ? 'req' : 'opt'} hint="سجّل توضيحاً صوتياً عن الحلال.">
+      <Section title="🎤 مقطع صوتي توضيحي" badge={req('audio') ? 'req' : 'opt'} tint="bg-teal-50 border-teal-200" hint="سجّل توضيحاً صوتياً عن الحلال.">
         {audioUrl ? (
           <div className="space-y-2">
             <audio src={audioUrl} controls className="w-full" />
@@ -353,7 +353,7 @@ export default function SellPage() {
       </Section>
 
       {/* التفاصيل — اختياري */}
-      <Section title="📋 التفاصيل" badge="opt">
+      <Section title="📋 التفاصيل" badge="opt" tint="bg-indigo-50 border-indigo-200">
         <div className="mb-3">
           <label className="mb-1 block text-sm font-bold text-gray-600">العدد</label>
           <input type="number" className={`input w-32 ${tone(false)}`} value={form.count} onChange={(e) => set('count', e.target.value)} />
@@ -367,7 +367,7 @@ export default function SellPage() {
       </Section>
 
       {/* الصحة */}
-      <Section title="🩺 الحالة الصحية" badge={req('health') ? 'req' : 'opt'} hint="إفصاح صادق يرفع ثقتك.">
+      <Section title="🩺 الحالة الصحية" badge={req('health') ? 'req' : 'opt'} tint="bg-lime-50 border-lime-200" hint="إفصاح صادق يرفع ثقتك.">
         <div className="space-y-2">
           {healthItems.map((h) => {
             const v = form.health[h.id];
@@ -385,7 +385,7 @@ export default function SellPage() {
       </Section>
 
       {/* البيع — مطلوب */}
-      <Section title="💰 طريقة البيع" badge="req">
+      <Section title="💰 طريقة البيع" badge="req" tint="bg-orange-50 border-orange-200">
         <div className="mb-4 grid grid-cols-3 gap-2">
           {([['DIRECT', '🏷️ سعر ثابت'], ['ONSOOM', '🤝 على السوم'], ['AUCTION', '🔨 مزاد']] as [string, string][]).map(([v, l]) => (
             <button key={v} onClick={() => set('saleType', v)} className={`rounded-2xl border-2 py-3 text-sm font-bold transition ${form.saleType === v ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{l}</button>
@@ -454,9 +454,9 @@ export default function SellPage() {
   );
 }
 
-function Section({ title, hint, badge, children }: { title: string; hint?: string; badge?: 'req' | 'opt'; children: ReactNode }) {
+function Section({ title, hint, badge, tint, children }: { title: string; hint?: string; badge?: 'req' | 'opt'; tint?: string; children: ReactNode }) {
   return (
-    <div className="card p-4">
+    <div className={`card border-2 p-4 ${tint ?? 'bg-white'}`}>
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-extrabold text-engrave">{title}</h2>
         {badge && <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${badge === 'req' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>{badge === 'req' ? 'مطلوب' : 'اختياري'}</span>}
