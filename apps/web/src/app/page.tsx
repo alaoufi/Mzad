@@ -369,7 +369,7 @@ export default function HomePage() {
               <p className="text-7xl drop-shadow">{emoji === '🐾' ? '🐪' : emoji}</p>
               <p className="mt-3 text-lg font-extrabold text-engrave">لا توجد نتائج في «{title}»</p>
               <p className="mt-1 text-sm text-gray-500">{tx('homeEmpty', 'كن أوّل من يضيف هنا، أو جرّب تصنيفاً آخر.')}</p>
-              <Link href="/sell" className="btn-gold mt-4 inline-flex !px-6">＋ أضف إعلانك</Link>
+              <Link href="/sell" className="mt-4 inline-flex items-center rounded-2xl px-6 py-2.5 font-extrabold text-white shadow-md transition active:scale-95" style={{ backgroundImage: gradient(theme) }}>＋ أضف إعلانك</Link>
             </div>
           ) : (
             <div className={`grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`}>

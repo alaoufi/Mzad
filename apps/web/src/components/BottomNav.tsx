@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useActiveTheme } from '@/lib/theme-context';
+import { gradient } from '@/lib/themes';
 
 const ITEMS = [
   { href: '/', label: 'الرئيسية', icon: '🏠' },
@@ -24,8 +25,8 @@ export function BottomNav() {
           if (item.primary) {
             return (
               <Link key={item.href} href={item.href} className="flex flex-1 items-center justify-center">
-                <span className="-mt-7 flex h-15 w-15 items-center justify-center rounded-full text-3xl text-white shadow-lg shadow-gold/30 ring-4 ring-white"
-                  style={{ height: '3.6rem', width: '3.6rem', backgroundImage: 'linear-gradient(135deg, #e0b85a, #b9852b)' }}>
+                <span className="-mt-7 flex h-15 w-15 items-center justify-center rounded-full text-3xl text-white shadow-lg ring-4 ring-white"
+                  style={{ height: '3.6rem', width: '3.6rem', backgroundImage: gradient(theme), boxShadow: `0 8px 20px ${theme.accent}55` }}>
                   {item.icon}
                 </span>
               </Link>

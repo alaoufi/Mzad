@@ -20,6 +20,19 @@ const Ctx = createContext<{
 export function ActiveThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [section, setSection] = useState<HeaderSection | null>(null);
+
+  // لون شريط المتصفّح يتبع ثيم الصفحة الحالية حتى لا يتنافر أعلى الشاشة مع المحتوى
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = theme.from || '#0f7b6c';
+  }, [theme]);
+
   return <Ctx.Provider value={{ theme, setTheme, section, setSection }}>{children}</Ctx.Provider>;
 }
 
