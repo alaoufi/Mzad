@@ -57,15 +57,12 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) { setProfileLoaded(true); return; }
-    // اهتمامات مخزّنة لكل مستخدم → عرض فوري للتصفّح ثم تحديث صامت.
-    // لا نعتبر الملف «جاهزاً» إلا إذا كان المخزّن غير فارغ — حتى لا تُجلب «كل المواشي»
-    // بناءً على ذاكرة قديمة فارغة بينما لدى الزائر اهتمام فعلي (يسبّب ظهور إعلانات ثم اختفاءها).
+    // الذاكرة تُستخدم فقط لترطيب شريط التصفّح فوراً (بلا وميض في القوائم) — لكن جلب الإعلانات
+    // ينتظر تأكيد الخادم للاهتمامات (profileLoaded). هكذا يحدث طلب واحد بحقيقة واحدة،
+    // فلا يقع طلبان متناقضان (اهتمام ثم «كل المواشي») يسبّبان ظهور حالة ثم اختفاءها.
     try {
       const cached = localStorage.getItem(`mzad_interests_${user.id}`);
-      if (cached) {
-        const arr = JSON.parse(cached);
-        if (Array.isArray(arr) && arr.length) { setInterests(arr); setProfileLoaded(true); }
-      }
+      if (cached) { const arr = JSON.parse(cached); if (Array.isArray(arr) && arr.length) setInterests(arr); }
     } catch {}
     api<{ interests?: string[] }>('/users/me')
       .then((r) => { const ints = r.interests ?? []; setInterests(ints); try { localStorage.setItem(`mzad_interests_${user.id}`, JSON.stringify(ints)); } catch {} })
