@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
 import { CatGlyph } from '@/components/CatGlyph';
-import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, skinVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
+import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, skinVars, SUPPLIES_NAME, CatNode, catImageIconForText } from '@/lib/themes';
 import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
@@ -255,6 +255,8 @@ export default function HomePage() {
 
   // دمج هوية القسم داخل الهيدر — نُفرّغه أثناء البوابة حتى لا يتداخل عنوانها مع «عروض المواشي»
   const headerEmoji = emoji === '🐾' ? '🐪' : emoji;
+  // صورة النوع (إبل/غنم) من سلسلة التصنيف — لاستخدامها بدل الإيموجي في الحالة الفارغة وغيرها
+  const heroImg = catImageIconForText([...chain.map((c) => c.name), title].join(' '));
   const headerSubtitle = loading ? '' : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`;
   useHeaderSection(showGate ? '' : (profileLoaded ? title : ''), headerEmoji, showGate ? '' : headerSubtitle, motif, mood, skin.font, theme.bg);
 
@@ -410,7 +412,12 @@ export default function HomePage() {
             </div>
           ) : listings.length === 0 ? (
             <div className="card mx-auto my-6 max-w-sm p-8 text-center">
-              <p className="text-7xl drop-shadow">{emoji === '🐾' ? '🐪' : emoji}</p>
+              {heroImg ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={heroImg} alt="" className="mx-auto h-24 w-24 rounded-full object-cover shadow ring-2 ring-black/5" />
+              ) : (
+                <p className="text-7xl drop-shadow">{emoji === '🐾' ? '🐪' : emoji}</p>
+              )}
               <p className="mt-3 text-lg font-extrabold text-engrave">لا توجد نتائج في «{title}»</p>
               <p className="mt-1 text-sm text-gray-500">{tx('homeEmpty', 'كن أوّل من يضيف هنا، أو جرّب تصنيفاً آخر.')}</p>
               <Link href="/sell" className="mt-4 inline-flex items-center rounded-2xl px-6 py-2.5 font-extrabold text-white shadow-md transition active:scale-95" style={{ backgroundImage: gradient(theme) }}>＋ أضف إعلانك</Link>
