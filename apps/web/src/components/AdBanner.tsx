@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
@@ -20,12 +19,9 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
   const router = useRouter();
   const [ads, setAds] = useState<Ad[]>([]);
   const [i, setI] = useState(0);
-  const [zoom, setZoom] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const seen = useRef<Set<string>>(new Set());
   const cats = (categoryIds || []).filter(Boolean).join(',');
 
-  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
     const qs = cats ? `&cats=${encodeURIComponent(cats)}` : '';
     api<{ ads: Ad[] }>(`/ads?placement=${placement}${qs}`).then((r) => { setAds(r.ads || []); setI(0); }).catch(() => {});
@@ -45,15 +41,10 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
 
   if (!ad) return null;
 
-  const open = () => {
-    track(ad.id, 'CLICK');
-    if (ad.link?.startsWith('http')) window.open(ad.link, '_blank', 'noopener');
-    else if (ad.link) router.push(ad.link);
-    else if (ad.imageUrl) setZoom(true);            // بلا رابط: نفتح صورة الإعلان كاملة
-  };
+  // النقر يعرض الإعلان نفسه (صفحة عرض الإعلان)
+  const open = () => { track(ad.id, 'CLICK'); router.push(`/ads/${ad.id}`); };
 
   return (
-    <>
       <button onClick={open}
         className="relative mb-4 flex w-full items-center gap-3 overflow-hidden rounded-2xl p-3 text-right text-white shadow-md transition active:scale-[0.99]"
         style={{ backgroundImage: 'linear-gradient(135deg, var(--th-from, #0e5a6b), var(--th-to, #28a0a8))' }}>
@@ -75,15 +66,5 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
         )}
         <span className="shrink-0 rounded-xl bg-white/25 px-3 py-1.5 text-sm font-bold">عرض ←</span>
       </button>
-
-      {zoom && ad.imageUrl && mounted && createPortal(
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/85 p-4" onClick={() => setZoom(false)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ad.imageUrl} alt={ad.title} className="max-h-[85vh] max-w-full rounded-2xl object-contain" />
-          <button className="absolute right-4 top-4 text-3xl text-white">×</button>
-        </div>,
-        document.body,
-      )}
-    </>
   );
 }
