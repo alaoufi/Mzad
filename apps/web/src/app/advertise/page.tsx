@@ -30,11 +30,14 @@ export default function AdvertisePage() {
   const [packageKey, setPackageKey] = useState('');
   const [countries, setCountries] = useState<string[]>([]);
   const [regions, setRegions] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [sections, setSections] = useState<{ id: string; name: string; icon?: string | null }[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const load = () => api<{ ads: Ad[] }>('/ads/mine').then((r) => setMine(r.ads)).catch(() => {});
   useEffect(() => { if (user) load(); }, [user]);
+  useEffect(() => { api<{ id: string; name: string; icon?: string | null }[]>('/categories').then(setSections).catch(() => {}); }, []);
 
   const pickImage = async (f: FileList | null) => {
     if (!f?.length) return;
@@ -48,9 +51,9 @@ export default function AdvertisePage() {
     if (!packageKey) { uiToast('اختر باقة'); return; }
     setSaving(true);
     try {
-      await api('/ads/request', { method: 'POST', body: JSON.stringify({ title, link, imageUrl, placement, packageKey, targetCountries: countries.join(','), targetRegions: regions.join(',') }) });
+      await api('/ads/request', { method: 'POST', body: JSON.stringify({ title, link, imageUrl, placement, packageKey, targetCountries: countries.join(','), targetRegions: regions.join(','), targetCategories: categories.join(',') }) });
       uiToast('✅ تم استلام طلبك — بانتظار موافقة الإدارة', 'success');
-      setTitle(''); setLink(''); setImageUrl(''); setPackageKey(''); setCountries([]); setRegions([]);
+      setTitle(''); setLink(''); setImageUrl(''); setPackageKey(''); setCountries([]); setRegions([]); setCategories([]);
       load();
     } catch (e: any) { uiToast(e.message); }
     finally { setSaving(false); }
@@ -96,6 +99,16 @@ export default function AdvertisePage() {
           <select className="input" value={placement} onChange={(e) => setPlacement(e.target.value)}>
             {AD_PLACEMENTS.map((p) => <option key={p.key} value={p.key}>{p.label} — {p.where}</option>)}
           </select></div>
+
+        <div><label className="mb-1 block text-sm font-bold text-gray-600">الأقسام (فارغ = كل الأقسام)</label>
+          <div className="flex flex-wrap gap-1.5">
+            {sections.map((s) => {
+              const on = categories.includes(s.id);
+              return <button key={s.id} type="button"
+                onClick={() => setCategories((p) => on ? p.filter((x) => x !== s.id) : [...p, s.id])}
+                className={`rounded-full px-3 py-1 text-sm font-bold ring-1 ${on ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>{s.icon} {s.name}</button>;
+            })}
+          </div></div>
 
         <div><label className="mb-1 block text-sm font-bold text-gray-600">الدول (فارغ = كل الدول)</label>
           <div className="flex flex-wrap gap-1.5">

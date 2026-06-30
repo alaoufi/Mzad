@@ -33,6 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(b.advertiser !== undefined ? { advertiser: b.advertiser?.trim() || null } : {}),
       ...(b.targetCountries !== undefined ? { targetCountries: b.targetCountries?.trim() || null } : {}),
       ...(b.targetRegions !== undefined ? { targetRegions: b.targetRegions?.trim() || null } : {}),
+      ...(b.targetCategories !== undefined ? { targetCategories: b.targetCategories?.trim() || null } : {}),
       ...(b.maxImpressions !== undefined ? { maxImpressions: b.maxImpressions === null || b.maxImpressions === '' ? null : Number(b.maxImpressions) } : {}),
       ...(b.startAt !== undefined ? { startAt: b.startAt ? new Date(b.startAt) : null } : {}),
       ...(b.endAt !== undefined ? { endAt: b.endAt ? new Date(b.endAt) : null } : {}),

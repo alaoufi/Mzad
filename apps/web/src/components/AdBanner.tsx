@@ -15,14 +15,16 @@ function track(id: string, type: 'IMPRESSION' | 'CLICK') {
   } catch {}
 }
 
-export function AdBanner({ placement = 'HOME_TOP' }: { placement?: string }) {
+export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: string; categoryIds?: string[] }) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [i, setI] = useState(0);
   const seen = useRef<Set<string>>(new Set());
+  const cats = (categoryIds || []).filter(Boolean).join(',');
 
   useEffect(() => {
-    api<{ ads: Ad[] }>(`/ads?placement=${placement}`).then((r) => { setAds(r.ads || []); setI(0); }).catch(() => {});
-  }, [placement]);
+    const qs = cats ? `&cats=${encodeURIComponent(cats)}` : '';
+    api<{ ads: Ad[] }>(`/ads?placement=${placement}${qs}`).then((r) => { setAds(r.ads || []); setI(0); }).catch(() => {});
+  }, [placement, cats]);
 
   // تبادل الإعلانات كل 7 ثوانٍ
   useEffect(() => {

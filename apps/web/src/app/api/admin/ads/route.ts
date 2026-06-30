@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
       ownerId: b.ownerId || null,
       targetCountries: b.targetCountries?.trim() || null,
       targetRegions: b.targetRegions?.trim() || null,
+      targetCategories: b.targetCategories?.trim() || null,
       packageKey: b.packageKey || null,
       priceHalalas: pkg ? pkg.priceHalalas : (b.priceHalalas != null ? Number(b.priceHalalas) : null),
       maxImpressions,

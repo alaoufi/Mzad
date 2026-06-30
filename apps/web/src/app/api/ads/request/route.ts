@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       ownerId: auth.sub,
       targetCountries: b.targetCountries?.trim() || null,
       targetRegions: b.targetRegions?.trim() || null,
+      targetCategories: b.targetCategories?.trim() || null,
       packageKey: pkg.key,
       priceHalalas: pkg.priceHalalas,
       maxImpressions: pkg.maxImpressions,

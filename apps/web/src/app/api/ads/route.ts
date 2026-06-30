@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
   // بلد ومدينة الزائر من ترويسات Vercel (إن توفّرت)
   const country = (req.headers.get('x-vercel-ip-country') || '').toUpperCase();
   const city = req.headers.get('x-vercel-ip-city') || '';
+  // سياق التصنيفات الحالي (التصنيف وأسلافه) لمطابقة الاستهداف بالقسم
+  const ctx = (req.nextUrl.searchParams.get('cats') || '').split(',').map((s) => s.trim()).filter(Boolean);
   const now = new Date();
   try {
     const rows = await prisma.ad.findMany({
@@ -38,6 +40,12 @@ export async function GET(req: NextRequest) {
       }
       // الاستهداف بالمدينة/المنطقة (إن حُدّد)
       if (!regionMatches(a.targetRegions, city)) return false;
+      // الاستهداف بالقسم: يظهر فقط إن طابق التصنيف الحالي (أو أحد أسلافه)
+      const tcat = (a.targetCategories || '').trim();
+      if (tcat) {
+        const cats = tcat.split(',').map((s) => s.trim()).filter(Boolean);
+        if (cats.length && !cats.some((id) => ctx.includes(id))) return false;
+      }
       return true;
     });
 

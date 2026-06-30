@@ -18,7 +18,7 @@ const toLocal = (iso?: string | null) => {
 
 interface Ad {
   id: string; title: string; imageUrl?: string | null; link?: string | null; placement: string;
-  status: string; priority: number; advertiser?: string | null; targetCountries?: string | null; targetRegions?: string | null;
+  status: string; priority: number; advertiser?: string | null; targetCountries?: string | null; targetRegions?: string | null; targetCategories?: string | null;
   packageKey?: string | null; priceHalalas?: number | null; maxImpressions?: number | null;
   startAt?: string | null; endAt?: string | null; impressions: number; clicks: number;
 }
@@ -30,11 +30,12 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   EXPIRED: { label: 'منتهٍ', cls: 'bg-red-100 text-red-700' },
 };
 
+interface Section { id: string; name: string; icon?: string | null }
 interface Draft {
   title: string; advertiser: string; placement: string; imageUrl: string; link: string;
-  packageKey: string; countries: string[]; regions: string[]; startAt: string; endAt: string; priority: string; status: string;
+  packageKey: string; countries: string[]; regions: string[]; categories: string[]; startAt: string; endAt: string; priority: string; status: string;
 }
-const EMPTY: Draft = { title: '', advertiser: '', placement: 'HOME_TOP', imageUrl: '', link: '', packageKey: '', countries: [], regions: [], startAt: '', endAt: '', priority: '0', status: 'ACTIVE' };
+const EMPTY: Draft = { title: '', advertiser: '', placement: 'HOME_TOP', imageUrl: '', link: '', packageKey: '', countries: [], regions: [], categories: [], startAt: '', endAt: '', priority: '0', status: 'ACTIVE' };
 
 const daysLeft = (endAt?: string | null) => {
   if (!endAt) return null;
@@ -46,6 +47,7 @@ export default function AdminAdsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [ads, setAds] = useState<Ad[] | null>(null);
+  const [sections, setSections] = useState<Section[]>([]);
   const [warn, setWarn] = useState('');
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -63,6 +65,8 @@ export default function AdminAdsPage() {
     finally { setLoading(false); }
   };
   useEffect(() => { if (!user) { setLoading(false); return; } load(); }, [user]);
+  useEffect(() => { api<Section[]>('/categories').then(setSections).catch(() => {}); }, []);
+  const sectionName = (id: string) => sections.find((s) => s.id === id)?.name ?? 'قسم';
 
   const run = async (fn: () => Promise<any>) => { try { await fn(); load(); } catch (e: any) { uiToast(e.message); } };
 
@@ -73,6 +77,7 @@ export default function AdminAdsPage() {
       title: a.title, advertiser: a.advertiser ?? '', placement: a.placement, imageUrl: a.imageUrl ?? '',
       link: a.link ?? '', packageKey: a.packageKey ?? '', countries: (a.targetCountries || '').split(',').map((s) => s.trim()).filter(Boolean),
       regions: (a.targetRegions || '').split(',').map((s) => s.trim()).filter(Boolean),
+      categories: (a.targetCategories || '').split(',').map((s) => s.trim()).filter(Boolean),
       startAt: toLocal(a.startAt), endAt: toLocal(a.endAt),
       priority: String(a.priority ?? 0), status: a.status,
     });
@@ -93,7 +98,7 @@ export default function AdminAdsPage() {
     const body = {
       title: draft.title, advertiser: draft.advertiser, placement: draft.placement, imageUrl: draft.imageUrl,
       link: draft.link, packageKey: draft.packageKey, targetCountries: draft.countries.join(','),
-      targetRegions: draft.regions.join(','), startAt: draft.startAt, endAt: draft.endAt,
+      targetRegions: draft.regions.join(','), targetCategories: draft.categories.join(','), startAt: draft.startAt, endAt: draft.endAt,
       priority: draft.priority, status: draft.status,
     };
     try {
@@ -157,6 +162,7 @@ export default function AdminAdsPage() {
                     <div className="mt-0.5 text-xs text-gray-500">
                       🌍 {countries.length ? countries.map(countryName).join('، ') : 'كل الدول'}
                       {regions.length > 0 && ` · 📍 ${regions.map(regionName).join('، ')}`}
+                      {(a.targetCategories || '').split(',').filter(Boolean).length > 0 && ` · 🗂️ ${(a.targetCategories || '').split(',').filter(Boolean).map(sectionName).join('، ')}`}
                       {a.priceHalalas != null && ` · 💰 ${riyals(a.priceHalalas)} ﷼`}
                     </div>
                   </div>
@@ -235,6 +241,21 @@ export default function AdminAdsPage() {
               <select className="input" value={draft.placement} onChange={(e) => setDraft((d) => ({ ...d, placement: e.target.value }))}>
                 {AD_PLACEMENTS.map((p) => <option key={p.key} value={p.key}>{p.label} — {p.where}</option>)}
               </select>
+            </Field>
+
+            <Field label="الأقسام المستهدفة (فارغ = كل الأقسام)">
+              <div className="flex flex-wrap gap-1.5">
+                {sections.map((s) => {
+                  const on = draft.categories.includes(s.id);
+                  return (
+                    <button key={s.id} type="button"
+                      onClick={() => setDraft((d) => ({ ...d, categories: on ? d.categories.filter((x) => x !== s.id) : [...d.categories, s.id] }))}
+                      className={`rounded-full px-3 py-1 text-sm font-bold ring-1 ${on ? 'bg-brand text-white ring-brand' : 'bg-white text-gray-600 ring-sand-200'}`}>
+                      {s.icon} {s.name}
+                    </button>
+                  );
+                })}
+              </div>
             </Field>
 
             <Field label="الباقة (مدة + سقف مشاهدات — أيهما أوّل)">

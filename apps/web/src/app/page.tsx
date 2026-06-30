@@ -136,6 +136,15 @@ export default function HomePage() {
   const chain: CatNode[] = ancestryChain.length
     ? ancestryChain
     : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
+  // سياق التصنيفات الحالي (التصنيف المفتوح + أسلافه) لاستهداف الإعلانات بالقسم
+  const categoryCtx = useMemo(() => {
+    const deepest = path[path.length - 1];
+    if (!deepest) return [] as string[];
+    const ids: string[] = [];
+    let cur: string | undefined = deepest.id;
+    while (cur) { ids.push(cur); cur = parentOf.get(cur); }
+    return ids;
+  }, [path, parentOf]);
   const theme = resolveTheme(chain);
   const skin = resolveSkin(chain);
   const { motif, layoutKey, cardStyle, mood } = skin;
@@ -245,11 +254,11 @@ export default function HomePage() {
               className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
               → العودة لأسواق المواشي
             </button>
-            <AdBanner placement="SUPPLIES_TOP" />
+            <AdBanner placement="SUPPLIES_TOP" categoryIds={categoryCtx} />
           </>
         ) : (
           <>
-            <AdBanner placement="HOME_TOP" />
+            <AdBanner placement="HOME_TOP" categoryIds={categoryCtx} />
 
             {/* المبدّل الرئيسي: عروض / مزادات + مدخل المستلزمات الصغير */}
             <div className="mb-3 flex items-center gap-2">

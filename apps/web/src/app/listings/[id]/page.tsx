@@ -344,7 +344,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           );
         })()}
 
-        <AdBanner placement="LISTING_DETAIL" />
+        <AdBanner placement="LISTING_DETAIL" categoryIds={[cat?.id, cat?.parent?.id, cat?.parent?.parent?.id].filter(Boolean) as string[]} />
 
         {/* المحادثة والتقييمات */}
         <ListingChat listingId={listing.id} />

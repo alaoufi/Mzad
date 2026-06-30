@@ -349,6 +349,7 @@ model Ad {
   ownerId     String?                          // المُعلِن (خدمة ذاتية)
   targetCountries String?                       // أكواد دول مفصولة بفواصل (فارغ = الكل)
   targetRegions   String?                       // مناطق/مدن اختيارية
+  targetCategories String?                       // معرّفات تصنيفات مفصولة بفواصل (فارغ = كل الأقسام)
   packageKey  String?                          // مفتاح الباقة
   priceHalalas Int?                             // سعر الباقة (هللات)
   maxImpressions Int?                           // سقف المشاهدات (null = بلا حد)
