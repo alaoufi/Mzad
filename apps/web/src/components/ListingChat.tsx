@@ -82,7 +82,7 @@ export function ListingChat({ listingId }: { listingId: string }) {
 
       {user ? (
         <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex gap-2">
-          <input className="input flex-1 !py-3 !text-base" placeholder="اكتب رسالتك..."
+          <input className="input flex-1 !py-3 !text-base" placeholder="اكتب رسالتك..." maxLength={1000}
             value={text} onChange={(e) => setText(e.target.value)} />
           <button type="submit" disabled={busy} className="btn-primary !px-5 !py-3 disabled:opacity-50">
             إرسال

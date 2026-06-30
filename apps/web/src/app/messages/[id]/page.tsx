@@ -232,7 +232,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               📷
               <input type="file" accept="image/*" className="hidden" onChange={(e) => onPickImage(e.target.files)} />
             </label>
-            <textarea value={text} onChange={(e) => setText(e.target.value)} rows={1}
+            <textarea value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} rows={1}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               placeholder="اكتب رسالة..."
               className="max-h-28 flex-1 resize-none rounded-3xl bg-white px-4 py-2.5 text-[15px] outline-none" />
