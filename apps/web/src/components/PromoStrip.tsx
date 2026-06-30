@@ -26,18 +26,17 @@ export function PromoStrip({ categoryIds }: { categoryIds?: string[] }) {
   }, [cats]);
 
   if (promos.length === 0) return null;
-  // نكرّر القائمة مرّتين لحركة لا نهائية سلسة
-  const loop = promos.length >= 3 ? [...promos, ...promos] : promos;
 
   return (
     <div className="mb-4 overflow-hidden rounded-2xl bg-white/70 p-2 ring-1 ring-black/[0.05]">
       <div className="mb-1.5 flex items-center gap-1.5 px-1">
         <span className="rounded-full bg-gradient-to-l from-gold to-amber-500 px-2 py-0.5 text-[10px] font-extrabold text-white">✦ ترويج</span>
         <span className="text-xs font-extrabold text-gray-600">مزادات نشطة وعروض مميّزة</span>
+        <span className="mr-auto text-[10px] text-gray-400">اسحب ←</span>
       </div>
       <div className="no-scrollbar overflow-x-auto">
-        <div className={`flex w-max gap-2 ${promos.length >= 3 ? 'promo-track' : ''}`}>
-          {loop.map((p, idx) => {
+        <div className="flex w-max gap-2">
+          {promos.map((p, idx) => {
             const soon = p.kind === 'AUCTION' && p.endAt && !isOpenEnd(p.endAt) && (new Date(p.endAt).getTime() - Date.now()) < 3 * 3600 * 1000;
             const img = p.image || catImageIcon(p.categoryName);
             return (
