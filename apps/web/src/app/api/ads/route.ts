@@ -5,20 +5,42 @@ import { json } from '@/lib/server-auth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// إعلان عام لموضع معيّن (للمكوّن AdBanner). متسامح: يعيد null إن لم يتهيّأ الجدول.
+// إعلانات موضع معيّن (للتبادل في AdBanner) — مع استهداف جغرافي بالـIP وسقف مشاهدات/مدة
 export async function GET(req: NextRequest) {
   const placement = req.nextUrl.searchParams.get('placement') ?? 'HOME_TOP';
+  // بلد الزائر من ترويسات Vercel (إن توفّرت)
+  const country = (req.headers.get('x-vercel-ip-country') || '').toUpperCase();
+  const now = new Date();
   try {
-    const ad = await prisma.ad.findFirst({
-      where: { placement, status: 'ACTIVE' },
+    const rows = await prisma.ad.findMany({
+      where: {
+        placement,
+        status: 'ACTIVE',
+        AND: [
+          { OR: [{ startAt: null }, { startAt: { lte: now } }] },
+          { OR: [{ endAt: null }, { endAt: { gte: now } }] },
+        ],
+      },
       orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      take: 20,
     });
-    if (ad) {
-      // تسجيل ظهور (best-effort)
-      prisma.ad.update({ where: { id: ad.id }, data: { impressions: { increment: 1 } } }).catch(() => {});
-    }
-    return json({ ad });
+
+    const eligible = rows.filter((a) => {
+      // سقف المشاهدات (أيهما أوّل مع المدة)
+      if (a.maxImpressions != null && a.impressions >= a.maxImpressions) return false;
+      // الاستهداف الجغرافي: فارغ = كل الدول
+      const tc = (a.targetCountries || '').trim();
+      if (tc && country) {
+        const list = tc.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
+        if (list.length && !list.includes(country)) return false;
+      }
+      return true;
+    });
+
+    return json({
+      ads: eligible.map((a) => ({ id: a.id, title: a.title, imageUrl: a.imageUrl, link: a.link, advertiser: a.advertiser })),
+    });
   } catch {
-    return json({ ad: null });
+    return json({ ads: [] });
   }
 }

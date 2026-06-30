@@ -139,7 +139,8 @@ export default function AdminPage() {
     { label: 'التصنيفات', icon: '🗂️', href: '/admin/categories' },
     { label: 'الحالة الصحية', icon: '🩺', href: '/admin/health' },
     { label: 'النزاعات', icon: '⚖️', href: '/admin/disputes', badge: data.stats.disputes },
-    { label: 'التسويق', icon: '📣', href: '/admin/marketing' },
+    { label: 'الإعلانات المبوبة', icon: '📣', href: '/admin/ads' },
+    { label: 'التسويق', icon: '🛠️', href: '/admin/marketing' },
   ];
 
   return (

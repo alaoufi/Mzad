@@ -191,6 +191,9 @@ export default function AccountPage() {
           className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold text-green-700">
           💬 <span>الدعم</span>
         </a>
+        <button className="card float-box col-span-3 flex items-center justify-center gap-2 p-3 text-sm font-bold text-brand-dark" onClick={() => router.push('/advertise')}>
+          📣 <span>أعلن معنا — إعلانات مبوبة</span>
+        </button>
       </div>
 
       {editInterests && (

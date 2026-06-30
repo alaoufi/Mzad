@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
+import { AdBanner } from '@/components/AdBanner';
 import { resolveTheme, resolveIcon, resolveSkin, sceneBackground, skinVars } from '@/lib/themes';
 import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
@@ -342,6 +343,8 @@ export default function ListingPage({ params }: { params: { id: string } }) {
             </>
           );
         })()}
+
+        <AdBanner placement="LISTING_DETAIL" />
 
         {/* المحادثة والتقييمات */}
         <ListingChat listingId={listing.id} />

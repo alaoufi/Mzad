@@ -343,9 +343,15 @@ model Ad {
   imageUrl    String?
   link        String?
   placement   String    @default("HOME_TOP")
-  status      String    @default("ACTIVE")   // ACTIVE / PAUSED
+  status      String    @default("ACTIVE")   // ACTIVE / PAUSED / PENDING / EXPIRED
   priority    Int       @default(0)
   advertiser  String?
+  ownerId     String?                          // المُعلِن (خدمة ذاتية)
+  targetCountries String?                       // أكواد دول مفصولة بفواصل (فارغ = الكل)
+  targetRegions   String?                       // مناطق/مدن اختيارية
+  packageKey  String?                          // مفتاح الباقة
+  priceHalalas Int?                             // سعر الباقة (هللات)
+  maxImpressions Int?                           // سقف المشاهدات (null = بلا حد)
   startAt     DateTime?
   endAt       DateTime?
   impressions Int       @default(0)
@@ -353,6 +359,19 @@ model Ad {
   createdAt   DateTime  @default(now())
 
   @@index([placement, status])
+  @@index([ownerId])
+}
+
+// إحصائيات يومية لكل إعلان (خط زمني)
+model AdStat {
+  id          String   @id @default(uuid())
+  adId        String
+  day         String   // YYYY-MM-DD
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+
+  @@unique([adId, day])
+  @@index([adId])
 }
 
 // ───────────────────────── مركز النزاعات ─────────────────────────
