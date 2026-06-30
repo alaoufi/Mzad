@@ -224,10 +224,14 @@ export default function HomePage() {
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
       : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${sectionName}`;
 
-  // دمج هوية القسم داخل الهيدر (بدل اللافتة المنفصلة)
+  // بوابة الترحيب: تظهر للمسجّلين/الزوار بلا اهتمامات (وضع متخصص)
+  const showGate = entryMode === 'SPECIALIZED' && !gateDismissed && mode !== 'SUPPLIES'
+    && path.length === 0 && interests.length === 0 && animals.length > 0 && profileLoaded;
+
+  // دمج هوية القسم داخل الهيدر — نُفرّغه أثناء البوابة حتى لا يتداخل عنوانها مع «عروض المواشي»
   const headerEmoji = emoji === '🐾' ? '🐪' : emoji;
   const headerSubtitle = loading ? '' : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`;
-  useHeaderSection(profileLoaded ? title : '', headerEmoji, headerSubtitle, motif, mood, skin.font, theme.bg);
+  useHeaderSection(showGate ? '' : (profileLoaded ? title : ''), headerEmoji, showGate ? '' : headerSubtitle, motif, mood, skin.font, theme.bg);
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
@@ -261,35 +265,21 @@ export default function HomePage() {
     setGateDismissed(true);
   };
 
-  // بوابة الدخول المتخصص: يختار الزائر النوع أول دخول (لغير المسجّلين أو بلا اهتمامات)
-  const showGate = entryMode === 'SPECIALIZED' && !gateDismissed && mode !== 'SUPPLIES'
-    && path.length === 0 && interests.length === 0 && animals.length > 0;
+  // بوابة الترحيب: نظيفة ومركّزة على الاهتمام — بلا مربّعات أنواع مزدحمة، زرّ واحد يفتح المُنتقي
   if (showGate) {
     return (
-      <div className="scene-root -mx-4 -my-6 min-h-screen px-4 py-10 animate-fadeup"
+      <div className="scene-root -mx-4 -my-6 flex min-h-[78vh] flex-col items-center justify-center px-4 py-12 text-center animate-fadeup"
         style={{ background: sceneBackground(resolveTheme([]), 'bloom'), ...themeVars(resolveTheme([])) }}>
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-6xl">🐾</p>
-          <h1 className="mt-3 text-2xl font-extrabold text-engrave sm:text-3xl">أهلاً بك في مزاد</h1>
-          <p className="mt-2 text-gray-500">اختر ما يهمّك لتتصفّحه — كل نوع بهويته الخاصة.</p>
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {animals.map((s) => {
-              const t = resolveTheme([{ name: s.name, themeKey: s.themeKey ?? null }]);
-              return (
-                <button key={s.id} onClick={() => enterSpecies(s)}
-                  className="group relative overflow-hidden rounded-3xl p-6 text-white shadow-lift transition active:scale-95"
-                  style={{ backgroundImage: gradient(t), boxShadow: `0 20px 40px -20px ${t.from}aa` }}>
-                  <span className="block text-5xl drop-shadow">{s.icon ?? '🐾'}</span>
-                  <span className="mt-2 block text-xl font-extrabold text-emboss-light">{s.name}</span>
-                </button>
-              );
-            })}
-          </div>
+        <div className="mx-auto max-w-sm">
+          <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-full bg-white/70 text-6xl shadow-lift ring-1 ring-black/5">🐾</div>
+          <h1 className="text-2xl font-extrabold text-engrave sm:text-3xl">أهلاً بك في مزاد</h1>
+          <p className="mt-3 leading-relaxed text-gray-600">اختر ما يهمّك — نوعك ولونك وسلالتك — ونعرض لك ما يخصّك فقط، كل نوع بهويته الخاصة.</p>
           <button onClick={() => setShowPicker(true)}
-            className="mt-6 rounded-2xl bg-white px-6 py-3 text-sm font-extrabold text-brand-dark ring-1 ring-sand-200">
-            ✏️ حدّد اهتماماتك بدقّة (نوع / لون / سلالة)
+            className="mt-7 w-full rounded-2xl px-6 py-4 text-base font-extrabold text-white shadow-lift transition active:scale-95"
+            style={{ backgroundImage: gradient(theme) }}>
+            ✏️ حدّد اهتماماتك للبدء
           </button>
-          <p className="mt-2 text-xs text-gray-400">نعرض لك ما يهمّك فقط — يمكنك تعديله لاحقاً من ملفك.</p>
+          <p className="mt-3 text-xs text-gray-400">يمكنك تعديلها لاحقاً من ملفك في أي وقت.</p>
         </div>
 
         {showPicker && (
