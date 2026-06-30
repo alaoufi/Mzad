@@ -41,12 +41,19 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
 
   if (!ad) return null;
 
-  // النقر يعرض الإعلان نفسه (صفحة عرض الإعلان)
-  const open = () => { track(ad.id, 'CLICK'); router.push(`/ads/${ad.id}`); };
+  // النقر على الإعلان: يفتح الرابط إن وُجد، وإلا يعرض الإعلان
+  const openMain = () => {
+    track(ad.id, 'CLICK');
+    if (ad.link?.startsWith('http')) window.open(ad.link, '_blank', 'noopener');
+    else if (ad.link) router.push(ad.link);
+    else router.push(`/ads/${ad.id}`);
+  };
+  // زر «عرض الإعلان»: يعرض معلومات الإعلان دائماً
+  const openInfo = (e: { stopPropagation: () => void }) => { e.stopPropagation(); router.push(`/ads/${ad.id}`); };
 
   return (
-      <button onClick={open}
-        className="relative mb-4 flex w-full items-center gap-3 overflow-hidden rounded-2xl p-3 text-right text-white shadow-md transition active:scale-[0.99]"
+      <div onClick={openMain} role="button" tabIndex={0}
+        className="relative mb-4 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-2xl p-3 text-right text-white shadow-md transition active:scale-[0.99]"
         style={{ backgroundImage: 'linear-gradient(135deg, var(--th-from, #0e5a6b), var(--th-to, #28a0a8))' }}>
         <span className="absolute left-3 top-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[10px] font-bold">إعلان</span>
         {ad.imageUrl ? (
@@ -64,7 +71,10 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
             {ads.map((_, k) => <span key={k} className={`h-1 w-1 rounded-full ${k === i ? 'bg-white' : 'bg-white/40'}`} />)}
           </span>
         )}
-        <span className="shrink-0 rounded-xl bg-white/25 px-3 py-1.5 text-sm font-bold">عرض ←</span>
-      </button>
+        <button onClick={openInfo}
+          className="shrink-0 rounded-xl bg-white/25 px-3 py-1.5 text-xs font-bold hover:bg-white/35">
+          ⓘ عرض الإعلان
+        </button>
+      </div>
   );
 }
