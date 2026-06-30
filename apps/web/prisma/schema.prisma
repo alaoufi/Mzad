@@ -80,13 +80,17 @@ enum CategoryLevel {
 
 model Category {
   id       String        @id @default(uuid())
-  name     String
-  level    CategoryLevel
-  icon     String?
-  themeKey String?
-  hidden   Boolean       @default(false)
-  order    Int           @default(0)
-  parentId String?
+  name      String
+  level     CategoryLevel
+  icon      String?
+  themeKey  String?
+  motifKey  String?
+  shapeKey  String?
+  layoutKey String?
+  cardStyle String?
+  hidden    Boolean       @default(false)
+  order     Int           @default(0)
+  parentId  String?
   parent   Category?     @relation("CategoryTree", fields: [parentId], references: [id])
   children Category[]    @relation("CategoryTree")
   listings Listing[]

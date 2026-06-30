@@ -6,13 +6,20 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { THEME_LIST, FAMILIES, themeByKey, gradient } from '@/lib/themes';
+import {
+  THEME_LIST, FAMILIES, themeByKey, gradient, resolveSkin, sceneBackground, themeVars,
+  MOTIF_OPTIONS, SHAPE_OPTIONS, LAYOUT_OPTIONS, CARD_OPTIONS,
+} from '@/lib/themes';
 
 interface Cat {
   id: string;
   name: string;
   icon?: string | null;
   themeKey?: string | null;
+  motifKey?: string | null;
+  shapeKey?: string | null;
+  layoutKey?: string | null;
+  cardStyle?: string | null;
   hidden?: boolean;
   order?: number;
   parentId?: string | null;
@@ -22,7 +29,11 @@ const ICON_SUGGESTIONS = ['🐪', '🐫', '🐐', '🐑', '🐏', '🐄', '🐂'
 // ألوان حافة حسب العمق — توضّح تداخل الفروع بصرياً (تُستخدم عند غياب ثيم خاص)
 const DEPTH_STRIPE = ['#0f7b6c', '#caa45d', '#7c8b9a', '#c98a6b'];
 
-interface Draft { name: string; icon: string; themeKey: string; hidden: boolean }
+interface Draft {
+  name: string; icon: string; themeKey: string; hidden: boolean;
+  motifKey: string; shapeKey: string; layoutKey: string; cardStyle: string;
+}
+const EMPTY_DRAFT: Draft = { name: '', icon: '', themeKey: '', hidden: false, motifKey: '', shapeKey: '', layoutKey: '', cardStyle: '' };
 const depthLabel = (d: number) => (d === 0 ? 'النوع (الرأس)' : `المستوى ${d + 1}`);
 
 interface NodeCtx {
@@ -98,7 +109,7 @@ export default function AdminCategoriesPage() {
 
   const [editFor, setEditFor] = useState<Cat | null>(null);
   const [addParent, setAddParent] = useState<{ id: string | null; depth: number } | null>(null);
-  const [draft, setDraft] = useState<Draft>({ name: '', icon: '', themeKey: '', hidden: false });
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -137,12 +148,15 @@ export default function AdminCategoriesPage() {
 
   const openEdit = (c: Cat) => {
     setAddParent(null);
-    setDraft({ name: c.name, icon: c.icon ?? '', themeKey: c.themeKey ?? '', hidden: !!c.hidden });
+    setDraft({
+      name: c.name, icon: c.icon ?? '', themeKey: c.themeKey ?? '', hidden: !!c.hidden,
+      motifKey: c.motifKey ?? '', shapeKey: c.shapeKey ?? '', layoutKey: c.layoutKey ?? '', cardStyle: c.cardStyle ?? '',
+    });
     setEditFor(c);
   };
   const openAdd = (parentId: string | null, depth: number) => {
     setEditFor(null);
-    setDraft({ name: '', icon: '', themeKey: '', hidden: false });
+    setDraft(EMPTY_DRAFT);
     setAddParent({ id: parentId, depth });
     if (parentId) setOpen((o) => ({ ...o, [parentId]: true }));
   };
@@ -152,12 +166,13 @@ export default function AdminCategoriesPage() {
     if (!draft.name.trim()) { uiToast('الاسم مطلوب'); return; }
     setSaving(true);
     try {
+      const axes = { motifKey: draft.motifKey, shapeKey: draft.shapeKey, layoutKey: draft.layoutKey, cardStyle: draft.cardStyle };
       if (editFor) {
         await api(`/admin/categories/${editFor.id}`, { method: 'PATCH',
-          body: JSON.stringify({ name: draft.name, icon: draft.icon, themeKey: draft.themeKey, hidden: draft.hidden }) });
+          body: JSON.stringify({ name: draft.name, icon: draft.icon, themeKey: draft.themeKey, hidden: draft.hidden, ...axes }) });
       } else if (addParent) {
         await api('/admin/categories', { method: 'POST',
-          body: JSON.stringify({ name: draft.name, parentId: addParent.id, icon: draft.icon, themeKey: draft.themeKey }) });
+          body: JSON.stringify({ name: draft.name, parentId: addParent.id, icon: draft.icon, themeKey: draft.themeKey, ...axes }) });
       }
       closeModal();
       load();
@@ -204,6 +219,13 @@ export default function AdminCategoriesPage() {
 
   const roots = childrenOf.get(null) ?? [];
   const modalDepth = editFor ? depthOf(editFor) : addParent?.depth ?? 0;
+  // الهوية الناتجة عن المسوّدة (للمعاينة الحيّة)
+  const previewSkin = resolveSkin([{
+    name: draft.name || 'معاينة', themeKey: draft.themeKey || null,
+    motifKey: draft.motifKey || null, shapeKey: draft.shapeKey || null,
+    layoutKey: draft.layoutKey || null, cardStyle: draft.cardStyle || null,
+  }]);
+  const cardLabel = CARD_OPTIONS.find((o) => o.key === previewSkin.cardStyle)?.label ?? previewSkin.cardStyle;
   const ctx: NodeCtx = { childrenOf, open, toggle, move, toggleHide, openEdit, openAdd, del };
 
   return (
@@ -301,6 +323,29 @@ export default function AdminCategoriesPage() {
               })}
             </div>
 
+            {/* هوية القسم — معاينة حيّة وتثبيت المحاور */}
+            <div className="mt-4 rounded-2xl border-2 border-sand-200 p-3">
+              <h4 className="mb-2 text-sm font-extrabold text-brand-dark">🎨 هوية القسم — معاينة وتثبيت</h4>
+              <div className="mb-3 overflow-hidden rounded-2xl p-3"
+                style={{ background: sceneBackground(previewSkin.theme, previewSkin.motif), ...themeVars(previewSkin.theme, previewSkin.shapeKey) }}>
+                <div className="card p-2">
+                  <div className="h-14 w-full rounded-[inherit]" style={{ backgroundImage: gradient(previewSkin.theme) }} />
+                  <div className="px-1 pt-1.5 text-[11px] font-bold text-gray-600">شكل البطاقة: {cardLabel}</div>
+                </div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="chip !bg-white !py-1 !text-[11px]">رقاقة</span>
+                  <button type="button" className="btn-primary !min-h-0 !px-3 !py-1 !text-[11px]">زر</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <PinSelect label="النمط (الخلفية)" value={draft.motifKey} options={MOTIF_OPTIONS} onChange={(v) => setDraft((d) => ({ ...d, motifKey: v }))} />
+                <PinSelect label="الاستدارة" value={draft.shapeKey} options={SHAPE_OPTIONS} onChange={(v) => setDraft((d) => ({ ...d, shapeKey: v }))} />
+                <PinSelect label="التخطيط" value={draft.layoutKey} options={LAYOUT_OPTIONS} onChange={(v) => setDraft((d) => ({ ...d, layoutKey: v }))} />
+                <PinSelect label="شكل البطاقة" value={draft.cardStyle} options={CARD_OPTIONS} onChange={(v) => setDraft((d) => ({ ...d, cardStyle: v }))} />
+              </div>
+              <p className="mt-2 text-[11px] text-gray-400">«تلقائي» يُشتقّ من اسم القسم. ثبّت أي محور لتجاوز التلقائي.</p>
+            </div>
+
             <div className="mt-5 flex gap-2">
               <button onClick={closeModal} className="btn-outline flex-1">إلغاء</button>
               <button onClick={save} disabled={saving} className="btn-primary flex-1 disabled:opacity-50">
@@ -312,6 +357,21 @@ export default function AdminCategoriesPage() {
         document.body,
       )}
     </div>
+  );
+}
+
+function PinSelect({ label, value, options, onChange }: {
+  label: string; value: string; options: { key: string; label: string }[]; onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-bold text-gray-500">{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-xl border border-sand-200 bg-white px-2 py-2 text-sm font-bold text-gray-700">
+        <option value="">تلقائي</option>
+        {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
+      </select>
+    </label>
   );
 }
 

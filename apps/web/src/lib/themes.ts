@@ -91,7 +91,10 @@ export function themeForSpeciesName(name?: string | null): Theme {
   return themeByKey(name ? SPECIES_DEFAULT[name] : undefined);
 }
 
-export interface CatNode { name?: string; icon?: string | null; themeKey?: string | null }
+export interface CatNode {
+  name?: string; icon?: string | null; themeKey?: string | null;
+  motifKey?: string | null; shapeKey?: string | null; layoutKey?: string | null; cardStyle?: string | null;
+}
 
 export function resolveTheme(chain: (CatNode | null | undefined)[]): Theme {
   for (const c of chain) if (c?.themeKey && THEMES[c.themeKey]) return THEMES[c.themeKey];
@@ -205,24 +208,52 @@ export interface Skin {
 export const SKIN_COMBINATIONS =
   THEME_LIST.length * PATTERN_KEYS.length * SHAPE_KEYS.length * LAYOUT_KEYS.length * CARD_STYLES.length;
 
+// أقرب تثبيت يدوي في السلسلة (الأعمق أولاً) لمحور معيّن
+function pinned(chain: (CatNode | null | undefined)[], get: (c: CatNode) => string | null | undefined): string | undefined {
+  for (const c of chain) { const v = c ? get(c) : null; if (v) return v; }
+  return undefined;
+}
+
 export function resolveSkin(chain: (CatNode | null | undefined)[]): Skin {
   const theme = resolveTheme(chain);
   const speciesName = chain[chain.length - 1]?.name;          // النوع (الجذر)
   const seedName = chain.find((c) => c?.name)?.name ?? speciesName ?? 'مزاد'; // الأعمق
   const h = hashStr(`${seedName}|${theme.family}`);
 
-  // النمط: مخصّص للأنواع المعروفة، وإلا حتمي من البذرة
-  const motif = (speciesName && SPECIES_MOTIF[speciesName])
+  // كل محور: تثبيت يدوي إن وُجد، وإلا مخصّص معروف، وإلا حتمي من البذرة
+  const motif = pinned(chain, (c) => c.motifKey)
+    || (speciesName && SPECIES_MOTIF[speciesName])
     || FAMILY_MOTIF[theme.family]
     || PATTERN_KEYS[h % PATTERN_KEYS.length];
-
-  // بقية المحاور مستقلة وحتمية — لتعظيم التمايز بين الأقسام
-  const shapeKey = SHAPE_KEYS[Math.floor(h / 7) % SHAPE_KEYS.length];
-  const layoutKey = LAYOUT_KEYS[Math.floor(h / 53) % LAYOUT_KEYS.length];
-  const cardStyle = CARD_STYLES[Math.floor(h / 389) % CARD_STYLES.length];
+  const shapeKey = pinned(chain, (c) => c.shapeKey) || SHAPE_KEYS[Math.floor(h / 7) % SHAPE_KEYS.length];
+  const layoutKey = pinned(chain, (c) => c.layoutKey) || LAYOUT_KEYS[Math.floor(h / 53) % LAYOUT_KEYS.length];
+  const pinnedCard = pinned(chain, (c) => c.cardStyle) as CardStyle | undefined;
+  const cardStyle = (pinnedCard && CARD_STYLES.includes(pinnedCard) ? pinnedCard : null)
+    || CARD_STYLES[Math.floor(h / 389) % CARD_STYLES.length];
 
   return { theme, motif, shapeKey, layoutKey, cardStyle };
 }
+
+// خيارات المحاور (مفتاح + وصف عربي) — للوحة الإدارة
+export const MOTIF_OPTIONS = [
+  { key: 'dunes', label: 'كثبان' }, { key: 'hills', label: 'تلال' }, { key: 'peaks', label: 'قمم' },
+  { key: 'waves', label: 'أمواج' }, { key: 'scales', label: 'حراشف' }, { key: 'motion', label: 'حركة' },
+  { key: 'spots', label: 'بقع' }, { key: 'grid', label: 'شبكة' }, { key: 'bloom', label: 'نقاط' },
+];
+export const SHAPE_OPTIONS = [
+  { key: 'hills', label: 'دائري ناعم' }, { key: 'dunes', label: 'انسيابي' }, { key: 'bloom', label: 'معتدل' },
+  { key: 'scales', label: 'متوسط' }, { key: 'waves', label: 'مدوّر' }, { key: 'motion', label: 'عصري' },
+  { key: 'spots', label: 'مدوّر دافئ' }, { key: 'peaks', label: 'حادّ' }, { key: 'grid', label: 'صندوقي' },
+];
+export const LAYOUT_OPTIONS = [
+  { key: 'bloom', label: 'شبكة قياسية' }, { key: 'hills', label: 'فسيح' }, { key: 'spots', label: 'فسيح مريح' },
+  { key: 'grid', label: 'كثيف (كتالوج)' }, { key: 'scales', label: 'كثيف جداً' }, { key: 'peaks', label: 'متوسط مدمج' },
+  { key: 'waves', label: 'قياسي' }, { key: 'dunes', label: 'بطاقة متصدّرة' }, { key: 'motion', label: 'متصدّرة حركية' },
+];
+export const CARD_OPTIONS = [
+  { key: 'classic', label: 'كلاسيكي' }, { key: 'overlay', label: 'مجلّة' },
+  { key: 'polaroid', label: 'بولارويد' }, { key: 'ticket', label: 'تذكرة' },
+];
 
 // خلفية المشهد — نمط شكلي مميّز للنوع + نفحات لونية هادئة فوق قاعدة فاتحة
 export function sceneBackground(t: Theme, motif: string = 'bloom'): string {

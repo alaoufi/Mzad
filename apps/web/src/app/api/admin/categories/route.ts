@@ -11,7 +11,11 @@ export async function GET(req: NextRequest) {
   if (!auth || auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
   const all = await prisma.category.findMany({
     orderBy: [{ order: 'asc' }, { name: 'asc' }],
-    select: { id: true, name: true, level: true, icon: true, themeKey: true, hidden: true, order: true, parentId: true },
+    select: {
+      id: true, name: true, level: true, icon: true, themeKey: true,
+      motifKey: true, shapeKey: true, layoutKey: true, cardStyle: true,
+      hidden: true, order: true, parentId: true,
+    },
   });
   return json(all);
 }
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
-  const { name, parentId, icon, themeKey } = await req.json();
+  const { name, parentId, icon, themeKey, motifKey, shapeKey, layoutKey, cardStyle } = await req.json();
   if (!name?.trim()) return json({ message: 'الاسم مطلوب' }, 400);
 
   const level = await depthLevel(parentId);
@@ -44,6 +48,10 @@ export async function POST(req: NextRequest) {
       parentId: parentId ?? null,
       icon: icon || null,
       themeKey: themeKey || null,
+      motifKey: motifKey || null,
+      shapeKey: shapeKey || null,
+      layoutKey: layoutKey || null,
+      cardStyle: cardStyle || null,
       order: (max._max.order ?? 0) + 1,
     },
   });

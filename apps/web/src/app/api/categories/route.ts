@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 
 interface Node {
   id: string; name: string; icon: string | null; themeKey: string | null;
+  motifKey: string | null; shapeKey: string | null; layoutKey: string | null; cardStyle: string | null;
   level: string; order: number; parentId: string | null; children: Node[];
 }
 
@@ -14,7 +15,11 @@ export async function GET() {
   const all = await prisma.category.findMany({
     where: { hidden: false },
     orderBy: [{ order: 'asc' }, { name: 'asc' }],
-    select: { id: true, name: true, icon: true, themeKey: true, level: true, order: true, parentId: true },
+    select: {
+      id: true, name: true, icon: true, themeKey: true,
+      motifKey: true, shapeKey: true, layoutKey: true, cardStyle: true,
+      level: true, order: true, parentId: true,
+    },
   });
 
   const map = new Map<string, Node>();

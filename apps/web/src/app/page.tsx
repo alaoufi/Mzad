@@ -10,7 +10,11 @@ import { usePageTheme } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
 
-interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[]; }
+interface Cat {
+  id: string; name: string; icon?: string; themeKey?: string | null;
+  motifKey?: string | null; shapeKey?: string | null; layoutKey?: string | null; cardStyle?: string | null;
+  children?: Cat[];
+}
 type Mode = 'DIRECT' | 'AUCTION' | 'SUPPLIES';
 
 export default function HomePage() {
@@ -120,7 +124,11 @@ export default function HomePage() {
     let cur: string | undefined = deepest.id;
     while (cur) {
       const c = catById.get(cur);
-      if (c) out.push({ name: c.name, icon: c.icon ?? null, themeKey: c.themeKey ?? null });
+      if (c) out.push({
+        name: c.name, icon: c.icon ?? null, themeKey: c.themeKey ?? null,
+        motifKey: c.motifKey ?? null, shapeKey: c.shapeKey ?? null,
+        layoutKey: c.layoutKey ?? null, cardStyle: c.cardStyle ?? null,
+      });
       cur = parentOf.get(cur);
     }
     return out;
