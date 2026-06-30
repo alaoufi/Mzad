@@ -348,6 +348,12 @@ export default function SellPage() {
       <Section title="✍️ العنوان والوصف" badge="req" tint="bg-emerald-50 border-emerald-200">
         <input className={`input mb-3 ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
         <textarea className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder="الوصف * — اكتب وصفاً صادقاً للحلال..." value={form.description} onChange={(e) => set('description', e.target.value)} />
+
+        {/* تنبيه مهم — بارز ثلاثي الأبعاد عائم */}
+        <div className="mt-4 animate-floaty rounded-2xl bg-gradient-to-b from-amber-200 to-amber-100 px-4 py-3 text-center text-lg font-extrabold text-amber-900 ring-2 ring-amber-400/70"
+          style={{ boxShadow: '0 14px 28px -10px rgba(180,120,20,0.55), inset 0 1px 0 rgba(255,255,255,0.8)', textShadow: '0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.28)' }}>
+          ⚠️ لا تشترِ حتى ترى بعينك أو من تثق به
+        </div>
       </Section>
 
       {/* الصور */}
