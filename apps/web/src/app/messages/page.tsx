@@ -59,7 +59,14 @@ export default function MessagesPage() {
     <div className="animate-fadeup">
       <h1 className="mb-4 text-2xl font-extrabold text-engrave">💬 رسائلي</h1>
       {loading ? (
-        <p className="py-8 text-center text-gray-500">جارٍ التحميل...</p>
+        <div className="space-y-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-sand-200">
+              <div className="h-12 w-12 animate-pulse rounded-full bg-black/5" />
+              <div className="flex-1 space-y-2"><div className="h-3.5 w-1/3 animate-pulse rounded bg-black/5" /><div className="h-3 w-2/3 animate-pulse rounded bg-black/5" /></div>
+            </div>
+          ))}
+        </div>
       ) : convs.length === 0 ? (
         <div className="card p-10 text-center text-gray-500">
           <p className="text-4xl">📭</p>

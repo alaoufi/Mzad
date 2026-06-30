@@ -243,7 +243,9 @@ export default function AccountPage() {
       <div>
         <h2 className="mb-3 text-xl font-bold">إعلاناتي</h2>
         {loading ? (
-          <p className="py-8 text-center text-gray-500">جارٍ التحميل...</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {[0, 1, 2, 3].map((i) => <div key={i} className="card h-44 animate-pulse bg-black/5" />)}
+          </div>
         ) : listings.length === 0 ? (
           <div className="card p-10 text-center text-gray-500">
             <p className="text-4xl">📭</p>

@@ -47,7 +47,9 @@ export default function NotificationsPage() {
       </div>
 
       {loading ? (
-        <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => <div key={i} className="card h-16 animate-pulse bg-black/5" />)}
+        </div>
       ) : items.length === 0 ? (
         <div className="card p-10 text-center text-gray-400">
           <p className="text-4xl">🔕</p>

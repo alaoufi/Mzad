@@ -35,7 +35,9 @@ export default function FavoritesPage() {
     <div className="animate-fadeup">
       <h1 className="mb-4 text-2xl font-extrabold text-engrave">❤️ المفضلة</h1>
       {loading ? (
-        <p className="py-8 text-center text-gray-500">جارٍ التحميل...</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => <div key={i} className="card h-44 animate-pulse bg-black/5" />)}
+        </div>
       ) : items.length === 0 ? (
         <div className="card p-10 text-center text-gray-500">
           <p className="text-4xl">🤍</p>
