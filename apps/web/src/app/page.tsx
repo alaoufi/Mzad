@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
@@ -282,6 +283,16 @@ export default function HomePage() {
           </>
         )}
 
+        {/* شريط الثقة — يطمئن الزائر ويعطي إحساساً راقياً (في الجذر فقط) */}
+        {mode !== 'SUPPLIES' && path.length === 0 && !q && profileLoaded && (
+          <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-0.5">
+            {[['✅', 'بائعون موثّقون'], ['🤝', 'تفاوض مباشر'], ['⚖️', 'حماية النزاعات'], ['🔒', 'مراسلات خاصة']].map(([ic, t]) => (
+              <div key={t} className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-white/85 px-3 py-1.5 text-xs font-extrabold text-gray-700 shadow-sm ring-1 ring-black/[0.04]">
+                <span className="text-base">{ic}</span> {t}
+              </div>
+            ))}
+          </div>
+        )}
 
         {q && (
           <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
@@ -318,16 +329,21 @@ export default function HomePage() {
           );
         })()}
 
-        {/* الفرز */}
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <span className="text-xs font-bold text-gray-400">ترتيب:</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value)}
-            className="rounded-xl border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700">
-            <option value="recent">الأحدث</option>
-            <option value="views">الأكثر مشاهدة</option>
-            <option value="price_asc">الأقل سعراً</option>
-            <option value="price_desc">الأعلى سعراً</option>
-          </select>
+        {/* عدد النتائج + الفرز */}
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <span className="text-sm font-extrabold" style={{ color: 'var(--th-accent, #0f7b6c)' }}>
+            {!loading && listings.length > 0 ? `${listings.length.toLocaleString('ar-SA')} ${mode === 'AUCTION' ? 'مزاد' : mode === 'SUPPLIES' ? 'منتج' : 'عرض'}` : ''}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400">ترتيب:</span>
+            <select value={sort} onChange={(e) => setSort(e.target.value)}
+              className="rounded-xl border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700">
+              <option value="recent">الأحدث</option>
+              <option value="views">الأكثر مشاهدة</option>
+              <option value="price_asc">الأقل سعراً</option>
+              <option value="price_desc">الأعلى سعراً</option>
+            </select>
+          </div>
         </div>
 
         {/* إعلان أعلى القوائم */}
@@ -340,9 +356,11 @@ export default function HomePage() {
               {[0, 1, 2, 3].map((i) => <div key={i} className="card h-44 animate-pulse bg-black/5" />)}
             </div>
           ) : listings.length === 0 ? (
-            <div className="py-14 text-center text-gray-500">
-              <p className="text-6xl">{emoji === '🐾' ? '🐪' : emoji}</p>
-              <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
+            <div className="card mx-auto my-6 max-w-sm p-8 text-center">
+              <p className="text-7xl drop-shadow">{emoji === '🐾' ? '🐪' : emoji}</p>
+              <p className="mt-3 text-lg font-extrabold text-engrave">لا توجد نتائج في «{title}»</p>
+              <p className="mt-1 text-sm text-gray-500">كن أوّل من يضيف هنا، أو جرّب تصنيفاً آخر.</p>
+              <Link href="/sell" className="btn-gold mt-4 inline-flex !px-6">＋ أضف إعلانك</Link>
             </div>
           ) : (
             <div className={`grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`}>
@@ -350,9 +368,9 @@ export default function HomePage() {
                 <Fragment key={l.id}>
                   {i === Math.min(4, listings.length - 1) && <div className="col-span-full"><AdBanner placement="HOME_MID" categoryIds={categoryCtx} /></div>}
                   {LAYOUTS[layoutKey]?.featured && i === 0 && !path.length ? (
-                    <div className="col-span-2"><ListingCard listing={l} featured /></div>
+                    <div className="col-span-2 animate-fadeup" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}><ListingCard listing={l} featured /></div>
                   ) : (
-                    <ListingCard listing={l} variant={cardStyle} />
+                    <div className="animate-fadeup" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}><ListingCard listing={l} variant={cardStyle} /></div>
                   )}
                 </Fragment>
               ))}
