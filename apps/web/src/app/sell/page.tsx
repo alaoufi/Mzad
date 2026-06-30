@@ -63,13 +63,15 @@ export default function SellPage() {
 
   const [auctionTypes, setAuctionTypes] = useState<{ id: string; name: string; icon?: string | null; commissionPct: number }[]>([]);
   const [healthItems, setHealthItems] = useState<HealthItem[]>(FALLBACK_HEALTH);
-  const [commission, setCommission] = useState({ marketCommissionPct: 0, commissionNote: '' });
+  const [commission, setCommission] = useState({ marketCommissionPct: 0, commissionNote: '', zeroCommissionNote: '' });
+  const [reqFields, setReqFields] = useState<string[]>([]);
+  const req = (k: string) => reqFields.includes(k);
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
     api<{ items: HealthItem[] }>('/health-items').then((r) => { if (r.items?.length) setHealthItems(r.items); }).catch(() => {});
-    api<{ marketCommissionPct: number; commissionNote: string }>('/settings')
-      .then((r) => setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '' })).catch(() => {});
+    api<{ marketCommissionPct: number; commissionNote: string; zeroCommissionNote: string; reqFields?: string[] }>('/settings')
+      .then((r) => { setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '', zeroCommissionNote: r.zeroCommissionNote ?? '' }); setReqFields(r.reqFields ?? []); }).catch(() => {});
   }, []);
 
   const addPhotos = async (files: FileList | null) => {
@@ -141,7 +143,13 @@ export default function SellPage() {
   const hasLoc = form.lat != null;
   const locationOk = hasLoc || (!!form.city.trim() && !!form.region.trim());
   const priceOk = form.saleType === 'DIRECT' ? !!form.price : form.saleType === 'ONSOOM' ? true : !!form.startPrice;
-  const canSubmit = !!form.categoryId && form.title.trim().length > 2 && form.description.trim().length > 2 && locationOk && priceOk;
+  const healthAllSet = healthItems.every((h) => form.health[h.id] !== undefined);
+  const reqOk =
+    (!req('photos') || form.photos.length > 0) &&
+    (!req('video') || !!videoUrl) &&
+    (!req('audio') || !!audioUrl) &&
+    (!req('health') || healthAllSet);
+  const canSubmit = !!form.categoryId && form.title.trim().length > 2 && form.description.trim().length > 2 && locationOk && priceOk && reqOk;
 
   if (!user) {
     return (
@@ -289,8 +297,8 @@ export default function SellPage() {
         <textarea className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder="الوصف * — اكتب وصفاً صادقاً للحلال..." value={form.description} onChange={(e) => set('description', e.target.value)} />
       </Section>
 
-      {/* الصور — اختياري */}
-      <Section title="📷 الصور" badge="opt" hint="حتى 8 صور واضحة.">
+      {/* الصور */}
+      <Section title="📷 الصور" badge={req('photos') ? 'req' : 'opt'} hint="حتى 8 صور واضحة.">
         <div className="grid grid-cols-3 gap-3">
           {form.photos.map((src: string, i: number) => (
             <div key={i} className="relative aspect-square overflow-hidden rounded-2xl ring-2 ring-green-200">
@@ -300,7 +308,7 @@ export default function SellPage() {
             </div>
           ))}
           {form.photos.length < 8 && (
-            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-green-300 text-gray-500 hover:border-brand">
+            <label className={`flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed text-gray-500 hover:border-brand ${req('photos') && form.photos.length === 0 ? 'border-red-300' : 'border-green-300'}`}>
               <span className="text-3xl">{uploading ? '⏳' : '📷'}</span>
               <span className="text-xs font-bold">{uploading ? 'جارٍ...' : 'أضف صورة'}</span>
               <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => addPhotos(e.target.files)} />
@@ -309,15 +317,15 @@ export default function SellPage() {
         </div>
       </Section>
 
-      {/* فيديو — اختياري */}
-      <Section title="🎬 مقطع فيديو" badge="opt" hint="مقطع قصير يوضّح الحلال (حتى 15MB).">
+      {/* فيديو */}
+      <Section title="🎬 مقطع فيديو" badge={req('video') ? 'req' : 'opt'} hint="مقطع قصير يوضّح الحلال (حتى 15MB).">
         {videoUrl ? (
           <div className="space-y-2">
             <video src={videoUrl} controls className="w-full rounded-2xl bg-black" />
             <button onClick={() => setVideoUrl('')} className="text-sm font-bold text-red-500">🗑️ إزالة الفيديو</button>
           </div>
         ) : (
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-green-300 py-6 font-bold text-gray-600 hover:border-brand">
+          <label className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed py-6 font-bold text-gray-600 hover:border-brand ${req('video') ? 'border-red-300' : 'border-green-300'}`}>
             <span className="text-3xl">🎬</span>
             <span>اختر مقطع فيديو</span>
             <input type="file" accept="video/*" className="hidden" onChange={(e) => pickVideo(e.target.files)} />
@@ -325,8 +333,8 @@ export default function SellPage() {
         )}
       </Section>
 
-      {/* مقطع صوتي توضيحي — اختياري */}
-      <Section title="🎤 مقطع صوتي توضيحي" badge="opt" hint="سجّل توضيحاً صوتياً عن الحلال (اختياري).">
+      {/* مقطع صوتي توضيحي */}
+      <Section title="🎤 مقطع صوتي توضيحي" badge={req('audio') ? 'req' : 'opt'} hint="سجّل توضيحاً صوتياً عن الحلال.">
         {audioUrl ? (
           <div className="space-y-2">
             <audio src={audioUrl} controls className="w-full" />
@@ -358,8 +366,8 @@ export default function SellPage() {
         </div>
       </Section>
 
-      {/* الصحة — اختياري */}
-      <Section title="🩺 الحالة الصحية" badge="opt" hint="إفصاح صادق يرفع ثقتك.">
+      {/* الصحة */}
+      <Section title="🩺 الحالة الصحية" badge={req('health') ? 'req' : 'opt'} hint="إفصاح صادق يرفع ثقتك.">
         <div className="space-y-2">
           {healthItems.map((h) => {
             const v = form.health[h.id];
@@ -383,7 +391,7 @@ export default function SellPage() {
             <button key={v} onClick={() => set('saleType', v)} className={`rounded-2xl border-2 py-3 text-sm font-bold transition ${form.saleType === v ? 'border-brand bg-sand-50' : 'border-sand-200'}`}>{l}</button>
           ))}
         </div>
-        {commission.marketCommissionPct > 0 && (() => {
+        {commission.marketCommissionPct > 0 ? (() => {
           const base = Number(form.saleType === 'DIRECT' ? form.price : form.startPrice) || 0;
           const amount = Math.round((base * commission.marketCommissionPct) / 100);
           return (
@@ -392,7 +400,13 @@ export default function SellPage() {
               <p className="mt-1 leading-relaxed text-gray-600">{commission.commissionNote}</p>
             </div>
           );
-        })()}
+        })() : (
+          commission.zeroCommissionNote && (
+            <div className="mb-4 rounded-2xl border-2 border-green-300 bg-green-50 p-3 text-center text-sm font-bold text-green-700">
+              {commission.zeroCommissionNote}
+            </div>
+          )
+        )}
         {form.saleType === 'DIRECT' && (
           <div><label className="mb-2 block font-bold">السعر (ريال) *</label>
             <input type="number" className={`input text-2xl ${tone(true, !!form.price)}`} placeholder="0" value={form.price} onChange={(e) => set('price', e.target.value)} /></div>

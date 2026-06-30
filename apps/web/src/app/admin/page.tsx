@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ACCOUNT_TYPES, accountTypeDef } from '@/lib/roles';
+import { REQ_FIELD_OPTIONS } from '@/lib/sellFields';
 
 interface AdminData {
   stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number; verifications: number; disputes: number };
@@ -43,8 +44,15 @@ export default function AdminPage() {
     setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
   const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
-  const [comm, setComm] = useState({ marketCommissionPct: 0, brokerSharePct: 0, supervisorSharePct: 0, commissionNote: '' });
+  const [comm, setComm] = useState({ marketCommissionPct: 0, brokerSharePct: 0, supervisorSharePct: 0, commissionNote: '', zeroCommissionNote: '' });
   const [savingComm, setSavingComm] = useState(false);
+  const [reqFields, setReqFields] = useState<string[]>([]);
+  const [savingReq, setSavingReq] = useState(false);
+  const saveReqFields = async () => {
+    setSavingReq(true);
+    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ reqFields }) }); uiToast('✅ حُفظت الحقول المطلوبة'); }
+    catch (e: any) { uiToast(e.message); } finally { setSavingReq(false); }
+  };
 
   const load = () =>
     api<AdminData>('/admin/stats').then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
@@ -57,7 +65,9 @@ export default function AdminPage() {
       setComm({
         marketCommissionPct: r.marketCommissionPct ?? 0, brokerSharePct: r.brokerSharePct ?? 0,
         supervisorSharePct: r.supervisorSharePct ?? 0, commissionNote: r.commissionNote ?? '',
+        zeroCommissionNote: r.zeroCommissionNote ?? '',
       });
+      setReqFields(Array.isArray(r.reqFields) ? r.reqFields : []);
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -210,15 +220,42 @@ export default function AdminPage() {
             onChange={(v) => setComm((c) => ({ ...c, supervisorSharePct: v }))} />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-bold text-gray-600">عبارة الإفصاح (تظهر للبائع قبل إطلاق البيع)</label>
+          <label className="mb-1 block text-sm font-bold text-gray-600">عبارة الإفصاح (تظهر للبائع عند وجود عمولة)</label>
           <textarea className="input min-h-[70px]" value={comm.commissionNote}
             onChange={(e) => setComm((c) => ({ ...c, commissionNote: e.target.value }))} />
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-bold text-gray-600">عبارة «بدون عمولة» (تظهر عندما تكون العمولة صفر)</label>
+          <textarea className="input min-h-[60px]" value={comm.zeroCommissionNote}
+            placeholder="🎉 جميع العروض والمزادات بدون عمولة حالياً."
+            onChange={(e) => setComm((c) => ({ ...c, zeroCommissionNote: e.target.value }))} />
         </div>
         <p className="rounded-xl bg-sand-50 p-2 text-xs text-gray-500">
           عمولة السوق تُحسب من سعر البيع. نصيب الدلال والمشرف يُقتطعان <b>من قيمة العمولة</b>، ويُقيَّدان عند إتمام البيع.
         </p>
         <button onClick={saveCommission} disabled={savingComm} className="btn-primary w-full disabled:opacity-50">
           {savingComm ? '...' : 'حفظ إعدادات العمولة'}
+        </button>
+      </div>
+
+      {/* الحقول المطلوبة في الإعلان */}
+      <div className="card space-y-3 p-4">
+        <h2 className="text-lg font-bold">📝 حقول الإعلان المطلوبة</h2>
+        <p className="text-xs text-gray-500">حدّد الحقول الإلزامية عند إضافة الإعلان. غير المحدّد يبقى اختيارياً. (العنوان والوصف والتصنيف والسعر إلزامية دائماً.)</p>
+        <div className="flex flex-wrap gap-2">
+          {REQ_FIELD_OPTIONS.map((f) => {
+            const on = reqFields.includes(f.key);
+            return (
+              <button key={f.key} type="button"
+                onClick={() => setReqFields((p) => on ? p.filter((x) => x !== f.key) : [...p, f.key])}
+                className={`rounded-full px-3 py-1.5 text-sm font-bold ring-1 ${on ? 'bg-red-500 text-white ring-red-500' : 'bg-green-50 text-green-700 ring-green-200'}`}>
+                {on ? '🔴 مطلوب' : '🟢 اختياري'} · {f.label}
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={saveReqFields} disabled={savingReq} className="btn-primary w-full disabled:opacity-50">
+          {savingReq ? '...' : 'حفظ الحقول المطلوبة'}
         </button>
       </div>
 

@@ -1,12 +1,14 @@
 import { prisma } from '@/lib/prisma';
 
 export const DEFAULT_COMMISSION_NOTE = 'العمولة في ذمة البائع، وتُحسب نسبتها من سعر البيع قبل إطلاق البيع.';
+export const DEFAULT_ZERO_COMMISSION_NOTE = '🎉 جميع العروض والمزادات بدون عمولة حالياً.';
 
 export interface CommissionConfig {
   marketCommissionPct: number;
   brokerSharePct: number;
   supervisorSharePct: number;
   commissionNote: string;
+  zeroCommissionNote: string;
 }
 
 export async function getCommissionConfig(): Promise<CommissionConfig> {
@@ -18,8 +20,9 @@ export async function getCommissionConfig(): Promise<CommissionConfig> {
       brokerSharePct: Number(map.brokerSharePct ?? 0) || 0,
       supervisorSharePct: Number(map.supervisorSharePct ?? 0) || 0,
       commissionNote: map.commissionNote || DEFAULT_COMMISSION_NOTE,
+      zeroCommissionNote: map.zeroCommissionNote || DEFAULT_ZERO_COMMISSION_NOTE,
     };
   } catch {
-    return { marketCommissionPct: 0, brokerSharePct: 0, supervisorSharePct: 0, commissionNote: DEFAULT_COMMISSION_NOTE };
+    return { marketCommissionPct: 0, brokerSharePct: 0, supervisorSharePct: 0, commissionNote: DEFAULT_COMMISSION_NOTE, zeroCommissionNote: DEFAULT_ZERO_COMMISSION_NOTE };
   }
 }
