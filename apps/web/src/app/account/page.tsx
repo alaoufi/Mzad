@@ -8,25 +8,32 @@ import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { HijriDate } from '@/components/HijriDate';
 import { InterestPicker } from '@/components/InterestPicker';
+import { ProfileEditSheet } from '@/components/ProfileEditSheet';
 import { accountTypeDef } from '@/lib/roles';
 
 interface Profile {
   name: string;
   role: string;
   accountType?: string;
-  city?: string;
-  region?: string;
+  city?: string | null;
+  region?: string | null;
   isPhoneVerified: boolean;
   identityStatus: string;
   trustScore: number;
   interests?: string[];
   bio?: string | null;
   experienceYears?: number | null;
+  bankName?: string | null;
+  bankAccount?: string | null;
+  iban?: string | null;
   createdAt?: string;
   _count: { listings: number; reviewsReceived: number };
   ratings: { avgRating: number; avgDescMatch: number; count: number };
   stats?: { sales: number; purchases: number; bids: number; auctionsBidIn: number; offers: number; auctionsListed: number };
 }
+
+interface Cat { id: string; name: string; icon?: string; children?: Cat[] }
+const SUPPLIES_NAME = 'مستلزمات الحلال';
 
 
 export default function AccountPage() {
@@ -37,8 +44,25 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [editInterests, setEditInterests] = useState(false);
+  const [editProfile, setEditProfile] = useState(false);
+  const [cats, setCats] = useState<Cat[]>([]);
 
   const loadProfile = () => api<Profile>('/users/me').then(setProfile).catch(() => {});
+
+  // فهرسة التصنيفات لعرض أسماء الاهتمامات (لا أرقام) وتقسيمها: حلال/مستلزمات
+  useEffect(() => { api<Cat[]>('/categories').then(setCats).catch(() => {}); }, []);
+  const catName = (id: string): { name: string; icon?: string; supply: boolean } | null => {
+    let found: { name: string; icon?: string; supply: boolean } | null = null;
+    const walk = (n: Cat, supply: boolean) => {
+      if (n.id === id) found = { name: n.name, icon: n.icon, supply };
+      n.children?.forEach((c) => walk(c, supply || n.name === SUPPLIES_NAME));
+    };
+    cats.forEach((c) => walk(c, c.name === SUPPLIES_NAME));
+    return found;
+  };
+  const interestChips = (profile?.interests ?? []).map((id) => ({ id, ...(catName(id) ?? { name: '', icon: undefined, supply: false }) }));
+  const animalChips = interestChips.filter((c) => c.name && !c.supply);
+  const supplyChips = interestChips.filter((c) => c.name && c.supply);
 
   const saveInterests = async (ids: string[]) => {
     setEditInterests(false);
@@ -87,8 +111,12 @@ export default function AccountPage() {
   return (
     <div className="space-y-5 animate-fadeup">
       {/* بطاقة الملف الشخصي — هوية بصرية */}
-      <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-6 text-white shadow-xl"
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-6 text-white shadow-xl"
         style={{ boxShadow: '0 24px 48px -22px rgba(10,92,80,0.5)' }}>
+        <button onClick={() => setEditProfile(true)}
+          className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold ring-1 ring-white/30 hover:bg-white/30">
+          ✏️ تعديل بياناتي
+        </button>
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/25 text-2xl font-extrabold">
             {(profile?.name ?? user.name).charAt(0)}
@@ -187,20 +215,47 @@ export default function AccountPage() {
         </button>
       </div>
 
-      {/* اهتماماتي */}
-      <div className="card flex items-center justify-between gap-3 p-4">
-        <div className="flex items-center gap-3">
-          <span className="text-3xl">⭐</span>
-          <div>
-            <div className="font-bold">اهتماماتي</div>
-            <div className="text-sm text-gray-500">
-              {profile?.interests?.length ? `${profile.interests.length} تصنيف مختار — تظهر لك إعلاناته` : 'لم تحدّد بعد — اختر ما يهمّك'}
+      {/* اهتماماتي — تُعرض كل الاختيارات بالاسم، مقسّمة: حلال / مستلزمات */}
+      <div className="card p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">⭐</span>
+            <div>
+              <div className="font-bold">اهتماماتي</div>
+              <div className="text-sm text-gray-500">
+                {profile?.interests?.length ? `${profile.interests.length} اختيار — تظهر لك إعلاناته فقط` : 'لم تحدّد بعد — اختر ما يهمّك'}
+              </div>
             </div>
           </div>
+          <button onClick={() => setEditInterests(true)} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm">
+            {profile?.interests?.length ? 'تعديل' : 'اختيار'}
+          </button>
         </div>
-        <button onClick={() => setEditInterests(true)} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm">
-          {profile?.interests?.length ? 'تعديل' : 'اختيار'}
-        </button>
+
+        {animalChips.length > 0 && (
+          <div className="mb-2">
+            <div className="mb-1.5 text-xs font-extrabold text-brand-dark">🐾 المواشي (الحلال)</div>
+            <div className="flex flex-wrap gap-1.5">
+              {animalChips.map((c) => (
+                <span key={c.id} className="rounded-full bg-brand/10 px-3 py-1 text-sm font-bold text-brand-dark">
+                  {c.icon ? `${c.icon} ` : ''}{c.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {supplyChips.length > 0 && (
+          <div>
+            <div className="mb-1.5 text-xs font-extrabold text-amber-700">🛒 المستلزمات</div>
+            <div className="flex flex-wrap gap-1.5">
+              {supplyChips.map((c) => (
+                <span key={c.id} className="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-800">
+                  {c.icon ? `${c.icon} ` : ''}{c.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -225,6 +280,18 @@ export default function AccountPage() {
           title="اهتماماتي"
           onSave={saveInterests}
           onClose={() => setEditInterests(false)}
+        />
+      )}
+
+      {editProfile && profile && (
+        <ProfileEditSheet
+          initial={{
+            name: profile.name, city: profile.city, region: profile.region,
+            bio: profile.bio, experienceYears: profile.experienceYears,
+            bankName: profile.bankName, bankAccount: profile.bankAccount, iban: profile.iban,
+          }}
+          onSaved={loadProfile}
+          onClose={() => setEditProfile(false)}
         />
       )}
 

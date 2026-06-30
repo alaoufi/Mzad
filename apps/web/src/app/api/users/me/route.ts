@@ -76,12 +76,20 @@ export async function PATCH(req: NextRequest) {
   const auth = getUser(req);
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
 
-  const { name, city, region, requestVerification, interests } = await req.json();
+  const body = await req.json();
+  const { name, city, region, requestVerification, interests, bio, experienceYears, bankName, bankAccount, iban } = body;
   const data: any = {};
   if (typeof name === 'string' && name.trim()) data.name = name.trim();
   if (city !== undefined) data.city = city || null;
   if (region !== undefined) data.region = region || null;
   if (Array.isArray(interests)) data.interests = interests.filter((x: any) => typeof x === 'string').slice(0, 50);
+  // بيانات شخصية/بنكية اختيارية — قابلة للتعديل والمسح
+  if (bio !== undefined) data.bio = typeof bio === 'string' && bio.trim() ? bio.trim().slice(0, 500) : null;
+  if (experienceYears !== undefined)
+    data.experienceYears = Number.isFinite(experienceYears) && experienceYears >= 0 ? Math.min(80, Math.floor(experienceYears)) : null;
+  if (bankName !== undefined) data.bankName = typeof bankName === 'string' && bankName.trim() ? bankName.trim().slice(0, 60) : null;
+  if (bankAccount !== undefined) data.bankAccount = typeof bankAccount === 'string' && bankAccount.trim() ? bankAccount.trim().slice(0, 40) : null;
+  if (iban !== undefined) data.iban = typeof iban === 'string' && iban.trim() ? iban.trim().replace(/\s+/g, '').slice(0, 40) : null;
 
   if (requestVerification) {
     const current = await prisma.user.findUnique({
