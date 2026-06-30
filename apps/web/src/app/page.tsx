@@ -44,17 +44,11 @@ export default function HomePage() {
   const [trustInfo, setTrustInfo] = useState<{ ic: string; title: string; body: string } | null>(null);
 
   useEffect(() => {
-    // ترطيب فوري من ذاكرة الجلسة (تصنيفات/نصوص نادراً ما تتغيّر) ثم تحديث صامت بالخلفية —
-    // فلا تظهر هياكل تحميل عند العودة للرئيسية، والتصفّح يفتح فوراً
-    try {
-      const ct = sessionStorage.getItem('mzad_cats');
-      if (ct) setTree(JSON.parse(ct));
-      const st = sessionStorage.getItem('mzad_settings');
-      if (st) { const s = JSON.parse(st); if (s.entryMode) setEntryMode(s.entryMode); if (s.texts) setTxt(s.texts); }
-      setGateDismissed(localStorage.getItem('mzad_gate') === '1');
-    } catch {}
-    api<Cat[]>('/categories').then((r) => { setTree(r); try { sessionStorage.setItem('mzad_cats', JSON.stringify(r)); } catch {} }).catch(() => {});
-    api<{ entryMode: 'GENERAL' | 'SPECIALIZED'; texts?: Record<string, string> }>('/settings').then((r) => { setEntryMode(r.entryMode); if (r.texts) setTxt(r.texts); try { sessionStorage.setItem('mzad_settings', JSON.stringify(r)); } catch {} }).catch(() => {});
+    // مصدر واحد للحقيقة = الخادم. لا تخزين للشجرة في الجهاز (كان يسبّب اختلاف السلوك بين الأجهزة
+    // عند قِدَم النسخة المخزّنة). كل جهاز يجلب الشجرة الطازجة فالنتيجة متطابقة للجميع.
+    try { setGateDismissed(localStorage.getItem('mzad_gate') === '1'); } catch {}
+    api<Cat[]>('/categories').then(setTree).catch(() => {});
+    api<{ entryMode: 'GENERAL' | 'SPECIALIZED'; texts?: Record<string, string> }>('/settings').then((r) => { setEntryMode(r.entryMode); if (r.texts) setTxt(r.texts); }).catch(() => {});
   }, []);
 
   useEffect(() => {
