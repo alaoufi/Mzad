@@ -168,8 +168,9 @@ export default function HomePage() {
   };
 
   useEffect(() => { setPath([]); }, [mode]);
-  useEffect(() => { if (tree.length) load(); /* eslint-disable-next-line */ },
-    [mode, path.map((p) => p.id).join('/'), tree.length, useInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
+  // لا نجلب النتائج حتى تجهز الاهتمامات (وإلا تظهر نتائج «كل المواشي» ثم تتغيّر)
+  useEffect(() => { if (tree.length && profileLoaded) load(); /* eslint-disable-next-line */ },
+    [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, useInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
 
   const deepest = path[path.length - 1];
   // اسم القسم في العنوان: التصنيف المفتوح، أو اسم الاهتمام الوحيد، أو «ما يهمّك» عند تعدّده
@@ -185,7 +186,7 @@ export default function HomePage() {
   // دمج هوية القسم داخل الهيدر (بدل اللافتة المنفصلة)
   const headerEmoji = emoji === '🐾' ? '🐪' : emoji;
   const headerSubtitle = loading ? '' : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`;
-  useHeaderSection(title, headerEmoji, headerSubtitle, motif, mood, skin.font, theme.bg);
+  useHeaderSection(profileLoaded ? title : '', headerEmoji, headerSubtitle, motif, mood, skin.font, theme.bg);
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));

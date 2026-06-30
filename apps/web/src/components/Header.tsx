@@ -99,7 +99,7 @@ export function Header() {
       )}
 
       {/* سطر هوية القسم — مدموج داخل الهيدر بدل اللافتة المنفصلة */}
-      {section && (
+      {section?.label && (
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-2">
           <span className="text-xl drop-shadow">{section.emoji}</span>
           <h1 className="truncate text-base font-extrabold text-emboss-light"
@@ -111,7 +111,7 @@ export function Header() {
         </div>
       )}
 
-      {section?.motif ? (
+      {section?.label && section?.motif ? (
         <svg className="block h-3 w-full" viewBox="0 0 1440 48" preserveAspectRatio="none" fill={section.edgeColor ?? '#fbf9f4'}>
           <path d={heroEdgePath(section.motif)} />
         </svg>
