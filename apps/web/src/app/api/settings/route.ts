@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { json } from '@/lib/server-auth';
 import { DEFAULT_COMMISSION_NOTE, DEFAULT_ZERO_COMMISSION_NOTE } from '@/lib/commission';
+import { buildTexts, TEXT_DEFAULTS } from '@/lib/texts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,8 +17,9 @@ export async function GET() {
       commissionNote: map.commissionNote || DEFAULT_COMMISSION_NOTE,
       zeroCommissionNote: map.zeroCommissionNote || DEFAULT_ZERO_COMMISSION_NOTE,
       reqFields: (map.reqFields || '').split(',').map((s) => s.trim()).filter(Boolean),
+      texts: buildTexts(map),
     });
   } catch {
-    return json({ entryMode: 'GENERAL', marketCommissionPct: 0, commissionNote: DEFAULT_COMMISSION_NOTE, zeroCommissionNote: DEFAULT_ZERO_COMMISSION_NOTE, reqFields: [] });
+    return json({ entryMode: 'GENERAL', marketCommissionPct: 0, commissionNote: DEFAULT_COMMISSION_NOTE, zeroCommissionNote: DEFAULT_ZERO_COMMISSION_NOTE, reqFields: [], texts: TEXT_DEFAULTS });
   }
 }

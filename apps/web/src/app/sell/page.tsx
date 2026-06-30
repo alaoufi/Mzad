@@ -10,6 +10,7 @@ import { getCoords } from '@/lib/geo';
 import { nearestRegion, regionName } from '@/lib/ads';
 import { resolveTheme, gradient } from '@/lib/themes';
 import { InterestPicker } from '@/components/InterestPicker';
+import { TEXT_DEFAULTS } from '@/lib/texts';
 import { uiToast } from '@/lib/ui';
 
 interface Cat { id: string; name: string; icon?: string; themeKey?: string | null; children?: Cat[] }
@@ -67,6 +68,9 @@ export default function SellPage() {
   const [commission, setCommission] = useState({ marketCommissionPct: 0, commissionNote: '', zeroCommissionNote: '' });
   const [reqFields, setReqFields] = useState<string[]>([]);
   const req = (k: string) => reqFields.includes(k);
+  const [txt, setTxt] = useState<Record<string, string>>(TEXT_DEFAULTS);
+  const t = (k: string) => txt[k] ?? TEXT_DEFAULTS[k] ?? '';
+  const [defectsNote, setDefectsNote] = useState('');
   const [interests, setInterests] = useState<string[]>([]);
   const [interestsReady, setInterestsReady] = useState(false);
   const [showInterestPicker, setShowInterestPicker] = useState(false);
@@ -79,8 +83,8 @@ export default function SellPage() {
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
     api<{ items: HealthItem[] }>('/health-items').then((r) => { if (r.items?.length) setHealthItems(r.items); }).catch(() => {});
     api<{ interests?: string[] }>('/users/me').then((r) => setInterests(r.interests ?? [])).catch(() => {}).finally(() => setInterestsReady(true));
-    api<{ marketCommissionPct: number; commissionNote: string; zeroCommissionNote: string; reqFields?: string[] }>('/settings')
-      .then((r) => { setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '', zeroCommissionNote: r.zeroCommissionNote ?? '' }); setReqFields(r.reqFields ?? []); }).catch(() => {});
+    api<{ marketCommissionPct: number; commissionNote: string; zeroCommissionNote: string; reqFields?: string[]; texts?: Record<string, string> }>('/settings')
+      .then((r) => { setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '', zeroCommissionNote: r.zeroCommissionNote ?? '' }); setReqFields(r.reqFields ?? []); if (r.texts) setTxt(r.texts); }).catch(() => {});
   }, []);
 
   const addPhotos = async (files: FileList | null) => {
@@ -212,6 +216,7 @@ export default function SellPage() {
       const health = Object.entries(form.health)
         .filter(([, value]) => value !== undefined && value !== null)
         .map(([key, value]) => ({ key, value, label: labelOf(key) }));
+      if (defectsNote.trim()) health.push({ key: 'other_defects', value: false as any, label: t('sellDefectsTitle'), note: defectsNote.trim() } as any);
       const media = [
         ...form.photos.map((url: string) => ({ url, type: 'IMAGE' })),
         ...(videoUrl ? [{ url: videoUrl, type: 'VIDEO' }] : []),
@@ -246,7 +251,7 @@ export default function SellPage() {
       {error && <div className="rounded-2xl bg-red-50 p-3 text-red-700">{error}</div>}
 
       {/* الموقع أولاً */}
-      <Section title="📍 موقع الحلال" badge="opt" tint="bg-sky-50 border-sky-200" hint="حدّد موقعك بدقّة ليصل المشترون إليك — أو أدخل المدينة يدوياً.">
+      <Section title="📍 موقع الحلال" badge="opt" tint="bg-sky-50 border-sky-200" hint={t('sellLocationHint')}>
         {hasLoc ? (
           <div className="rounded-2xl border-2 border-green-300 bg-green-50 p-3">
             <div className="flex items-center gap-2 font-bold text-green-700">
@@ -347,12 +352,12 @@ export default function SellPage() {
       {/* العنوان والوصف — مطلوب */}
       <Section title="✍️ العنوان والوصف" badge="req" tint="bg-emerald-50 border-emerald-200">
         <input className={`input mb-3 ${tone(true, form.title.trim().length > 2)}`} placeholder="عنوان الإعلان * (مثال: ناقة مجاهيم منتجة)" value={form.title} onChange={(e) => set('title', e.target.value)} />
-        <textarea className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder="الوصف * — اكتب وصفاً صادقاً للحلال..." value={form.description} onChange={(e) => set('description', e.target.value)} />
+        <textarea className={`input min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder={`الوصف * — ${t('sellDescPlaceholder')}`} value={form.description} onChange={(e) => set('description', e.target.value)} />
 
-        {/* تنبيه مهم — بارز ثلاثي الأبعاد عائم */}
-        <div className="mt-4 animate-floaty rounded-2xl bg-gradient-to-b from-amber-200 to-amber-100 px-4 py-3 text-center text-lg font-extrabold text-amber-900 ring-2 ring-amber-400/70"
-          style={{ boxShadow: '0 14px 28px -10px rgba(180,120,20,0.55), inset 0 1px 0 rgba(255,255,255,0.8)', textShadow: '0 1px 0 #fff, 0 2px 4px rgba(0,0,0,0.28)' }}>
-          ⚠️ لا تشترِ حتى ترى بعينك أو من تثق به
+        {/* تنبيه مهم — بارز ثلاثي الأبعاد عائم، سطر واحد */}
+        <div className="mt-3 animate-floaty whitespace-nowrap overflow-hidden text-ellipsis rounded-xl bg-gradient-to-b from-amber-200 to-amber-100 px-3 py-1.5 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
+          style={{ boxShadow: '0 10px 20px -8px rgba(180,120,20,0.5), inset 0 1px 0 rgba(255,255,255,0.8)', textShadow: '0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.25)' }}>
+          ⚠️ {t('sellWarning')}
         </div>
       </Section>
 
@@ -426,7 +431,7 @@ export default function SellPage() {
       </Section>
 
       {/* الصحة */}
-      <Section title="🩺 الحالة الصحية" badge={req('health') ? 'req' : 'opt'} tint="bg-lime-50 border-lime-200" hint="إفصاح صادق يرفع ثقتك.">
+      <Section title="🩺 الحالة الصحية" badge={req('health') ? 'req' : 'opt'} tint="bg-lime-50 border-lime-200" hint={t('sellHealthHint')}>
         <div className="space-y-2">
           {healthItems.map((h) => {
             const v = form.health[h.id];
@@ -440,6 +445,11 @@ export default function SellPage() {
               </div>
             );
           })}
+        </div>
+        {/* حقل حرّ: عيوب لم تُذكر أعلاه */}
+        <div className="mt-3">
+          <label className="mb-1 block text-sm font-bold text-gray-700">{t('sellDefectsTitle')}</label>
+          <textarea className="input min-h-[70px]" placeholder={t('sellDefectsPlaceholder')} value={defectsNote} onChange={(e) => setDefectsNote(e.target.value)} />
         </div>
       </Section>
 
@@ -514,7 +524,7 @@ export default function SellPage() {
         <InterestPicker
           initial={interests}
           title="اهتماماتي"
-          subtitle="اختر الأصناف التي تبيعها لتظهر لك عند إضافة الإعلان. الفارغ يعرض كل التصنيفات."
+          subtitle={t('interestSubtitle')}
           onSave={saveInterests}
           onClose={() => setShowInterestPicker(false)}
         />

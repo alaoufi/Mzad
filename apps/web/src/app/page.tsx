@@ -37,10 +37,12 @@ export default function HomePage() {
   // وضع الدخول (عام/متخصص) — بوابة اختيار النوع أول دخول
   const [entryMode, setEntryMode] = useState<'GENERAL' | 'SPECIALIZED'>('GENERAL');
   const [gateDismissed, setGateDismissed] = useState(true);
+  const [txt, setTxt] = useState<Record<string, string>>({});
+  const tx = (k: string, def: string) => txt[k]?.trim() || def;
 
   useEffect(() => {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
-    api<{ entryMode: 'GENERAL' | 'SPECIALIZED' }>('/settings').then((r) => setEntryMode(r.entryMode)).catch(() => {});
+    api<{ entryMode: 'GENERAL' | 'SPECIALIZED'; texts?: Record<string, string> }>('/settings').then((r) => { setEntryMode(r.entryMode); if (r.texts) setTxt(r.texts); }).catch(() => {});
     if (typeof window !== 'undefined') setGateDismissed(sessionStorage.getItem('mzad_gate') === '1');
   }, []);
 
@@ -286,9 +288,9 @@ export default function HomePage() {
         {/* شريط الثقة — يطمئن الزائر ويعطي إحساساً راقياً (في الجذر فقط) */}
         {mode !== 'SUPPLIES' && path.length === 0 && !q && profileLoaded && (
           <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-0.5">
-            {[['✅', 'بائعون موثّقون'], ['🤝', 'تفاوض مباشر'], ['⚖️', 'حماية النزاعات'], ['🔒', 'مراسلات خاصة']].map(([ic, t]) => (
-              <div key={t} className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-white/85 px-3 py-1.5 text-xs font-extrabold text-gray-700 shadow-sm ring-1 ring-black/[0.04]">
-                <span className="text-base">{ic}</span> {t}
+            {[['✅', tx('trust1', 'بائعون موثّقون')], ['🤝', tx('trust2', 'تفاوض مباشر')], ['⚖️', tx('trust3', 'حماية النزاعات')], ['🔒', tx('trust4', 'مراسلات خاصة')]].map(([ic, label]) => (
+              <div key={label} className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-white/85 px-3 py-1.5 text-xs font-extrabold text-gray-700 shadow-sm ring-1 ring-black/[0.04]">
+                <span className="text-base">{ic}</span> {label}
               </div>
             ))}
           </div>
@@ -359,7 +361,7 @@ export default function HomePage() {
             <div className="card mx-auto my-6 max-w-sm p-8 text-center">
               <p className="text-7xl drop-shadow">{emoji === '🐾' ? '🐪' : emoji}</p>
               <p className="mt-3 text-lg font-extrabold text-engrave">لا توجد نتائج في «{title}»</p>
-              <p className="mt-1 text-sm text-gray-500">كن أوّل من يضيف هنا، أو جرّب تصنيفاً آخر.</p>
+              <p className="mt-1 text-sm text-gray-500">{tx('homeEmpty', 'كن أوّل من يضيف هنا، أو جرّب تصنيفاً آخر.')}</p>
               <Link href="/sell" className="btn-gold mt-4 inline-flex !px-6">＋ أضف إعلانك</Link>
             </div>
           ) : (

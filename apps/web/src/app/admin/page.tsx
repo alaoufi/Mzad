@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ACCOUNT_TYPES, accountTypeDef } from '@/lib/roles';
 import { REQ_FIELD_OPTIONS } from '@/lib/sellFields';
+import { SITE_TEXTS } from '@/lib/texts';
 
 interface AdminData {
   stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number; verifications: number; disputes: number };
@@ -53,6 +54,13 @@ export default function AdminPage() {
     try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ reqFields }) }); uiToast('✅ حُفظت الحقول المطلوبة'); }
     catch (e: any) { uiToast(e.message); } finally { setSavingReq(false); }
   };
+  const [texts, setTexts] = useState<Record<string, string>>({});
+  const [savingTexts, setSavingTexts] = useState(false);
+  const saveTexts = async () => {
+    setSavingTexts(true);
+    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ texts }) }); uiToast('✅ حُفظت النصوص'); }
+    catch (e: any) { uiToast(e.message); } finally { setSavingTexts(false); }
+  };
 
   const load = () =>
     api<AdminData>('/admin/stats').then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
@@ -68,6 +76,7 @@ export default function AdminPage() {
         zeroCommissionNote: r.zeroCommissionNote ?? '',
       });
       setReqFields(Array.isArray(r.reqFields) ? r.reqFields : []);
+      setTexts(r.texts ?? {});
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -256,6 +265,29 @@ export default function AdminPage() {
         </div>
         <button onClick={saveReqFields} disabled={savingReq} className="btn-primary w-full disabled:opacity-50">
           {savingReq ? '...' : 'حفظ الحقول المطلوبة'}
+        </button>
+      </div>
+
+      {/* النصوص الظاهرة للزائر والتاجر */}
+      <div className="card space-y-3 p-4">
+        <h2 className="text-lg font-bold">📝 النصوص</h2>
+        <p className="text-xs text-gray-500">عدّل النصوص الظاهرة للزوّار والتجّار. اترك الحقل فارغاً للرجوع للنص الافتراضي.</p>
+        <div className="space-y-2">
+          {SITE_TEXTS.map((t) => (
+            <div key={t.key}>
+              <label className="mb-1 block text-sm font-bold text-gray-600">{t.label}</label>
+              {t.multiline ? (
+                <textarea className="input min-h-[60px]" placeholder={t.def} value={texts[t.key] ?? ''}
+                  onChange={(e) => setTexts((p) => ({ ...p, [t.key]: e.target.value }))} />
+              ) : (
+                <input className="input" placeholder={t.def} value={texts[t.key] ?? ''}
+                  onChange={(e) => setTexts((p) => ({ ...p, [t.key]: e.target.value }))} />
+              )}
+            </div>
+          ))}
+        </div>
+        <button onClick={saveTexts} disabled={savingTexts} className="btn-primary w-full disabled:opacity-50">
+          {savingTexts ? '...' : 'حفظ النصوص'}
         </button>
       </div>
 

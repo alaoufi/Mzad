@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
 import { DEFAULT_COMMISSION_NOTE, DEFAULT_ZERO_COMMISSION_NOTE } from '@/lib/commission';
+import { buildTexts } from '@/lib/texts';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
       commissionNote: map.commissionNote || DEFAULT_COMMISSION_NOTE,
       zeroCommissionNote: map.zeroCommissionNote || DEFAULT_ZERO_COMMISSION_NOTE,
       reqFields: (map.reqFields || '').split(',').map((s) => s.trim()).filter(Boolean),
+      texts: buildTexts(map),
     });
   } catch {
     return json({ message: 'الجدول غير مهيّأ بعد (لم يُطبّق التعديل على قاعدة البيانات).' }, 503);
@@ -48,6 +50,9 @@ export async function PATCH(req: NextRequest) {
   if (body.commissionNote !== undefined) await setKey('commissionNote', String(body.commissionNote).slice(0, 500));
   if (body.zeroCommissionNote !== undefined) await setKey('zeroCommissionNote', String(body.zeroCommissionNote).slice(0, 500));
   if (body.reqFields !== undefined) await setKey('reqFields', (Array.isArray(body.reqFields) ? body.reqFields.join(',') : String(body.reqFields)).slice(0, 200));
+  if (body.texts && typeof body.texts === 'object') {
+    for (const [k, v] of Object.entries(body.texts)) await setKey('txt_' + k, String(v ?? '').slice(0, 800));
+  }
 
   return json({ ok: true });
 }
