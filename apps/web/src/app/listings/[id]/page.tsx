@@ -10,7 +10,7 @@ import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
 import { AdBanner } from '@/components/AdBanner';
-import { resolveTheme, resolveIcon, resolveSkin, sceneBackground, skinVars } from '@/lib/themes';
+import { resolveTheme, resolveIcon, resolveSkin, sceneBackground, skinVars, gradient } from '@/lib/themes';
 import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
@@ -271,35 +271,44 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* البائع والثقة */}
-        <div className="card flex items-center justify-between p-4">
-          <div>
-            <div className="font-bold">{listing.seller?.name}</div>
-            <div className="text-sm text-gray-500">
-              ⭐ {listing.seller?.trustScore?.toFixed(1) ?? '—'}
-              {listing.seller?.identityStatus === 'VERIFIED' && (
-                <span className="mr-2 chip">✔ موثّق</span>
-              )}
+        {/* البائع والثقة — مرساة الثقة وأهم نقطة تواصل */}
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white shadow"
+              style={{ backgroundImage: gradient(theme) }}>
+              {(listing.seller?.name ?? '؟').trim().charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="truncate font-extrabold text-gray-800">{listing.seller?.name}</span>
+                {listing.seller?.identityStatus === 'VERIFIED' && (
+                  <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700">✔ موثّق</span>
+                )}
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-amber-500">
+                ⭐ {listing.seller?.trustScore?.toFixed(1) ?? '—'} <span className="font-normal text-gray-400">تقييم البائع</span>
+              </div>
             </div>
           </div>
-          <div className="flex shrink-0 flex-col gap-2">
-            {!isOwner && (
+          {!isOwner && (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <button onClick={openPrivateChat}
-                className="rounded-2xl px-4 py-2 text-sm font-bold text-white shadow"
-                style={{ backgroundImage: 'linear-gradient(135deg, #128C7E, #25D366)' }}>
+                className="flex items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-sm font-extrabold text-white shadow transition active:scale-95"
+                style={{ backgroundImage: gradient(theme) }}>
                 💬 مراسلة خاصة
               </button>
-            )}
-            {listing.seller?.phone && (
-              <a
-                href={`https://wa.me/${String(listing.seller.phone).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`السلام عليكم، بخصوص إعلان «${listing.title}» في مزاد`)}`}
-                target="_blank" rel="noopener noreferrer"
-                className="rounded-2xl border border-green-300 px-4 py-1.5 text-center text-sm font-bold text-green-700"
-              >
-                واتساب
-              </a>
-            )}
-          </div>
+              {listing.seller?.phone && (
+                <a
+                  href={`https://wa.me/${String(listing.seller.phone).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`السلام عليكم، بخصوص إعلان «${listing.title}» في مزاد`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-2xl px-4 py-2.5 text-center text-sm font-extrabold text-white shadow transition active:scale-95"
+                  style={{ backgroundImage: 'linear-gradient(135deg, #128C7E, #25D366)' }}
+                >
+                  📱 واتساب
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* المواصفات */}
