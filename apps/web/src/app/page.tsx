@@ -68,6 +68,16 @@ export default function HomePage() {
       .finally(() => setProfileLoaded(true));
   }, [user]);
 
+  // ذكاء السياق: نسجّل ما يتصفّحه الزائر (مزاد/عرض + التصنيف الحالي) ليُهيَّأ نموذج «أضف إعلان» تلقائياً
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('mzad_sell_ctx', JSON.stringify({
+        saleType: mode === 'AUCTION' ? 'AUCTION' : 'DIRECT',
+        categoryId: path.length ? path[path.length - 1].id : '',
+      }));
+    } catch {}
+  }, [mode, path]);
+
   // عرض رسالة «ما يهمّك» أول دخول للمسجّلين بلا اهتمامات
   useEffect(() => {
     if (!profileLoaded || !user) return;

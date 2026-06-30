@@ -168,6 +168,30 @@ export default function SellPage() {
     return false;
   };
 
+  // ذكاء السياق: نهيّئ نوع البيع والتصنيف من آخر تصفّح للزائر (مرّة واحدة، وما لم يكن قد اختار بنفسه)
+  const ctxAppliedRef = useRef(false);
+  useEffect(() => {
+    if (ctxAppliedRef.current || !tree.length) return;
+    ctxAppliedRef.current = true;
+    try {
+      const raw = sessionStorage.getItem('mzad_sell_ctx');
+      if (!raw) return;
+      const ctx = JSON.parse(raw);
+      setForm((f: any) => {
+        if (f.catPath.length || f.categoryId) return f; // الزائر اختار بنفسه — لا نُبدّل
+        const next = { ...f };
+        if (ctx.saleType === 'AUCTION' || ctx.saleType === 'DIRECT') next.saleType = ctx.saleType;
+        if (ctx.categoryId && catById.has(ctx.categoryId)) {
+          const p: Cat[] = [];
+          let cur: string | undefined = ctx.categoryId;
+          while (cur) { const c = catById.get(cur); if (c) p.unshift(c); cur = parentOf.get(cur); }
+          if (p.length) { const leaf = p[p.length - 1]; next.catPath = p; next.categoryId = leaf.children?.length ? '' : leaf.id; }
+        }
+        return next;
+      });
+    } catch {}
+  }, [tree, catById, parentOf]);
+
   const searchResults = catSearch.trim() ? allCats.filter((x) => x.cat.name.includes(catSearch.trim()) && relevant(x.cat.id)).slice(0, 30) : [];
   const deepestCat: Cat | undefined = form.catPath[form.catPath.length - 1];
   const catOptions: Cat[] = form.catPath.length
