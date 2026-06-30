@@ -1,15 +1,18 @@
-import { Theme, gradient, motifPattern, heroEdgePath } from '@/lib/themes';
+import { Theme, Mood, gradient, motifPattern, heroEdgePath } from '@/lib/themes';
 
-// ترويسة قسم بهويّة كاملة: تدرّج لوني + زخرفة النمط + ظلّ النوع + حافة مقصوصة
+// ترويسة قسم بهويّة كاملة: تدرّج لوني + زخرفة النمط + ظلّ النوع + حافة مقصوصة + مزاج
 export function CategoryHero({
-  theme, motif, emoji, title, subtitle,
-}: { theme: Theme; motif: string; emoji: string; title: string; subtitle?: string }) {
+  theme, motif, emoji, title, subtitle, mood = 'airy',
+}: { theme: Theme; motif: string; emoji: string; title: string; subtitle?: string; mood?: Mood }) {
   const pat = motifPattern(motif, '#ffffff');
+  const rich = mood === 'rich';
   return (
-    <div className="relative -mx-4 -mt-6 mb-3 overflow-hidden px-4 pb-9 pt-9" style={{ backgroundImage: gradient(theme) }}>
+    <div className={`relative -mx-4 -mt-6 mb-3 overflow-hidden px-4 pt-9 ${rich ? 'pb-11' : 'pb-9'}`}
+      style={{ backgroundImage: gradient(theme) }}>
       {/* زخرفة النمط بلون أبيض شفّاف */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.22]"
-        style={{ backgroundImage: pat.image, backgroundSize: pat.size, backgroundRepeat: 'repeat' }} />
+      <div className="pointer-events-none absolute inset-0" style={{ opacity: rich ? 0.3 : 0.22, backgroundImage: pat.image, backgroundSize: pat.size, backgroundRepeat: 'repeat' }} />
+      {/* تعتيم فخم للمزاج الغني */}
+      {rich && <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />}
       {/* ظلّ النوع الكبير */}
       <div aria-hidden className="pointer-events-none absolute -left-5 -top-4 select-none text-[160px] leading-none text-white/15">
         {emoji}
@@ -20,9 +23,11 @@ export function CategoryHero({
       <div className="relative">
         <div className="flex items-center gap-2">
           <span className="text-4xl drop-shadow">{emoji}</span>
-          <h1 className="text-2xl font-extrabold text-white text-emboss-light sm:text-3xl">{title}</h1>
+          <h1 className="text-2xl font-extrabold text-white text-emboss-light sm:text-3xl"
+            style={{ fontFamily: 'var(--font-display, inherit)' }}>{title}</h1>
         </div>
         {subtitle && <p className="mt-1 text-sm font-bold text-white/85">{subtitle}</p>}
+        {rich && <span className="mt-2 inline-block rounded-full bg-white/20 px-3 py-0.5 text-[11px] font-extrabold text-white ring-1 ring-white/30">✦ مميّز</span>}
       </div>
 
       {/* حافة مقصوصة بلون الصفحة */}

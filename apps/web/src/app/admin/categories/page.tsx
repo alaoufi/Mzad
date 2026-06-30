@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import {
-  THEME_LIST, FAMILIES, themeByKey, gradient, resolveSkin, sceneBackground, themeVars,
+  THEME_LIST, FAMILIES, themeByKey, gradient, resolveSkin, sceneBackground, skinVars,
   MOTIF_OPTIONS, SHAPE_OPTIONS, LAYOUT_OPTIONS, CARD_OPTIONS,
 } from '@/lib/themes';
 
@@ -327,7 +327,7 @@ export default function AdminCategoriesPage() {
             <div className="mt-4 rounded-2xl border-2 border-sand-200 p-3">
               <h4 className="mb-2 text-sm font-extrabold text-brand-dark">🎨 هوية القسم — معاينة وتثبيت</h4>
               <div className="mb-3 overflow-hidden rounded-2xl p-3"
-                style={{ background: sceneBackground(previewSkin.theme, previewSkin.motif), ...themeVars(previewSkin.theme, previewSkin.shapeKey) }}>
+                style={{ background: sceneBackground(previewSkin.theme, previewSkin.motif, previewSkin.mood), ...skinVars(previewSkin) }}>
                 <div className="card p-2">
                   <div className="h-14 w-full rounded-[inherit]" style={{ backgroundImage: gradient(previewSkin.theme) }} />
                   <div className="px-1 pt-1.5 text-[11px] font-bold text-gray-600">شكل البطاقة: {cardLabel}</div>

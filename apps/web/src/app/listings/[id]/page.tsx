@@ -9,7 +9,8 @@ import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
-import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars } from '@/lib/themes';
+import { resolveTheme, resolveIcon, resolveSkin, sceneBackground, skinVars } from '@/lib/themes';
+import { CategoryHero } from '@/components/CategoryHero';
 import { usePageTheme } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
@@ -118,7 +119,8 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const cat = listing?.category;
   const chain = [cat, cat?.parent, cat?.parent?.parent].filter(Boolean);
   const theme = resolveTheme(chain);
-  const { motif, shapeKey } = resolveSkin(chain);
+  const skin = resolveSkin(chain);
+  const { motif, mood } = skin;
   usePageTheme(theme); // يلوّن ترويسة الموقع والشريط السفلي بلون نوع الإعلان
 
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
@@ -137,18 +139,11 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const canArchive = isOwner || isStaff;
 
   return (
-    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif), ...themeVars(theme, shapeKey) }}>
-      {/* لافتة السوق حسب النوع */}
-      <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
-        style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 40px -18px ${theme.from}88` }}>
-        <span className="text-4xl animate-floaty">{emoji}</span>
-        <div>
-          <div className="text-lg font-extrabold text-emboss-light">سوق {marketName}</div>
-          <div className="text-sm text-white/80">
-            {[cat?.parent?.parent?.name, cat?.parent?.name, cat?.name].filter(Boolean).join(' · ')}
-          </div>
-        </div>
-      </div>
+    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
+      {/* ترويسة السوق بهويّة النوع الكاملة */}
+      <CategoryHero theme={theme} motif={motif} mood={mood} emoji={emoji}
+        title={`سوق ${marketName}`}
+        subtitle={[cat?.parent?.parent?.name, cat?.parent?.name, cat?.name].filter(Boolean).join(' · ')} />
 
       {listing.status === 'DRAFT' && (
         <div className="mb-4 rounded-2xl bg-amber-50 p-3 text-center font-bold text-amber-800">

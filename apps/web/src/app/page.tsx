@@ -5,7 +5,7 @@ import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
-import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
+import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, skinVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { usePageTheme } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
@@ -139,7 +139,7 @@ export default function HomePage() {
     : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
   const theme = resolveTheme(chain);
   const skin = resolveSkin(chain);
-  const { motif, shapeKey, layoutKey, cardStyle } = skin;
+  const { motif, shapeKey, layoutKey, cardStyle, mood } = skin;
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
 
@@ -233,10 +233,10 @@ export default function HomePage() {
 
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
-      style={{ background: sceneBackground(theme, motif), ...themeVars(theme, shapeKey) }}>
+      style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
       <div className="relative">
         {/* ترويسة القسم — هوية كاملة بحافة مقصوصة حسب النمط */}
-        <CategoryHero theme={theme} motif={motif} emoji={emoji === '🐾' ? '🐪' : emoji} title={title}
+        <CategoryHero theme={theme} motif={motif} mood={mood} emoji={emoji === '🐾' ? '🐪' : emoji} title={title}
           subtitle={loading ? undefined : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`} />
 
         {mode === 'SUPPLIES' ? (

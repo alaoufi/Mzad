@@ -196,13 +196,32 @@ function hashStr(s: string): number {
   return h >>> 0;
 }
 
+export type Mood = 'airy' | 'rich';
+
 export interface Skin {
   theme: Theme;
   motif: string;     // نمط خلفية الشكل
   shapeKey: string;  // استدارة المكوّنات
   layoutKey: string; // تخطيط الشبكة
   cardStyle: CardStyle;
+  font: string;      // خط العناوين (CSS font-family)
+  mood: Mood;        // مزاج فاتح/غني
 }
+
+// خطوط العناوين حسب العائلة اللونية + قائمة احتياطية حتمية
+const FAMILY_FONT: Record<string, string> = {
+  'ذهبي وترابي': "'Amiri', serif",
+  'برتقالي وأحمر': "'Changa', sans-serif",
+  'وردي وبنفسجي': "'El Messiri', sans-serif",
+  'بنفسجي وأزرق': "'Reem Kufi', sans-serif",
+  'أزرق وسماوي': "'Cairo', sans-serif",
+  'أخضر وفيروزي': "'El Messiri', sans-serif",
+  'محايد وداكن': "'Cairo', sans-serif",
+};
+const FONT_CSS = [
+  "'Cairo', sans-serif", "'Reem Kufi', sans-serif", "'El Messiri', sans-serif",
+  "'Changa', sans-serif", "'Lalezar', cursive", "'Amiri', serif",
+];
 
 // عدد التوليفات الممكنة (لإظهاره للإدارة) = ألوان × أنماط × أشكال × تخطيطات × بطاقات
 export const SKIN_COMBINATIONS =
@@ -231,7 +250,21 @@ export function resolveSkin(chain: (CatNode | null | undefined)[]): Skin {
   const cardStyle = (pinnedCard && CARD_STYLES.includes(pinnedCard) ? pinnedCard : null)
     || CARD_STYLES[Math.floor(h / 389) % CARD_STYLES.length];
 
-  return { theme, motif, shapeKey, layoutKey, cardStyle };
+  const font = FAMILY_FONT[theme.family] || FONT_CSS[Math.floor(h / 97) % FONT_CSS.length];
+  const mood: Mood = Math.floor(h / 211) % 3 === 0 ? 'rich' : 'airy';
+
+  return { theme, motif, shapeKey, layoutKey, cardStyle, font, mood };
+}
+
+// كل متغيّرات الهوية للحاوية: استدارة + خط العناوين + سطح البطاقة حسب المزاج
+export function skinVars(skin: Skin): Record<string, string> {
+  const base = themeVars(skin.theme, skin.shapeKey);
+  return {
+    ...base,
+    '--font-display': skin.font,
+    '--card-bg': skin.mood === 'rich' ? `color-mix(in srgb, ${skin.theme.accent} 7%, white)` : '#ffffff',
+    '--card-ring': skin.mood === 'rich' ? `${skin.theme.accent}40` : base['--card-ring'],
+  };
 }
 
 // خيارات المحاور (مفتاح + وصف عربي) — للوحة الإدارة
@@ -278,13 +311,15 @@ export function heroEdgePath(motif: string): string {
   return HERO_EDGES[MOTIF_EDGE[motif] ?? 'curve'] ?? HERO_EDGES.curve;
 }
 
-// خلفية المشهد — نمط شكلي مميّز للنوع + نفحات لونية هادئة فوق قاعدة فاتحة
-export function sceneBackground(t: Theme, motif: string = 'bloom'): string {
+// خلفية المشهد — نمط شكلي مميّز للنوع + نفحات لونية (أغنى في المزاج «الغني»)
+export function sceneBackground(t: Theme, motif: string = 'bloom', mood: Mood = 'airy'): string {
   const p = (PATTERNS[motif] ?? PATTERNS.bloom)(t.accent);
+  const a1 = mood === 'rich' ? '4a' : '2e';
+  const a2 = mood === 'rich' ? '30' : '20';
   return [
     `${svgBg(p.svg)} center top / ${p.size} repeat`,
-    `radial-gradient(1200px circle at 100% -14%, ${t.accent}2e, transparent 58%) no-repeat`,
-    `radial-gradient(1000px circle at -10% 2%, ${t.to}20, transparent 54%) no-repeat`,
+    `radial-gradient(1200px circle at 100% -14%, ${t.accent}${a1}, transparent 58%) no-repeat`,
+    `radial-gradient(1000px circle at -10% 2%, ${t.to}${a2}, transparent 54%) no-repeat`,
     `linear-gradient(180deg, ${t.bg}, ${t.surface})`,
   ].join(', ');
 }
