@@ -6,12 +6,12 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { useActiveTheme } from '@/lib/theme-context';
-import { gradient } from '@/lib/themes';
+import { heroEdgePath } from '@/lib/themes';
 import { setSearchTerm } from '@/lib/search';
 
 export function Header() {
   const { user } = useAuth();
-  const { theme } = useActiveTheme();
+  const { theme, section } = useActiveTheme();
   const router = useRouter();
   const pathname = usePathname();
   const isHome = pathname === '/';
@@ -98,7 +98,26 @@ export function Header() {
         </div>
       )}
 
-      <div className="h-0.5 w-full" style={{ backgroundImage: 'linear-gradient(90deg, transparent, #e0b85a, transparent)' }} />
+      {/* سطر هوية القسم — مدموج داخل الهيدر بدل اللافتة المنفصلة */}
+      {section && (
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-2">
+          <span className="text-xl drop-shadow">{section.emoji}</span>
+          <h1 className="truncate text-base font-extrabold text-emboss-light"
+            style={{ fontFamily: section.font ?? 'inherit' }}>{section.label}</h1>
+          <div className="mr-auto flex shrink-0 items-center gap-1.5">
+            {section.mood === 'rich' && <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold ring-1 ring-white/30">✦ مميّز</span>}
+            {section.subtitle && <span className="rounded-full bg-black/15 px-2 py-0.5 text-[11px] font-bold text-white/90">{section.subtitle}</span>}
+          </div>
+        </div>
+      )}
+
+      {section?.motif ? (
+        <svg className="block h-3 w-full" viewBox="0 0 1440 48" preserveAspectRatio="none" fill={section.edgeColor ?? '#fbf9f4'}>
+          <path d={heroEdgePath(section.motif)} />
+        </svg>
+      ) : (
+        <div className="h-0.5 w-full" style={{ backgroundImage: 'linear-gradient(90deg, transparent, #e0b85a, transparent)' }} />
+      )}
     </header>
   );
 }

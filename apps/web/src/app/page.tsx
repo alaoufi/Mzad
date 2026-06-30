@@ -6,10 +6,9 @@ import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
 import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, skinVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
-import { usePageTheme } from '@/lib/theme-context';
+import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
-import { CategoryHero } from '@/components/CategoryHero';
 
 interface Cat {
   id: string; name: string; icon?: string; themeKey?: string | null;
@@ -139,7 +138,7 @@ export default function HomePage() {
     : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
   const theme = resolveTheme(chain);
   const skin = resolveSkin(chain);
-  const { motif, shapeKey, layoutKey, cardStyle, mood } = skin;
+  const { motif, layoutKey, cardStyle, mood } = skin;
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
 
@@ -173,6 +172,11 @@ export default function HomePage() {
     mode === 'SUPPLIES'
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
       : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${sectionName}`;
+
+  // دمج هوية القسم داخل الهيدر (بدل اللافتة المنفصلة)
+  const headerEmoji = emoji === '🐾' ? '🐪' : emoji;
+  const headerSubtitle = loading ? '' : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`;
+  useHeaderSection(title, headerEmoji, headerSubtitle, motif, mood, skin.font, theme.bg);
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
   const reset = (level: number) => setPath((p) => p.slice(0, level));
@@ -235,10 +239,6 @@ export default function HomePage() {
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
       style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
       <div className="relative">
-        {/* ترويسة القسم — هوية كاملة بحافة مقصوصة حسب النمط */}
-        <CategoryHero theme={theme} motif={motif} mood={mood} emoji={emoji === '🐾' ? '🐪' : emoji} title={title}
-          subtitle={loading ? undefined : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`} />
-
         {mode === 'SUPPLIES' ? (
           <>
             <button onClick={() => setMode('DIRECT')}
@@ -280,34 +280,29 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* المستوى 1 (الرأس) — مصفّى حسب اهتمامك */}
-        <Row label={levelLabel(mode, 0)}>
-          {!useInterestNav && (
-            <Chip active={path.length === 0} accent={theme.accent} onClick={() => reset(0)}>الكل</Chip>
-          )}
-          {topList.filter((c) => relevant(c.id)).map((c) => (
-            <Chip key={c.id} active={path[0]?.id === c.id} accent={theme.accent}
-              onClick={() => (path[0]?.id === c.id ? reset(0) : pick(0, c))}>
-              {c.icon} {c.name}
-            </Chip>
-          ))}
-        </Row>
-
-        {/* المستويات الأعمق — بأي عدد حسب التصنيف */}
-        {path.map((node, i) => {
-          const kids = (node.children ?? []).filter((c) => relevant(c.id));
-          return kids.length > 0 ? (
-            <Row key={node.id} label={levelLabel(mode, i + 1)}>
-              <Chip active={path.length === i + 1} accent={theme.accent} onClick={() => reset(i + 1)}>الكل</Chip>
-              {kids.map((c) => (
-                <Chip key={c.id} active={path[i + 1]?.id === c.id} accent={theme.accent} onClick={() => pick(i + 1, c)}>
-                  {c.icon} {c.name}
-                </Chip>
+        {/* تصفّح مدمج في سطر واحد: مسار مختار (يُزال بنقرة ✕) + خيارات المستوى الحالي */}
+        {(() => {
+          const deepest = path[path.length - 1];
+          const options = (deepest ? (deepest.children ?? []) : topList).filter((c) => relevant(c.id));
+          if (path.length === 0 && options.length === 0) return null;
+          return (
+            <div className="no-scrollbar mb-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+              {path.map((node, i) => (
+                <button key={node.id} onClick={() => reset(i)}
+                  className="chip shrink-0 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
+                  style={{ backgroundColor: theme.accent, color: '#fff' }}>
+                  {node.icon} {node.name} <span className="opacity-80">✕</span>
+                </button>
               ))}
-            </Row>
-          ) : null;
-        }
-        )}
+              {options.map((c) => (
+                <button key={c.id} onClick={() => pick(path.length, c)}
+                  className="chip shrink-0 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
+                  {c.icon} {c.name}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* الفرز */}
         <div className="mt-4 flex items-center justify-end gap-2">
@@ -374,26 +369,3 @@ const LAYOUTS: Record<string, { grid: string; gap: string; featured: boolean }> 
   bloom:  { grid: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', gap: 'gap-3', featured: false },
 };
 
-function levelLabel(mode: Mode, depth: number): string {
-  if (mode === 'SUPPLIES') return ['الفئة', 'الصنف', 'النوع'][depth] ?? `مستوى ${depth + 1}`;
-  return ['النوع', 'اللون / الصنف', 'السلالة'][depth] ?? `مستوى ${depth + 1}`;
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-2">
-      <div className="mb-1 text-xs font-extrabold" style={{ color: 'var(--th-accent, #6b7280)' }}>{label}</div>
-      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">{children}</div>
-    </div>
-  );
-}
-
-function Chip({ children, active, onClick, accent }: { children: React.ReactNode; active?: boolean; onClick: () => void; accent: string }) {
-  return (
-    <button onClick={onClick}
-      className="chip whitespace-nowrap shadow-sm transition"
-      style={active ? { backgroundColor: accent, color: '#fff' } : undefined}>
-      {children}
-    </button>
-  );
-}

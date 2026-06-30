@@ -10,8 +10,7 @@ import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
 import { resolveTheme, resolveIcon, resolveSkin, sceneBackground, skinVars } from '@/lib/themes';
-import { CategoryHero } from '@/components/CategoryHero';
-import { usePageTheme } from '@/lib/theme-context';
+import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
 import { HijriDate } from '@/components/HijriDate';
@@ -122,13 +121,15 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const skin = resolveSkin(chain);
   const { motif, mood } = skin;
   usePageTheme(theme); // يلوّن ترويسة الموقع والشريط السفلي بلون نوع الإعلان
+  const emoji = resolveIcon(chain);
+  const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
+  const crumb = [cat?.parent?.parent?.name, cat?.parent?.name, cat?.name].filter(Boolean).join(' · ');
+  useHeaderSection(`سوق ${marketName}`, emoji, crumb, motif, mood, skin.font, theme.bg);
 
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
   if (!listing) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 
   const media = listing.media ?? [];
-  const emoji = resolveIcon(chain);
-  const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
 
   // صلاحيات التعديل والأرشفة
   const isOwner = !!user && user.id === listing.seller?.id;
@@ -140,11 +141,6 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
-      {/* ترويسة السوق بهويّة النوع الكاملة */}
-      <CategoryHero theme={theme} motif={motif} mood={mood} emoji={emoji}
-        title={`سوق ${marketName}`}
-        subtitle={[cat?.parent?.parent?.name, cat?.parent?.name, cat?.name].filter(Boolean).join(' · ')} />
-
       {listing.status === 'DRAFT' && (
         <div className="mb-4 rounded-2xl bg-amber-50 p-3 text-center font-bold text-amber-800">
           ⏳ إعلانك بانتظار موافقة الإدارة قبل ظهوره للجميع
