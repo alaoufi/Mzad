@@ -9,7 +9,7 @@ import { useAuth } from '@/lib/auth';
 import { LiveAuction } from '@/components/LiveAuction';
 import { ListingChat } from '@/components/ListingChat';
 import { SellerReviews } from '@/components/SellerReviews';
-import { resolveTheme, resolveIcon, resolveMotif, gradient, sceneBackground, themeVars } from '@/lib/themes';
+import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars } from '@/lib/themes';
 import { usePageTheme } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
@@ -118,7 +118,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const cat = listing?.category;
   const chain = [cat, cat?.parent, cat?.parent?.parent].filter(Boolean);
   const theme = resolveTheme(chain);
-  const motif = resolveMotif(chain, theme);
+  const { motif, shapeKey } = resolveSkin(chain);
   usePageTheme(theme); // يلوّن ترويسة الموقع والشريط السفلي بلون نوع الإعلان
 
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
@@ -137,7 +137,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const canArchive = isOwner || isStaff;
 
   return (
-    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif), ...themeVars(theme, motif) }}>
+    <div className="-mx-4 -my-6 min-h-screen px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif), ...themeVars(theme, shapeKey) }}>
       {/* لافتة السوق حسب النوع */}
       <div className="mb-5 flex items-center gap-3 rounded-3xl p-4 text-white shadow-lg"
         style={{ backgroundImage: gradient(theme), boxShadow: `0 20px 40px -18px ${theme.from}88` }}>

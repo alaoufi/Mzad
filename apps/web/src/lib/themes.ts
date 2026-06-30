@@ -162,19 +162,13 @@ export function resolveMotif(chain: (CatNode | null | undefined)[], theme: Theme
   return FAMILY_MOTIF[theme.family] ?? 'bloom';
 }
 
-// خلفية المشهد — نمط شكلي مميّز للنوع + نفحات لونية هادئة فوق قاعدة فاتحة
-export function sceneBackground(t: Theme, motif: string = 'bloom'): string {
-  const p = (PATTERNS[motif] ?? PATTERNS.bloom)(t.accent);
-  return [
-    `${svgBg(p.svg)} center top / ${p.size} repeat`,
-    `radial-gradient(1200px circle at 100% -14%, ${t.accent}2e, transparent 58%) no-repeat`,
-    `radial-gradient(1000px circle at -10% 2%, ${t.to}20, transparent 54%) no-repeat`,
-    `linear-gradient(180deg, ${t.bg}, ${t.surface})`,
-  ].join(', ');
-}
+/* ───────── محرّك الهويّات (Skin Engine) ─────────
+   يركّب لكل تصنيف هويّة كاملة من محاور مستقلة:
+   لوحة لونية × نمط شكلي × استدارة مكوّنات × تخطيط × شكل بطاقة.
+   تُشتقّ حتمياً من اسم التصنيف (نفس التصنيف = نفس الهوية دائماً) فيحصل
+   كل قسم تلقائياً على إحساس «موقع مستقل» — وعدد التوليفات هائل جداً. */
 
-// لغة شكل المكوّنات حسب النمط — تتبدّل استدارة البطاقات والرقائق والأزرار
-// فتبدو مكوّنات الصفحة نفسها مختلفة حسب الصنف (حادّة للقمم/الشبكة، دائرية للتلال…)
+// لغة شكل المكوّنات — تتبدّل استدارة البطاقات والرقائق والأزرار حسب الصنف
 const SHAPES: Record<string, { card: string; chip: string; btn: string }> = {
   dunes:  { card: '1.75rem', chip: '9999px', btn: '1.25rem' },
   hills:  { card: '2rem',    chip: '9999px', btn: '1.5rem'  },
@@ -186,6 +180,60 @@ const SHAPES: Record<string, { card: string; chip: string; btn: string }> = {
   grid:   { card: '0.7rem',  chip: '0.5rem', btn: '0.5rem'  },
   bloom:  { card: '1.5rem',  chip: '9999px', btn: '1rem'    },
 };
+
+const PATTERN_KEYS = Object.keys(PATTERNS);
+const SHAPE_KEYS = Object.keys(SHAPES);
+export const CARD_STYLES = ['classic', 'overlay', 'polaroid', 'ticket'] as const;
+export type CardStyle = (typeof CARD_STYLES)[number];
+export const LAYOUT_KEYS = ['dunes', 'hills', 'peaks', 'waves', 'motion', 'spots', 'scales', 'grid', 'bloom'];
+
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+export interface Skin {
+  theme: Theme;
+  motif: string;     // نمط خلفية الشكل
+  shapeKey: string;  // استدارة المكوّنات
+  layoutKey: string; // تخطيط الشبكة
+  cardStyle: CardStyle;
+}
+
+// عدد التوليفات الممكنة (لإظهاره للإدارة) = ألوان × أنماط × أشكال × تخطيطات × بطاقات
+export const SKIN_COMBINATIONS =
+  THEME_LIST.length * PATTERN_KEYS.length * SHAPE_KEYS.length * LAYOUT_KEYS.length * CARD_STYLES.length;
+
+export function resolveSkin(chain: (CatNode | null | undefined)[]): Skin {
+  const theme = resolveTheme(chain);
+  const speciesName = chain[chain.length - 1]?.name;          // النوع (الجذر)
+  const seedName = chain.find((c) => c?.name)?.name ?? speciesName ?? 'مزاد'; // الأعمق
+  const h = hashStr(`${seedName}|${theme.family}`);
+
+  // النمط: مخصّص للأنواع المعروفة، وإلا حتمي من البذرة
+  const motif = (speciesName && SPECIES_MOTIF[speciesName])
+    || FAMILY_MOTIF[theme.family]
+    || PATTERN_KEYS[h % PATTERN_KEYS.length];
+
+  // بقية المحاور مستقلة وحتمية — لتعظيم التمايز بين الأقسام
+  const shapeKey = SHAPE_KEYS[Math.floor(h / 7) % SHAPE_KEYS.length];
+  const layoutKey = LAYOUT_KEYS[Math.floor(h / 53) % LAYOUT_KEYS.length];
+  const cardStyle = CARD_STYLES[Math.floor(h / 389) % CARD_STYLES.length];
+
+  return { theme, motif, shapeKey, layoutKey, cardStyle };
+}
+
+// خلفية المشهد — نمط شكلي مميّز للنوع + نفحات لونية هادئة فوق قاعدة فاتحة
+export function sceneBackground(t: Theme, motif: string = 'bloom'): string {
+  const p = (PATTERNS[motif] ?? PATTERNS.bloom)(t.accent);
+  return [
+    `${svgBg(p.svg)} center top / ${p.size} repeat`,
+    `radial-gradient(1200px circle at 100% -14%, ${t.accent}2e, transparent 58%) no-repeat`,
+    `radial-gradient(1000px circle at -10% 2%, ${t.to}20, transparent 54%) no-repeat`,
+    `linear-gradient(180deg, ${t.bg}, ${t.surface})`,
+  ].join(', ');
+}
 
 // متغيّرات CSS تُمرَّر للحاوية: بطاقات بيضاء ناصعة تبرز فوق الحقل اللوني + حدود بلون النوع
 // + لغة شكل المكوّنات (استدارة) حسب النمط

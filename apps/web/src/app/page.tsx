@@ -5,7 +5,7 @@ import { api, ListingSummary } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ListingCard } from '@/components/ListingCard';
 import { InterestPicker } from '@/components/InterestPicker';
-import { resolveTheme, resolveIcon, resolveMotif, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
+import { resolveTheme, resolveIcon, resolveSkin, gradient, sceneBackground, themeVars, SUPPLIES_NAME, CatNode } from '@/lib/themes';
 import { usePageTheme } from '@/lib/theme-context';
 import { useSearchTerm, setSearchTerm } from '@/lib/search';
 import { AdBanner } from '@/components/AdBanner';
@@ -129,7 +129,8 @@ export default function HomePage() {
     ? ancestryChain
     : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
   const theme = resolveTheme(chain);
-  const motif = resolveMotif(chain, theme);
+  const skin = resolveSkin(chain);
+  const { motif, shapeKey, layoutKey, cardStyle } = skin;
   const emoji = path.length || mode === 'SUPPLIES' ? resolveIcon(chain) : '🐾';
   usePageTheme(theme);
 
@@ -223,7 +224,7 @@ export default function HomePage() {
 
   return (
     <div className="relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 transition-all duration-500 animate-fadeup"
-      style={{ background: sceneBackground(theme, motif), ...themeVars(theme, motif) }}>
+      style={{ background: sceneBackground(theme, motif), ...themeVars(theme, shapeKey) }}>
       {/* بصمة شكلية للنوع — صورة ظلّية خافتة تعزّز هوية القسم */}
       <div aria-hidden className="pointer-events-none absolute -left-8 top-20 select-none text-[200px] leading-none opacity-[0.05] blur-[1px]">
         {emoji === '🐾' ? '🐪' : emoji}
@@ -331,14 +332,14 @@ export default function HomePage() {
               <p className="mt-3 text-lg font-bold">لا توجد نتائج في «{title}»</p>
             </div>
           ) : (
-            <div className={`grid ${LAYOUTS[motif]?.gap ?? 'gap-3'} ${LAYOUTS[motif]?.grid ?? LAYOUTS.bloom.grid}`}>
+            <div className={`grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`}>
               {listings.map((l, i) =>
-                LAYOUTS[motif]?.featured && i === 0 && !path.length ? (
+                LAYOUTS[layoutKey]?.featured && i === 0 && !path.length ? (
                   <div key={l.id} className="col-span-2">
                     <ListingCard listing={l} featured />
                   </div>
                 ) : (
-                  <ListingCard key={l.id} listing={l} />
+                  <ListingCard key={l.id} listing={l} variant={cardStyle} />
                 )
               )}
             </div>
