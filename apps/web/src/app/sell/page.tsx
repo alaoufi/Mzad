@@ -134,30 +134,40 @@ export default function SellPage() {
     walk(tree, []);
     return out;
   }, [tree]);
-  // تصفية حسب اهتمامات المستخدم: تظهر العقد المختارة وفروعها وأسلافها (للتنقّل)
+  // تصفية صارمة حسب الاهتمام: يبدأ التصفّح من جذور الاهتمام مباشرة، ولا يُعرض أي صنف خارجها
   const parentOf = useMemo(() => {
     const m = new Map<string, string | undefined>();
     const walk = (n: Cat, p?: string) => { m.set(n.id, p); n.children?.forEach((c) => walk(c, n.id)); };
     tree.forEach((t) => walk(t, undefined));
     return m;
   }, [tree]);
+  const catById = useMemo(() => {
+    const m = new Map<string, Cat>();
+    const walk = (n: Cat) => { m.set(n.id, n); n.children?.forEach(walk); };
+    tree.forEach(walk);
+    return m;
+  }, [tree]);
   const interestSet = useMemo(() => new Set(interests), [interests]);
-  const ancestorOfInterest = useMemo(() => {
-    const s = new Set<string>();
-    for (const id of interests) { let p = parentOf.get(id); while (p) { s.add(p); p = parentOf.get(p); } }
-    return s;
-  }, [interests, parentOf]);
+  const interestRootCats = useMemo(() => {
+    return interests.filter((id) => {
+      let p = parentOf.get(id);
+      while (p) { if (interestSet.has(p)) return false; p = parentOf.get(p); }
+      return true;
+    }).map((id) => catById.get(id)).filter(Boolean) as Cat[];
+  }, [interests, parentOf, catById, interestSet]);
+  // داخل الاهتمام فقط: العنصر اهتمام أو فرع منه
   const relevant = (id: string): boolean => {
     if (!interests.length) return true;
-    if (interestSet.has(id) || ancestorOfInterest.has(id)) return true;
-    let p: string | undefined = parentOf.get(id);
+    let p: string | undefined = id;
     while (p) { if (interestSet.has(p)) return true; p = parentOf.get(p); }
     return false;
   };
 
   const searchResults = catSearch.trim() ? allCats.filter((x) => x.cat.name.includes(catSearch.trim()) && relevant(x.cat.id)).slice(0, 30) : [];
-  const catOptionsAll: Cat[] = form.catPath.length ? (form.catPath[form.catPath.length - 1].children ?? []) : tree;
-  const catOptions = catOptionsAll.filter((c) => relevant(c.id));
+  const deepestCat: Cat | undefined = form.catPath[form.catPath.length - 1];
+  const catOptions: Cat[] = form.catPath.length
+    ? (deepestCat?.children ?? []).filter((c: Cat) => relevant(c.id))
+    : (interests.length ? interestRootCats : tree);
   const chooseCat = (c: Cat) => {
     const newPath = [...form.catPath, c];
     setForm((f: any) => ({ ...f, catPath: newPath, categoryId: c.children && c.children.length ? '' : c.id }));
