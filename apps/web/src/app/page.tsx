@@ -327,8 +327,6 @@ export default function HomePage() {
           </>
         ) : (
           <>
-            <AdBanner placement="HOME_TOP" categoryIds={adCtx} />
-
             {/* المبدّل الرئيسي: عروض / مزادات + مدخل المستلزمات الصغير */}
             <div className="mb-3 flex items-center gap-2">
               <div className="grid flex-1 grid-cols-2 gap-2 rounded-3xl bg-white/80 p-1.5 ring-1 ring-black/[0.04]">
