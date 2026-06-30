@@ -68,6 +68,7 @@ export default function SellPage() {
   const [reqFields, setReqFields] = useState<string[]>([]);
   const req = (k: string) => reqFields.includes(k);
   const [interests, setInterests] = useState<string[]>([]);
+  const [interestsReady, setInterestsReady] = useState(false);
   const [showInterestPicker, setShowInterestPicker] = useState(false);
   const saveInterests = async (ids: string[]) => {
     setInterests(ids); setShowInterestPicker(false);
@@ -77,7 +78,7 @@ export default function SellPage() {
     api<Cat[]>('/categories').then(setTree).catch(() => {});
     api<{ types: any[] }>('/auction-types').then((r) => setAuctionTypes(r.types)).catch(() => {});
     api<{ items: HealthItem[] }>('/health-items').then((r) => { if (r.items?.length) setHealthItems(r.items); }).catch(() => {});
-    api<{ interests?: string[] }>('/users/me').then((r) => setInterests(r.interests ?? [])).catch(() => {});
+    api<{ interests?: string[] }>('/users/me').then((r) => setInterests(r.interests ?? [])).catch(() => {}).finally(() => setInterestsReady(true));
     api<{ marketCommissionPct: number; commissionNote: string; zeroCommissionNote: string; reqFields?: string[] }>('/settings')
       .then((r) => { setCommission({ marketCommissionPct: r.marketCommissionPct ?? 0, commissionNote: r.commissionNote ?? '', zeroCommissionNote: r.zeroCommissionNote ?? '' }); setReqFields(r.reqFields ?? []); }).catch(() => {});
   }, []);
@@ -283,7 +284,11 @@ export default function SellPage() {
           <input className={`input !pr-10 ${tone(true, !!form.categoryId)}`} placeholder="🔍 ابحث عن تصنيف بالاسم..." value={catSearch} onChange={(e) => setCatSearch(e.target.value)} />
         </div>
 
-        {catSearch.trim() ? (
+        {(!interestsReady || !tree.length) ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {[0, 1, 2, 3].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-black/5" />)}
+          </div>
+        ) : catSearch.trim() ? (
           <div className="space-y-1.5">
             {searchResults.length === 0 ? <p className="py-3 text-center text-gray-500">لا نتائج لـ «{catSearch}»</p> :
               searchResults.map(({ cat, path }) => {

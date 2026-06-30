@@ -290,7 +290,11 @@ export default function HomePage() {
         )}
 
         {/* تصفّح مدمج في سطر واحد: مسار مختار (يُزال بنقرة ✕) + خيارات المستوى الحالي */}
-        {(() => {
+        {(!profileLoaded || !tree.length) ? (
+          <div className="mb-2 flex gap-1.5 pb-1">
+            {[0, 1, 2].map((i) => <div key={i} className="h-8 w-20 animate-pulse rounded-full bg-black/5" />)}
+          </div>
+        ) : (() => {
           const deepest = path[path.length - 1];
           const options = (deepest ? (deepest.children ?? []) : topList).filter((c) => relevant(c.id));
           if (path.length === 0 && options.length === 0) return null;
