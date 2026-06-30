@@ -42,7 +42,6 @@ export default function HomePage() {
   const [gateDismissed, setGateDismissed] = useState(true);
   const [txt, setTxt] = useState<Record<string, string>>({});
   const tx = (k: string, def: string) => txt[k]?.trim() || def;
-  const [trustInfo, setTrustInfo] = useState<{ ic: string; title: string; body: string } | null>(null);
 
   useEffect(() => {
     // مصدر واحد للحقيقة = الخادم. لا تخزين للشجرة في الجهاز (كان يسبّب اختلاف السلوك بين الأجهزة
@@ -348,23 +347,6 @@ export default function HomePage() {
           </>
         )}
 
-        {/* شريط الثقة — يطمئن الزائر ويعطي إحساساً راقياً (في الجذر فقط) */}
-        {mode !== 'SUPPLIES' && path.length === 0 && !q && profileLoaded && (
-          <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto pb-0.5">
-            {([
-              ['✅', tx('trust1', 'بائعون موثّقون'), 'نراجع بيانات البائع قبل توثيقه، وتظهر شارة «موثّق» على إعلاناته لتطمئن قبل التواصل.'],
-              ['🤝', tx('trust2', 'تفاوض مباشر'), 'تتواصل مع البائع مباشرة وتتفق على السعر والتسليم بينكما — بلا وسيط وبلا عمولة.'],
-              ['⚖️', tx('trust3', 'حماية النزاعات'), 'إن حدث خلاف بعد الاتفاق يمكنك فتح بلاغ، وتتابعه إدارة المنصّة للوصول إلى حل عادل.'],
-              ['🔒', tx('trust4', 'مراسلات خاصة'), 'محادثاتك مع البائع خاصة ومحفوظة داخل المنصّة، ولا يظهر رقمك إلا إذا شاركته بنفسك.'],
-            ] as [string, string, string][]).map(([ic, label, body]) => (
-              <button key={label} type="button" onClick={() => setTrustInfo({ ic, title: label, body })}
-                className="flex shrink-0 items-center gap-1.5 rounded-2xl bg-white/85 px-3 py-1.5 text-xs font-extrabold text-gray-700 shadow-sm ring-1 ring-black/[0.04] transition active:scale-95">
-                <span className="text-base">{ic}</span> {label}
-              </button>
-            ))}
-          </div>
-        )}
-
         {q && (
           <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
             <span className="font-bold text-gray-600">نتائج البحث: «{q}»</span>
@@ -400,22 +382,24 @@ export default function HomePage() {
           );
         })()}
 
-        {/* عدد النتائج + الفرز */}
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <span className="text-sm font-extrabold" style={{ color: 'var(--th-accent, #0f7b6c)' }}>
-            {!loading && listings.length > 0 ? `${listings.length.toLocaleString('ar-SA')} ${mode === 'AUCTION' ? 'مزاد' : mode === 'SUPPLIES' ? 'منتج' : 'عرض'}` : ''}
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-gray-400">ترتيب:</span>
-            <select value={sort} onChange={(e) => setSort(e.target.value)}
-              className="rounded-xl border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700">
-              <option value="recent">الأحدث</option>
-              <option value="views">الأكثر مشاهدة</option>
-              <option value="price_asc">الأقل سعراً</option>
-              <option value="price_desc">الأعلى سعراً</option>
-            </select>
+        {/* عدد النتائج + الفرز — لا يظهر إلا عند وجود نتائج فعلاً (لا يطفو فوق حالة فارغة) */}
+        {!loading && listings.length > 0 && (
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <span className="text-sm font-extrabold" style={{ color: 'var(--th-accent, #0f7b6c)' }}>
+              {`${listings.length.toLocaleString('ar-SA')} ${mode === 'AUCTION' ? 'مزاد' : mode === 'SUPPLIES' ? 'منتج' : 'عرض'}`}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-400">ترتيب:</span>
+              <select value={sort} onChange={(e) => setSort(e.target.value)}
+                className="rounded-xl border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700">
+                <option value="recent">الأحدث</option>
+                <option value="views">الأكثر مشاهدة</option>
+                <option value="price_asc">الأقل سعراً</option>
+                <option value="price_desc">الأعلى سعراً</option>
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* إعلان أعلى القوائم */}
         <AdBanner placement="MARKET_TOP" categoryIds={adCtx} />
@@ -460,16 +444,6 @@ export default function HomePage() {
         />
       )}
 
-      {trustInfo && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center" onClick={() => setTrustInfo(null)}>
-          <div className="card w-full max-w-sm animate-fadeup p-6 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-sand-100 text-4xl">{trustInfo.ic}</div>
-            <h3 className="mb-2 text-lg font-extrabold text-gray-800">{trustInfo.title}</h3>
-            <p className="text-sm leading-relaxed text-gray-600">{trustInfo.body}</p>
-            <button onClick={() => setTrustInfo(null)} className="btn-primary mt-5 w-full">فهمت 👍</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

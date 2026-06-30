@@ -46,7 +46,9 @@ export function Header() {
             </button>
           )}
           <Link href="/" className="flex items-center gap-2 text-2xl font-extrabold text-emboss-light">
-            <span className="text-3xl drop-shadow">🐪</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/ibil.jpg" alt="مزاد" width={36} height={36}
+              className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-white/60 drop-shadow" />
             <span>مزاد</span>
           </Link>
         </div>
@@ -103,13 +105,17 @@ export function Header() {
       {/* سطر هوية القسم — مدموج داخل الهيدر بدل اللافتة المنفصلة */}
       {section?.label && (
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-2">
-          {catImageIconForText(section.label) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={catImageIconForText(section.label)!} alt="" width={26} height={26}
-              className="h-[26px] w-[26px] shrink-0 rounded-full object-cover ring-2 ring-white/60 drop-shadow" />
-          ) : (
-            <span className="text-xl drop-shadow">{section.emoji}</span>
-          )}
+          {(() => {
+            // صورة النوع إن تطابق الاسم، وإلا صورة الجمل بدل إيموجي الجمل الافتراضي، وإلا الإيموجي
+            const img = catImageIconForText(section.label) || ((section.emoji === '🐪' || section.emoji === '🐫') ? '/icons/ibil.jpg' : null);
+            return img ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={img} alt="" width={26} height={26}
+                className="h-[26px] w-[26px] shrink-0 rounded-full object-cover ring-2 ring-white/60 drop-shadow" />
+            ) : (
+              <span className="text-xl drop-shadow">{section.emoji}</span>
+            );
+          })()}
           <h1 className="truncate text-base font-extrabold text-emboss-light"
             style={{ fontFamily: section.font ?? 'inherit' }}>{section.label}</h1>
           <div className="mr-auto flex shrink-0 items-center gap-1.5">
