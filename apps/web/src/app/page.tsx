@@ -196,6 +196,8 @@ export default function HomePage() {
 
   // هل لدى المستخدم اهتمامات؟ — لا نعتمد على شجرة العميل (قد تكون قديمة) حتى لا ينكسر الفلتر
   const hasCuratedInterests = interestActive && interests.length > 0;
+  // اختار الاثنين معاً (مواشٍ + مستلزمات) → نُظهر مبدّل سوقَين واضحاً وقوياً أعلى الصفحة
+  const hasBothMarkets = animalInterests.length > 0 && supplyInterests.length > 0;
 
   const loadSeq = useRef(0);
   const load = () => {
@@ -334,6 +336,22 @@ export default function HomePage() {
     <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 pb-6 pt-2 transition-all duration-500 animate-fadeup"
       style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
+        {/* مبدّل السوقَين — يظهر فقط لمن اختار الاثنين (مواشٍ + مستلزمات) لفصلٍ واضح ومتابعة سهلة */}
+        {modeDecided && hasBothMarkets && (
+          <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-white/80 p-1 shadow-sm ring-1 ring-black/[0.04]">
+            <button onClick={() => chooseMode(mode === 'SUPPLIES' ? 'DIRECT' : mode)}
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-extrabold transition ${mode !== 'SUPPLIES' ? 'text-white shadow' : 'text-gray-500'}`}
+              style={mode !== 'SUPPLIES' ? { backgroundImage: gradient(theme) } : undefined}>
+              🐾 سوق المواشي
+            </button>
+            <button onClick={() => chooseMode('SUPPLIES')}
+              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-extrabold transition ${mode === 'SUPPLIES' ? 'text-white shadow' : 'text-gray-500'}`}
+              style={mode === 'SUPPLIES' ? { backgroundImage: gradient(theme) } : undefined}>
+              🛒 المستلزمات
+            </button>
+          </div>
+        )}
+
         {/* صفّ واحد أنيق تحت الهيدر: شرائح التصنيف + الترتيب */}
         <div className="mb-3 flex items-center gap-2">
           <div className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto py-0.5">
@@ -378,10 +396,13 @@ export default function HomePage() {
           <div className="mb-3 h-12 animate-pulse rounded-2xl bg-black/5" />
         ) : mode === 'SUPPLIES' ? (
           <>
-            <button onClick={() => chooseMode('DIRECT')}
-              className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
-              → العودة لأسواق المواشي
-            </button>
+            {/* زرّ العودة يظهر فقط حين لا يوجد مبدّل علوي (أي ليس مختاراً للسوقَين) */}
+            {!hasBothMarkets && (
+              <button onClick={() => chooseMode('DIRECT')}
+                className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
+                → العودة لأسواق المواشي
+              </button>
+            )}
             <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />
           </>
         ) : (
@@ -395,7 +416,8 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            {suppliesRoot && (
+            {/* زرّ المستلزمات الصغير يظهر فقط حين لا يوجد مبدّل علوي */}
+            {suppliesRoot && !hasBothMarkets && (
               <button onClick={() => chooseMode('SUPPLIES')} title="سوق المستلزمات"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm ring-1 ring-sand-200">
                 🛒

@@ -30,7 +30,9 @@ export function ListingCard({
     <img src={catImageIcon(listing.category?.name)!} alt={listing.category?.name ?? ''} loading="lazy" decoding="async"
       className="h-full w-full object-cover" />
   ) : (
-    <div className="flex h-full min-h-[8rem] items-center justify-center text-5xl">{listing.category?.icon ?? '🐾'}</div>
+    <div className="flex h-full min-h-[8rem] items-center justify-center bg-gradient-to-br from-sand-100 to-sand-200 text-5xl">
+      <span className="opacity-60 drop-shadow-sm">{listing.category?.icon || '📦'}</span>
+    </div>
   );
 
   // شارات فوق الصورة (للتصميم المتراكب فقط)
