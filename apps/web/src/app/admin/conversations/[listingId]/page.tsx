@@ -13,7 +13,7 @@ interface Data { listing: { id: string; title: string; sellerName: string }; con
 
 export default function AdminConversationsPage({ params }: { params: { listingId: string } }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -26,6 +26,7 @@ export default function AdminConversationsPage({ params }: { params: { listingId
       .finally(() => setLoading(false));
   }, [user, params.listingId]);
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

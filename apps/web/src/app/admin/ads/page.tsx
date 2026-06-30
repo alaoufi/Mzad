@@ -45,7 +45,7 @@ const daysLeft = (endAt?: string | null) => {
 
 export default function AdminAdsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [ads, setAds] = useState<Ad[] | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
   const [warn, setWarn] = useState('');
@@ -118,6 +118,7 @@ export default function AdminAdsPage() {
   const toggle = (a: Ad) => run(() => api(`/admin/ads/${a.id}`, { method: 'PATCH', body: JSON.stringify({ status: a.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE' }) }));
   const del = async (a: Ad) => { if (await uiConfirm(`حذف إعلان «${a.title}»؟`, { danger: true })) run(() => api(`/admin/ads/${a.id}`, { method: 'DELETE' })); };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) return <Center onLogin={() => router.push('/login')} />;
   if (loading) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 

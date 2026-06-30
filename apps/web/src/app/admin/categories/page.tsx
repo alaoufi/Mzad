@@ -100,7 +100,7 @@ function NodeRow({ cat, depth, ctx }: { cat: Cat; depth: number; ctx: NodeCtx })
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [flat, setFlat] = useState<Cat[]>([]);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
@@ -204,6 +204,7 @@ export default function AdminCategoriesPage() {
     });
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

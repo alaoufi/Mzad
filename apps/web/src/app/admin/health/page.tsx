@@ -15,7 +15,7 @@ interface Item {
 
 export default function AdminHealthPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -63,6 +63,7 @@ export default function AdminHealthPage() {
     });
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">

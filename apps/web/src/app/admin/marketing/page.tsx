@@ -13,7 +13,7 @@ const PLACEMENTS = ['HOME_TOP', 'HOME_MID', 'MARKET_TOP', 'SUPPLIES_TOP', 'LISTI
 
 export default function MarketingPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [tab, setTab] = useState<'types' | 'ads'>('types');
   const [types, setTypes] = useState<AType[] | null>(null);
   const [ads, setAds] = useState<Ad[] | null>(null);
@@ -53,6 +53,7 @@ export default function MarketingPage() {
     run(() => api('/admin/ads', { method: 'POST', body: JSON.stringify({ title, placement, link, imageUrl, advertiser, type: 'BANNER' }) }));
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) return <Center>سجّل الدخول بحساب مشرف</Center>;
   if (loading) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
 

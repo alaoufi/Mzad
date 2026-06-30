@@ -28,7 +28,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 export default function AdminDisputesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -56,6 +56,7 @@ export default function AdminDisputesPage() {
     catch (e: any) { uiToast(e.message); }
   };
 
+  if (!ready) return <p className="py-16 text-center text-gray-400">جارٍ التحميل...</p>;
   if (!user) {
     return (
       <div className="mx-auto max-w-md text-center">
