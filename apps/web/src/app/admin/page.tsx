@@ -35,7 +35,8 @@ export default function AdminHub() {
       <p className="mt-1 text-sm text-gray-500">هذه اللوحة للأدوار المصرّح لها فقط.</p></div>
   );
 
-  const acct = me?.accountType;
+  // نوع الحساب من الملف، وإلا اشتقاق مبدئي من صلاحية الجلسة (حتى لا تختفي الأقسام قبل تحميل /users/me)
+  const acct = me?.accountType || (user.role === 'ADMIN' ? 'ADMIN' : user.role === 'BROKER' ? 'BROKER' : 'SHOPPER');
   const def = accountTypeDef(acct);
   // نُظهر «الملف الشخصي» دائماً، وبقية الأقسام بحسب صلاحية الاطلاع
   const sections = SECTIONS.filter((s) => s.key === 'profile' || canAny(acct, s.key));

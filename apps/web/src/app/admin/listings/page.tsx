@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { uiToast, uiConfirm } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { AdminNav } from '@/components/AdminNav';
 
 const STATUS_LABEL: Record<string, string> = { ACTIVE: 'نشط', DRAFT: 'بانتظار الموافقة', SOLD: 'مُباع', CLOSED: 'مخفي' };
 
@@ -34,6 +35,7 @@ export default function AdminListingsPage() {
         <button onClick={() => router.push('/admin')} className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">→ الإدارة</button>
         <h1 className="text-2xl font-extrabold text-engrave">📋 إدارة الإعلانات</h1>
       </div>
+      <AdminNav />
 
       <div className="grid grid-cols-2 gap-2">
         {[['pending', `بانتظار الموافقة (${data.stats.pending})`], ['all', 'كل الإعلانات']].map(([k, l]) => (

@@ -6,6 +6,7 @@ import { uiToast, uiConfirm } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { REQ_FIELD_OPTIONS } from '@/lib/sellFields';
+import { AdminNav } from '@/components/AdminNav';
 
 function Field({ label, hint, value, onChange }: { label: string; hint?: string; value: number; onChange: (v: number) => void }) {
   return (
@@ -68,6 +69,7 @@ export default function AdminSitePage() {
         <button onClick={() => router.push('/admin')} className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">→ الإدارة</button>
         <h1 className="text-2xl font-extrabold text-engrave">⚙️ تجهيزات الموقع</h1>
       </div>
+      <AdminNav />
 
       <div className="grid grid-cols-3 gap-2">
         {services.map((s) => (

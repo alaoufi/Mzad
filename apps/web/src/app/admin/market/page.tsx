@@ -7,6 +7,7 @@ import { uiToast } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { accountTypeDef } from '@/lib/roles';
+import { AdminNav } from '@/components/AdminNav';
 
 const TARGET_LABEL: Record<string, string> = { listing: 'إعلان', user: 'مستخدم', message: 'رسالة', auction: 'مزاد' };
 
@@ -41,6 +42,7 @@ export default function AdminMarketPage() {
         <button onClick={() => router.push('/admin')} className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">→ الإدارة</button>
         <h1 className="text-xl font-extrabold text-engrave">⚖️ السوق والمستخدمون والنزاعات</h1>
       </div>
+      <AdminNav />
 
       {/* حركة السوق */}
       <div className="grid grid-cols-3 gap-2">
