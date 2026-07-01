@@ -200,7 +200,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       <div className="grid gap-6 lg:grid-cols-2">
       {/* الميديا */}
       <div>
-        <div className="card aspect-[4/3] bg-sand-100">
+        <div className="card float-box relative aspect-[4/3] bg-sand-100">
           {media[activeImg] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -213,9 +213,20 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               {listing.category?.parent?.icon ?? listing.category?.icon ?? '🐾'}
             </div>
           )}
+          {/* أزرار عائمة على الصورة — إحساس عمق */}
+          <div className="absolute left-3 top-3 flex gap-2">
+            <button onClick={share} aria-label="مشاركة"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/85 text-xl shadow-lg ring-1 ring-black/5 backdrop-blur-sm transition active:scale-90">↗️</button>
+          </div>
+          <HeartButton id={listing.id} className="absolute right-3 top-3 !h-11 !w-11 !text-2xl !bg-white/85 shadow-lg ring-1 ring-black/5 backdrop-blur-sm" />
+          {/* شارة نوع البيع أسفل الصورة */}
+          <span className="absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-extrabold text-white shadow-lg"
+            style={{ backgroundImage: gradient(theme) }}>
+            {listing.auction ? (isOpenEnd(listing.auction.endAt) ? '🤝 على السوم' : '🔨 مزاد') : '🏷️ عرض مباشر'}
+          </span>
         </div>
         {media.length > 1 && (
-          <div className="mt-2 flex gap-2 overflow-x-auto">
+          <div className="mt-3 flex gap-2 overflow-x-auto">
             {media.map((m: any, i: number) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -224,8 +235,8 @@ export default function ListingPage({ params }: { params: { id: string } }) {
                 loading="lazy"
                 decoding="async"
                 onClick={() => setActiveImg(i)}
-                className={`h-20 w-20 shrink-0 cursor-pointer rounded-xl object-cover ${
-                  i === activeImg ? 'ring-2 ring-brand' : ''
+                className={`h-20 w-20 shrink-0 cursor-pointer rounded-2xl object-cover shadow-sm transition ${
+                  i === activeImg ? 'ring-2 ring-brand ring-offset-2' : 'opacity-80 hover:opacity-100'
                 }`}
                 alt=""
               />
@@ -249,32 +260,30 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
       {/* التفاصيل */}
       <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-extrabold text-engrave">{listing.title}</h1>
-            <p className="mt-1 flex flex-wrap items-center gap-2 text-gray-500">
-              {(listing.city || listing.region) ? <>📍 {[listing.city, listing.region].filter(Boolean).join(' — ')}</> : (listing.lat != null ? '📍 على الخريطة' : '')}
-              {listing.lat != null && listing.lng != null && (
-                <a href={`https://maps.google.com/?q=${listing.lat},${listing.lng}`} target="_blank" rel="noopener noreferrer"
-                  className="rounded-lg bg-sand-100 px-2 py-0.5 text-xs font-bold text-brand-dark">🗺️ الموقع على الخريطة</a>
-              )}
-            </p>
-            <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-gray-400">
-              {listing.createdAt && <span>🗓️ <HijriDate value={listing.createdAt} /></span>}
-              {typeof listing.views === 'number' && <span>👁️ {listing.views.toLocaleString('ar-SA')} مشاهدة</span>}
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <button onClick={share} aria-label="مشاركة"
-              className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl ring-1 ring-sand-200">↗️</button>
-            <HeartButton id={listing.id} className="!h-11 !w-11 !text-2xl ring-1 ring-sand-200" />
-          </div>
+        <div>
+          {crumb && (
+            <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-brand-dark shadow-sm ring-1 ring-black/5">
+              {emoji} {crumb}
+            </span>
+          )}
+          <h1 className="text-2xl font-extrabold leading-snug text-engrave sm:text-3xl">{listing.title}</h1>
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-gray-500">
+            {(listing.city || listing.region) ? <>📍 {[listing.city, listing.region].filter(Boolean).join(' — ')}</> : (listing.lat != null ? '📍 على الخريطة' : '')}
+            {listing.lat != null && listing.lng != null && (
+              <a href={`https://maps.google.com/?q=${listing.lat},${listing.lng}`} target="_blank" rel="noopener noreferrer"
+                className="rounded-lg bg-sand-100 px-2 py-0.5 text-xs font-bold text-brand-dark">🗺️ الموقع على الخريطة</a>
+            )}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 text-xs text-gray-400">
+            {listing.createdAt && <span>🗓️ <HijriDate value={listing.createdAt} /></span>}
+            {typeof listing.views === 'number' && <span>👁️ {listing.views.toLocaleString('ar-SA')} مشاهدة</span>}
+          </p>
         </div>
 
         {/* البائع والثقة — مرساة الثقة وأهم نقطة تواصل */}
-        <div className="card p-4">
+        <div className="card float-box p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white shadow"
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl font-extrabold text-white shadow-lg ring-2 ring-white/60"
               style={{ backgroundImage: gradient(theme) }}>
               {(listing.seller?.name ?? '؟').trim().charAt(0)}
             </div>
@@ -312,21 +321,21 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* المواصفات */}
-        <div className="card p-4">
-          <h2 className="mb-3 text-lg font-bold">المواصفات</h2>
-          <dl className="grid grid-cols-2 gap-3 text-sm">
-            <Spec label="النوع" value={`${listing.category?.parent?.name ?? ''} / ${listing.category?.name ?? ''}`} />
-            <Spec label="العدد" value={listing.count} />
-            <Spec label="الجنس" value={sexLabel(listing.sex)} />
-            {listing.approxWeightKg && <Spec label="الوزن التقريبي" value={`${listing.approxWeightKg} كجم`} />}
-            {listing.productionStatus && <Spec label="حالة الإنتاج" value={listing.productionStatus} />}
+        <div className="card float-box p-4">
+          <h2 className="mb-3 text-lg font-extrabold text-engrave">📋 المواصفات</h2>
+          <dl className="grid grid-cols-2 gap-2.5 text-sm">
+            <Spec icon="🏷️" label="النوع" value={`${listing.category?.parent?.name ?? ''} / ${listing.category?.name ?? ''}`} />
+            <Spec icon="🔢" label="العدد" value={listing.count} />
+            <Spec icon="⚧" label="الجنس" value={sexLabel(listing.sex)} />
+            {listing.approxWeightKg && <Spec icon="⚖️" label="الوزن التقريبي" value={`${listing.approxWeightKg} كجم`} />}
+            {listing.productionStatus && <Spec icon="🥛" label="حالة الإنتاج" value={listing.productionStatus} />}
           </dl>
         </div>
 
         {/* الحالة الصحية */}
         {listing.health?.length > 0 && (
-          <div className="card p-4">
-            <h2 className="mb-3 text-lg font-bold">🩺 الحالة الصحية والعيوب</h2>
+          <div className="card float-box p-4">
+            <h2 className="mb-3 text-lg font-extrabold text-engrave">🩺 الحالة الصحية والعيوب</h2>
             <div className="flex flex-wrap gap-2">
               {listing.health.map((h: any) => (
                 <span
@@ -341,8 +350,8 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         )}
 
         {/* الوصف */}
-        <div className="card p-4">
-          <h2 className="mb-2 text-lg font-bold">الوصف</h2>
+        <div className="card float-box p-4">
+          <h2 className="mb-2 text-lg font-extrabold text-engrave">📝 الوصف</h2>
           <p className="leading-relaxed text-gray-700">{listing.description}</p>
         </div>
 
@@ -359,21 +368,29 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               {hasAuction ? (
                 <LiveAuction auctionId={listing.auction.id} canManage={canManage} />
               ) : (
-                <div className="card flex items-center justify-between p-5">
-                  <div>
-                    <div className="text-gray-500">السعر</div>
-                    <div className="text-3xl font-extrabold text-brand-dark text-emboss">
-                      {listing.price ? `${Number(listing.price).toLocaleString('ar-SA')} ﷼` : 'على السوم'}
+                <div className="card float-box relative overflow-hidden p-5 text-white"
+                  style={{ backgroundImage: gradient(theme) }}>
+                  <div className="pointer-events-none absolute -left-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
+                  <div className="pointer-events-none absolute -bottom-12 right-6 h-28 w-28 rounded-full bg-white/10" />
+                  <div className="relative flex items-end justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-white/80">💰 السعر</div>
+                      <div className="text-4xl font-extrabold leading-none text-emboss-light">
+                        {listing.price ? <>{Number(listing.price).toLocaleString('ar-SA')} <span className="text-2xl">﷼</span></> : 'على السوم'}
+                      </div>
                     </div>
+                    <button onClick={requestPurchase}
+                      className="shrink-0 rounded-2xl bg-white px-6 py-3 text-base font-extrabold text-brand-dark shadow-lg transition active:scale-95">
+                      🛒 اطلب الشراء
+                    </button>
                   </div>
-                  <button className="btn-primary" onClick={requestPurchase}>اطلب الشراء</button>
                 </div>
               )}
 
               {/* تحويل نوع البيع (للمالك أو الدلال أو الإدارة) */}
               {canManage && (
-                <div className="card p-4">
-                  <h3 className="mb-2 text-sm font-bold text-gray-500">تحويل نوع البيع</h3>
+                <div className="card float-box p-4">
+                  <h3 className="mb-2 text-sm font-bold text-gray-500">🔁 تحويل نوع البيع</h3>
                   <div className="flex flex-wrap gap-2">
                     {(timed || open) && (
                       <button onClick={() => convert('DIRECT')} className="btn-outline !min-h-0 !px-4 !py-2 !text-sm">🏷️ عرض بسعر</button>
@@ -470,11 +487,14 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   );
 }
 
-function Spec({ label, value }: { label: string; value: any }) {
+function Spec({ label, value, icon }: { label: string; value: any; icon?: string }) {
   return (
-    <div className="rounded-xl bg-sand-50 px-3 py-2">
-      <dt className="text-gray-400">{label}</dt>
-      <dd className="font-bold">{value}</dd>
+    <div className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-br from-sand-50 to-sand-100 px-3 py-2.5 ring-1 ring-black/[0.03]">
+      {icon && <span className="text-xl">{icon}</span>}
+      <div className="min-w-0">
+        <dt className="text-[11px] text-gray-400">{label}</dt>
+        <dd className="truncate font-extrabold text-gray-800">{value}</dd>
+      </div>
     </div>
   );
 }
