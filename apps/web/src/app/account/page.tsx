@@ -291,7 +291,10 @@ export default function AccountPage() {
           className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold text-green-700">
           💬 <span>الدعم</span>
         </a>
-        <button className="card float-box col-span-3 flex items-center justify-center gap-2 p-3 text-sm font-bold text-brand-dark" onClick={() => router.push('/advertise')}>
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold" onClick={() => user && router.push(`/u/${user.id}`)}>
+          👁️ <span>ملفي العام</span>
+        </button>
+        <button className="card float-box col-span-2 flex items-center justify-center gap-2 p-3 text-sm font-bold text-brand-dark" onClick={() => router.push('/advertise')}>
           📣 <span>أعلن معنا — إعلانات مبوبة</span>
         </button>
         <button className="card float-box col-span-3 flex items-center justify-center gap-2 p-3 text-sm font-bold text-gray-600" onClick={() => router.push('/policies')}>

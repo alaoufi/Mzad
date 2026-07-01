@@ -295,14 +295,18 @@ export default function ListingPage({ params }: { params: { id: string } }) {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="truncate font-extrabold text-gray-800">{listing.seller?.name}</span>
+                {listing.seller?.id ? (
+                  <button onClick={() => router.push(`/u/${listing.seller.id}`)} className="truncate font-extrabold text-gray-800 hover:text-brand">{listing.seller?.name} ›</button>
+                ) : (
+                  <span className="truncate font-extrabold text-gray-800">{listing.seller?.name}</span>
+                )}
                 {listing.seller?.identityStatus === 'VERIFIED' && (
                   <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700">✔ موثّق</span>
                 )}
               </div>
-              <div className="mt-0.5 text-sm font-bold text-amber-500">
-                ⭐ {listing.seller?.trustScore?.toFixed(1) ?? '—'} <span className="font-normal text-gray-400">تقييم البائع</span>
-              </div>
+              <button onClick={() => listing.seller?.id && router.push(`/u/${listing.seller.id}`)} className="mt-0.5 block text-sm font-bold text-amber-500">
+                ⭐ {listing.seller?.trustScore?.toFixed(1) ?? '—'} <span className="font-normal text-gray-400">— عرض الملف العام</span>
+              </button>
             </div>
           </div>
           {!isOwner && (
