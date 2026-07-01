@@ -18,7 +18,7 @@ interface Cat {
   motifKey?: string | null; shapeKey?: string | null; layoutKey?: string | null; cardStyle?: string | null;
   children?: Cat[];
 }
-type Mode = 'DIRECT' | 'AUCTION' | 'SUPPLIES';
+type Mode = 'DIRECT' | 'AUCTION' | 'ALL' | 'SUPPLIES';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -224,7 +224,9 @@ export default function HomePage() {
     const seq = ++loadSeq.current;
     setLoading(true);
     const params = new URLSearchParams();
-    params.set('saleType', mode === 'AUCTION' ? 'AUCTION' : 'DIRECT');
+    // «الكل» لا يفلتر بنوع البيع؛ وإلا عروض/مزادات. (المستلزمات = بيع مباشر)
+    if (mode === 'DIRECT' || mode === 'SUPPLIES') params.set('saleType', 'DIRECT');
+    else if (mode === 'AUCTION') params.set('saleType', 'AUCTION');
     // فلترة صارمة من الـ API على معرّفات الاهتمام مباشرةً — بلا أي fallback يعرض الكل.
     if (path.length) {
       params.set('categoryId', path[path.length - 1].id);
@@ -273,7 +275,9 @@ export default function HomePage() {
   const title =
     mode === 'SUPPLIES'
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
-      : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${sectionName}`;
+      : mode === 'ALL'
+        ? sectionName
+        : `${mode === 'DIRECT' ? 'عروض' : 'مزادات'} ${sectionName}`;
 
   // بوابة الترحيب: تظهر للمسجّلين/الزوار بلا اهتمامات (وضع متخصص)
   const showGate = entryMode === 'SPECIALIZED' && !gateDismissed && mode !== 'SUPPLIES'
@@ -283,7 +287,7 @@ export default function HomePage() {
   const headerEmoji = emoji === '🐾' ? '🐪' : emoji;
   // صورة النوع (إبل/غنم) من سلسلة التصنيف — لاستخدامها بدل الإيموجي في الحالة الفارغة وغيرها
   const heroImg = catImageIconForText([...chain.map((c) => c.name), title].join(' '));
-  const headerSubtitle = loading ? '' : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : 'عرض'}`;
+  const headerSubtitle = loading ? '' : `${listings.length} ${mode === 'SUPPLIES' ? 'منتج' : mode === 'AUCTION' ? 'مزاد' : mode === 'ALL' ? 'إعلان' : 'عرض'}`;
   useHeaderSection(showGate ? '' : (profileLoaded ? title : ''), headerEmoji, showGate ? '' : headerSubtitle, motif, mood, skin.font, theme.bg);
 
   const pick = (level: number, cat: Cat) => setPath((p) => [...p.slice(0, level), cat]);
@@ -442,8 +446,8 @@ export default function HomePage() {
           </>
         ) : (
           <div className="mb-3 flex items-center gap-2">
-            <div className="grid flex-1 grid-cols-2 gap-1 rounded-2xl bg-white/80 p-1 ring-1 ring-black/[0.04]">
-              {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات']] as [Mode, string][]).map(([m, label]) => (
+            <div className="grid flex-1 grid-cols-3 gap-1 rounded-2xl bg-white/80 p-1 ring-1 ring-black/[0.04]">
+              {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات'], ['ALL', '✨ الكل']] as [Mode, string][]).map(([m, label]) => (
                 <button key={m} onClick={() => chooseMode(m)}
                   className={`rounded-xl py-2 text-sm font-bold transition ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
                   style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
