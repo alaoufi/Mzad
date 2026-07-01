@@ -108,7 +108,7 @@ export function Header() {
 
       {/* سطر هوية القسم — مدموج داخل الهيدر بدل اللافتة المنفصلة */}
       {section?.label && (
-        <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-2">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 overflow-hidden px-4 pb-2">
           {(() => {
             // صورة النوع إن تطابق الاسم، وإلا صورة الجمل بدل إيموجي الجمل الافتراضي، وإلا الإيموجي
             const img = catImageIconForText(section.label) || ((section.emoji === '🐪' || section.emoji === '🐫') ? '/icons/ibil.jpg' : null);
@@ -117,14 +117,14 @@ export function Header() {
               <img src={img} alt="" width={26} height={26}
                 className="h-[26px] w-[26px] shrink-0 rounded-full object-cover drop-shadow" />
             ) : (
-              <span className="text-xl drop-shadow">{section.emoji}</span>
+              <span className="shrink-0 text-xl drop-shadow">{section.emoji}</span>
             );
           })()}
           <h1 className="truncate text-base font-extrabold text-emboss-light"
             style={{ fontFamily: section.font ?? 'inherit' }}>{section.label}</h1>
-          <div className="mr-auto flex shrink-0 items-center gap-1.5">
-            {section.mood === 'rich' && <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold ring-1 ring-white/30">✦ مميّز</span>}
-            {section.subtitle && <span className="rounded-full bg-black/15 px-2 py-0.5 text-[11px] font-bold text-white/90">{section.subtitle}</span>}
+          <div className="mr-auto flex min-w-0 shrink items-center gap-1.5">
+            {section.mood === 'rich' && <span className="shrink-0 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-extrabold ring-1 ring-white/30">✦ مميّز</span>}
+            {section.subtitle && <span className="truncate rounded-full bg-black/15 px-2 py-0.5 text-[11px] font-bold text-white/90">{section.subtitle}</span>}
           </div>
         </div>
       )}

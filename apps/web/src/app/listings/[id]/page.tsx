@@ -126,7 +126,8 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const emoji = resolveIcon(chain);
   const marketName = (cat?.parent?.parent ?? cat?.parent ?? cat)?.name ?? 'السوق';
   const crumb = [cat?.parent?.parent?.name, cat?.parent?.name, cat?.name].filter(Boolean).join(' · ');
-  useHeaderSection(`سوق ${marketName}`, emoji, crumb, motif, mood, skin.font, theme.bg);
+  // لا نمرّر المسار الطويل كعنوان فرعي في الهيدر (كان يوسّعه فتزيح الصفحة) — يظهر داخل الصفحة
+  useHeaderSection(`سوق ${marketName}`, emoji, undefined, motif, mood, skin.font, theme.bg);
 
   if (error) return <p className="py-10 text-center text-red-600">{error}</p>;
   if (!listing) return (
