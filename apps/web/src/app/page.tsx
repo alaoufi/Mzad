@@ -29,6 +29,9 @@ export default function HomePage() {
   const q = useSearchTerm();
   const [sort, setSort] = useState('recent');
   const [loading, setLoading] = useState(true);
+  // فلتر التصنيفات بقائمة منسدلة متعددة الاختيار (فارغ = كل الاهتمامات)
+  const [selCats, setSelCats] = useState<Set<string>>(new Set());
+  const [catMenuOpen, setCatMenuOpen] = useState(false);
 
   // الاهتمامات الشخصية
   const [interests, setInterests] = useState<string[]>([]);
@@ -135,6 +138,22 @@ export default function HomePage() {
   const useInterestNav = interestActive && marketInterests.length > 0 && interestRootCats.length > 0;
   const useInterests = useInterestNav && path.length === 0;
 
+  // خيارات القائمة المنسدلة: جذور الاهتمام + أبناؤها المباشرون (مستوى واحد) للاختيار المتعدد
+  const catOptions = useMemo(() => {
+    const out: { id: string; name: string; icon?: string; depth: number }[] = [];
+    const walk = (c: Cat, depth: number) => {
+      out.push({ id: c.id, name: c.name, icon: c.icon, depth });
+      if (depth < 1) (c.children ?? []).forEach((k) => walk(k, depth + 1));
+    };
+    interestRootCats.forEach((r) => walk(r, 0));
+    return out;
+  }, [interestRootCats]);
+  // التصنيفات الفعّالة للفلترة: المختار من القائمة، وإلا كل الاهتمامات
+  const activeCatIds = useMemo(() => (selCats.size ? [...selCats] : marketInterests), [selCats, marketInterests]);
+  const toggleSelCat = (id: string) => setSelCats((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  // إعادة ضبط الفلتر عند تغيّر الاهتمامات أو السوق
+  useEffect(() => { setSelCats(new Set()); setCatMenuOpen(false); }, [marketInterests.join(','), mode]);
+
   // قائمة المستوى الأول: تبدأ من جذور الاهتمام عند تفعيله، وإلا كل الأنواع
   const topList = useInterestNav
     ? interestRootCats
@@ -167,11 +186,12 @@ export default function HomePage() {
   const ancestryChain = useMemo(() => {
     const deepest = path[path.length - 1];
     if (deepest) return chainFromId(deepest.id);
+    if (selCats.size === 1) return chainFromId([...selCats][0]); // فلتر واحد مختار → ثيمه
     if (marketInterests.length === 1) return chainFromId(marketInterests[0]);
     if (interestRootCats.length === 1) return chainFromId(interestRootCats[0].id);
     return [] as CatNode[];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, marketInterests.join(','), interestRootCats, catById, parentOf]);
+  }, [path, [...selCats].join(','), marketInterests.join(','), interestRootCats, catById, parentOf]);
   const chain: CatNode[] = ancestryChain.length
     ? ancestryChain
     : (mode === 'SUPPLIES' && suppliesRoot ? [{ name: SUPPLIES_NAME, icon: suppliesRoot.icon ?? null, themeKey: suppliesRoot.themeKey ?? null }] : []);
@@ -209,7 +229,8 @@ export default function HomePage() {
     if (path.length) {
       params.set('categoryId', path[path.length - 1].id);
     } else if (marketInterests.length) {
-      params.set('categoryIds', marketInterests.join(','));
+      // فلتر القائمة المنسدلة المتعدد إن وُجد، وإلا كل الاهتمامات
+      params.set('categoryIds', activeCatIds.join(','));
     } else if (hasCuratedInterests) {
       // لديه اهتمامات لكن لا شيء منها في هذا السوق → نتائج فارغة فعلاً، لا «كل الإعلانات»
       setListings([]); setLoading(false); return;
@@ -229,7 +250,7 @@ export default function HomePage() {
   useEffect(() => { setPath([]); }, [mode]);
   // لا نجلب النتائج حتى تكتمل الاهتمامات (profileLoaded) — التسلسل: مستخدم → اهتمامات → استعلام
   useEffect(() => { if (tree.length && profileLoaded) load(); /* eslint-disable-next-line */ },
-    [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, hasCuratedInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
+    [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, hasCuratedInterests, marketInterests.join(','), [...selCats].join(','), suppliesRoot?.id, q, sort]);
 
   // الموجز موحّد: لا فصل تلقائي. القائمة العادية (عروض/مزادات) تعرض كل الاهتمامات معاً.
   const userPickedMode = useRef(false);
@@ -241,11 +262,14 @@ export default function HomePage() {
   }, [profileLoaded, tree.length]);
 
   const deepest = path[path.length - 1];
-  // اسم القسم في العنوان: التصنيف المفتوح، أو اسم الاهتمام الوحيد، أو «ما يهمّك» عند تعدّده
+  const soleSel = selCats.size === 1 ? catById.get([...selCats][0]) : undefined;
+  // اسم القسم في العنوان: التصنيف المفتوح، أو الفلتر الوحيد المختار، أو اسم الاهتمام الوحيد، أو «ما يهمّك»
   const sectionName = deepest?.name
-    ?? (useInterests
-      ? (interestRootCats.length === 1 ? interestRootCats[0].name : 'ما يهمّك')
-      : 'المواشي');
+    ?? soleSel?.name
+    ?? (selCats.size > 1 ? `${selCats.size} تصنيفات`
+      : useInterests
+        ? (interestRootCats.length === 1 ? interestRootCats[0].name : 'ما يهمّك')
+        : 'المواشي');
   const title =
     mode === 'SUPPLIES'
       ? `سوق المستلزمات${deepest ? ` — ${deepest.name}` : ''}`
@@ -329,32 +353,69 @@ export default function HomePage() {
     <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 pb-6 pt-2 transition-all duration-500 animate-fadeup"
       style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
-        {/* صفّ واحد أنيق تحت الهيدر: شرائح التصنيف + الترتيب */}
+        {/* صفّ واحد أنيق تحت الهيدر: فلتر التصنيفات (قائمة منسدلة متعددة الاختيار) + الترتيب */}
         <div className="mb-3 flex items-center gap-2">
-          <div className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto py-0.5">
+          <div className="relative flex-1">
             {(!profileLoaded || !tree.length || !modeDecided) ? (
-              [0, 1, 2].map((i) => <div key={i} className="h-8 w-20 shrink-0 animate-pulse rounded-full bg-black/5" />)
-            ) : (() => {
-              const deepest = path[path.length - 1];
-              const options = (deepest ? (deepest.children ?? []) : topList).filter((c) => relevant(c.id));
-              return (
-                <>
-                  {path.map((node, i) => (
-                    <button key={node.id} onClick={() => reset(i)}
-                      className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
-                      style={{ backgroundColor: theme.accent, color: '#fff' }}>
-                      <CatGlyph name={node.name} icon={node.icon} size={18} /> {node.name} <span className="opacity-80">✕</span>
-                    </button>
-                  ))}
-                  {options.map((c) => (
-                    <button key={c.id} onClick={() => pick(path.length, c)}
-                      className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
-                      <CatGlyph name={c.name} icon={c.icon} size={18} /> {c.name}
-                    </button>
-                  ))}
-                </>
-              );
-            })()}
+              <div className="h-9 w-full animate-pulse rounded-full bg-black/5" />
+            ) : (hasCuratedInterests && mode !== 'SUPPLIES' && catOptions.length > 1) ? (
+              <>
+                <button onClick={() => setCatMenuOpen((o) => !o)}
+                  className="flex w-full items-center justify-between gap-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-sand-200">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span>🏷️</span>
+                    <span className="truncate">{selCats.size ? `${selCats.size} تصنيف مختار` : 'كل تصنيفاتي'}</span>
+                  </span>
+                  <span className={`shrink-0 text-gray-400 transition ${catMenuOpen ? 'rotate-180' : ''}`}>▾</span>
+                </button>
+                {catMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setCatMenuOpen(false)} />
+                    <div className="absolute right-0 z-40 mt-1.5 max-h-80 w-72 max-w-[80vw] overflow-y-auto rounded-2xl bg-white p-2 shadow-xl ring-1 ring-sand-200">
+                      <button onClick={() => setSelCats(new Set())}
+                        className={`mb-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold ${!selCats.size ? 'bg-brand/10 text-brand-dark' : 'text-gray-600'}`}>
+                        <span className={`flex h-5 w-5 items-center justify-center rounded-md border-2 text-xs ${!selCats.size ? 'border-brand bg-brand text-white' : 'border-sand-300'}`}>{!selCats.size ? '✓' : ''}</span>
+                        كل تصنيفاتي
+                      </button>
+                      {catOptions.map((o) => (
+                        <button key={o.id} onClick={() => toggleSelCat(o.id)}
+                          className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold ${selCats.has(o.id) ? 'bg-brand/10 text-brand-dark' : 'text-gray-600'}`}
+                          style={{ paddingRight: `${0.75 + o.depth * 1.25}rem` }}>
+                          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 text-xs ${selCats.has(o.id) ? 'border-brand bg-brand text-white' : 'border-sand-300'}`}>{selCats.has(o.id) ? '✓' : ''}</span>
+                          <CatGlyph name={o.name} icon={o.icon} size={18} />
+                          <span className="truncate">{o.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              // تصفّح بلا اهتمامات أو سوق المستلزمات: شرائح تنقّل هرمية كما هي
+              <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto py-0.5">
+                {(() => {
+                  const deep = path[path.length - 1];
+                  const options = (deep ? (deep.children ?? []) : topList).filter((c) => relevant(c.id));
+                  return (
+                    <>
+                      {path.map((node, i) => (
+                        <button key={node.id} onClick={() => reset(i)}
+                          className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm"
+                          style={{ backgroundColor: theme.accent, color: '#fff' }}>
+                          <CatGlyph name={node.name} icon={node.icon} size={18} /> {node.name} <span className="opacity-80">✕</span>
+                        </button>
+                      ))}
+                      {options.map((c) => (
+                        <button key={c.id} onClick={() => pick(path.length, c)}
+                          className="chip flex shrink-0 items-center gap-1 whitespace-nowrap !px-3 !py-1.5 !text-sm shadow-sm">
+                          <CatGlyph name={c.name} icon={c.icon} size={18} /> {c.name}
+                        </button>
+                      ))}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
           </div>
           {!loading && listings.length > 0 && (
             <select value={sort} onChange={(e) => setSort(e.target.value)}
