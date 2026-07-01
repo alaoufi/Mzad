@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { can } from '@/lib/permissions';
 import { accountTypeDef } from '@/lib/roles';
 import AccountPage from '@/app/account/page';
+import { FollowUpSummary } from '@/components/FollowUpSummary';
 import { SiteSection } from '@/components/admin/SiteSection';
 import { ListingsSection } from '@/components/admin/ListingsSection';
 import { MarketSection } from '@/components/admin/MarketSection';
@@ -83,7 +84,7 @@ export default function AdminHub() {
         <div className="pointer-events-none absolute -top-2.5 left-4 right-4 h-5 rounded-2xl bg-black/[0.05]" />
         <div className="pointer-events-none absolute -top-1.5 left-2 right-2 h-5 rounded-2xl bg-black/[0.08]" />
         <div className="relative rounded-3xl bg-white/40 p-3 shadow-lift ring-1 ring-black/[0.05]">
-          {tab === 'profile' && <AccountPage />}
+          {tab === 'profile' && <><FollowUpSummary /><AccountPage /></>}
           {tab === 'site' && can(role, 'site', 'view') && <SiteSection embedded />}
           {tab === 'listings' && can(role, 'listings', 'view') && <ListingsSection embedded />}
           {tab === 'market' && can(role, 'market', 'view') && <MarketSection embedded />}
