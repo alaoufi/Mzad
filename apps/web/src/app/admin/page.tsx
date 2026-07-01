@@ -52,22 +52,19 @@ export default function AdminHub() {
         <span className="rounded-full bg-brand/10 px-3 py-1 text-sm font-extrabold text-brand-dark">{def.emoji} {def.label}</span>
       </div>
 
-      {/* تبويبات الأقسام — تنقّل سريع */}
+      {/* التبويبات الأربعة — أزرار ثلاثية الأبعاد، كل زرّ يفتح قسمه المستقل */}
       <AdminNav />
 
-      {/* الأقسام الأربعة — بطاقات مستقلّة */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {sections.map((s) => (
+      {/* وصف مختصر لكل قسم */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {sections.filter((s) => s.key !== 'profile').map((s) => (
           <button key={s.key} onClick={() => router.push(s.href)}
-            className="card float-box relative flex items-center gap-3 p-4 text-right transition active:scale-[0.99]">
+            className="card relative flex items-center gap-3 p-3 text-right transition active:scale-[0.99]">
             {!!badge[s.key] && badge[s.key]! > 0 && (
-              <span className="absolute left-3 top-3 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">{badge[s.key]}</span>
+              <span className="absolute left-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">{badge[s.key]}</span>
             )}
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-2xl">{s.icon}</span>
-            <span className="min-w-0">
-              <span className="block font-extrabold text-engrave">{s.label}</span>
-              <span className="block text-xs text-gray-500">{s.desc}</span>
-            </span>
+            <span className="text-xl">{s.icon}</span>
+            <span className="min-w-0 text-xs text-gray-500">{s.desc}</span>
           </button>
         ))}
       </div>
