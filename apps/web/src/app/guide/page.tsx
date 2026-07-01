@@ -118,6 +118,36 @@ const GUIDE: Guide[] = [
   },
 ];
 
+// صورة توضيحية مبسّطة (محاكاة شاشة) لكل خدمة — بلون مميّز وأيقونتها
+const SHOT_COLORS = ['#0f7b6c', '#b9852b', '#3b5bdb', '#c2410c', '#7c3aed', '#0e7490', '#be123c', '#15803d', '#a16207', '#1d4ed8', '#0d9488', '#9333ea', '#dc2626', '#334155', '#0891b2'];
+
+function GuideShot({ icon, color }: { icon: string; color: string }) {
+  return (
+    <div className="mb-3 overflow-hidden rounded-2xl ring-1 ring-black/[0.06] shadow-sm">
+      <svg viewBox="0 0 320 168" className="block w-full" role="img" aria-label="صورة توضيحية">
+        <rect width="320" height="168" fill="#f7f5f0" />
+        <rect width="320" height="44" fill={color} />
+        <text x="298" y="29" fontSize="20" textAnchor="middle">{icon}</text>
+        <rect x="120" y="15" width="150" height="13" rx="6.5" fill="#ffffff" fillOpacity="0.9" />
+        <g>
+          <rect x="16" y="60" width="140" height="92" rx="12" fill="#ffffff" stroke="#ececec" />
+          <rect x="28" y="72" width="116" height="48" rx="8" fill={color} fillOpacity="0.14" />
+          <text x="86" y="104" fontSize="26" textAnchor="middle">{icon}</text>
+          <rect x="28" y="128" width="86" height="8" rx="4" fill="#e2e0da" />
+          <rect x="28" y="140" width="54" height="7" rx="3.5" fill={color} fillOpacity="0.5" />
+        </g>
+        <g>
+          <rect x="164" y="60" width="140" height="92" rx="12" fill="#ffffff" stroke="#ececec" />
+          <rect x="176" y="72" width="116" height="48" rx="8" fill={color} fillOpacity="0.14" />
+          <text x="234" y="104" fontSize="26" textAnchor="middle">{icon}</text>
+          <rect x="176" y="128" width="86" height="8" rx="4" fill="#e2e0da" />
+          <rect x="176" y="140" width="54" height="7" rx="3.5" fill={color} fillOpacity="0.5" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
 export default function GuidePage() {
   const router = useRouter();
   return (
@@ -143,12 +173,13 @@ export default function GuidePage() {
 
       {/* الأقسام */}
       <div className="space-y-4">
-        {GUIDE.map((g) => (
+        {GUIDE.map((g, i) => (
           <section key={g.id} id={g.id} className="card float-box scroll-mt-20 p-4">
-            <h2 className="flex items-center gap-2 text-lg font-extrabold text-engrave">
+            <h2 className="mb-2 flex items-center gap-2 text-lg font-extrabold text-engrave">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-xl">{g.icon}</span>
               {g.tab}
             </h2>
+            <GuideShot icon={g.icon} color={SHOT_COLORS[i % SHOT_COLORS.length]} />
             <div className="mt-3 rounded-2xl bg-brand/[0.06] p-3">
               <div className="text-xs font-extrabold text-brand-dark">🎯 الهدف</div>
               <p className="mt-0.5 text-sm text-gray-700">{g.goal}</p>

@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { SECTIONS, can, canAny } from '@/lib/permissions';
 import { accountTypeDef } from '@/lib/roles';
+import { AdminNav } from '@/components/AdminNav';
 
 // لوحة الإدارة — موزّعة على أربعة أقسام مستقلّة، كلٌّ في صفحته، بحسب صلاحية الدور
 export default function AdminHub() {
@@ -50,6 +51,9 @@ export default function AdminHub() {
         <h1 className="text-2xl font-extrabold text-engrave">🛡️ لوحة الإدارة</h1>
         <span className="rounded-full bg-brand/10 px-3 py-1 text-sm font-extrabold text-brand-dark">{def.emoji} {def.label}</span>
       </div>
+
+      {/* تبويبات الأقسام — تنقّل سريع */}
+      <AdminNav />
 
       {/* الأقسام الأربعة — بطاقات مستقلّة */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
