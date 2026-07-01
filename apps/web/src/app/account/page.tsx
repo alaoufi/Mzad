@@ -115,19 +115,19 @@ export default function AccountPage() {
   return (
     <div className="space-y-5 animate-fadeup">
       {/* بطاقة الملف الشخصي — هوية بصرية */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-6 text-white shadow-xl"
-        style={{ boxShadow: '0 24px 48px -22px rgba(10,92,80,0.5)' }}>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-4 text-white shadow-xl"
+        style={{ boxShadow: '0 18px 36px -22px rgba(10,92,80,0.5)' }}>
         <button onClick={() => setEditProfile(true)}
-          className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-white/20 px-3 py-1.5 text-xs font-bold ring-1 ring-white/30 hover:bg-white/30">
+          className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold ring-1 ring-white/30 hover:bg-white/30">
           ✏️ تعديل بياناتي
         </button>
-        <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/25 text-2xl font-extrabold">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/25 text-xl font-extrabold">
             {(profile?.name ?? user.name).charAt(0)}
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-extrabold text-emboss-light">{profile?.name ?? user.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-extrabold text-emboss-light">{profile?.name ?? user.name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
               <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">
                 {accountTypeDef(profile?.accountType).emoji} {accountTypeDef(profile?.accountType).label}
               </span>
