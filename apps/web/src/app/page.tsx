@@ -489,20 +489,35 @@ export default function HomePage() {
               <p className="mt-1 text-sm text-gray-500">{tx('homeEmpty', 'كن أوّل من يضيف هنا، أو جرّب تصنيفاً آخر.')}</p>
               <Link href="/sell" className="mt-4 inline-flex items-center rounded-2xl px-6 py-2.5 font-extrabold text-white shadow-md transition active:scale-95" style={{ backgroundImage: gradient(theme) }}>＋ أضف إعلانك</Link>
             </div>
-          ) : (
-            <div className={`grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`}>
-              {listings.map((l, i) => (
-                <Fragment key={l.id}>
-                  {i === Math.min(4, listings.length - 1) && <div className="col-span-full"><AdBanner placement="HOME_MID" categoryIds={adCtx} /></div>}
-                  {LAYOUTS[layoutKey]?.featured && i === 0 && !path.length ? (
-                    <div className="col-span-2 animate-fadeup" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}><ListingCard listing={l} featured /></div>
-                  ) : (
-                    <div className="animate-fadeup" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}><ListingCard listing={l} variant={cardStyle} /></div>
-                  )}
-                </Fragment>
-              ))}
-            </div>
-          )}
+          ) : (() => {
+            // نقسّم النتائج إلى شبكتين نظيفتين والإعلان بينهما — بدل حقنه داخل الشبكة (كان يترك خانة فارغة ممتدّة)
+            const AD_AT = 4;
+            const gridCls = `grid ${LAYOUTS[layoutKey]?.gap ?? 'gap-3'} ${LAYOUTS[layoutKey]?.grid ?? LAYOUTS.bloom.grid}`;
+            const chunks = listings.length > AD_AT ? [listings.slice(0, AD_AT), listings.slice(AD_AT)] : [listings];
+            return (
+              <>
+                {chunks.map((chunk, ci) => {
+                  const offset = ci === 0 ? 0 : AD_AT;
+                  return (
+                    <Fragment key={ci}>
+                      {ci > 0 && <AdBanner placement="HOME_MID" categoryIds={adCtx} />}
+                      <div className={gridCls}>
+                        {chunk.map((l, j) => {
+                          const idx = offset + j;
+                          const feat = LAYOUTS[layoutKey]?.featured && idx === 0 && !path.length;
+                          return feat ? (
+                            <div key={l.id} className="col-span-2 animate-fadeup" style={{ animationDelay: `${Math.min(idx, 8) * 45}ms` }}><ListingCard listing={l} featured /></div>
+                          ) : (
+                            <div key={l.id} className="animate-fadeup" style={{ animationDelay: `${Math.min(idx, 8) * 45}ms` }}><ListingCard listing={l} variant={cardStyle} /></div>
+                          );
+                        })}
+                      </div>
+                    </Fragment>
+                  );
+                })}
+              </>
+            );
+          })()}
         </div>
 
       </div>

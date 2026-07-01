@@ -62,28 +62,34 @@ export function AdBanner({ placement = 'HOME_TOP', categoryIds }: { placement?: 
 
   return (
       <div onClick={openMain} role="button" tabIndex={0}
-        className="relative mb-4 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-2xl p-3 text-right text-white shadow-md transition active:scale-[0.99]"
-        style={{ backgroundImage: 'linear-gradient(135deg, var(--th-from, #0e5a6b), var(--th-to, #28a0a8))' }}>
-        <span className="absolute left-3 top-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[10px] font-bold">إعلان</span>
-        {ad.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={ad.imageUrl} alt="" className="h-12 w-12 rounded-xl object-cover ring-1 ring-white/30" />
-        ) : (
-          <span className="text-3xl drop-shadow">📣</span>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-extrabold">{ad.title}</div>
-          {ad.advertiser && <div className="truncate text-xs text-white/85">{ad.advertiser}</div>}
+        className="relative my-4 w-full cursor-pointer overflow-hidden rounded-2xl bg-white text-right shadow-md ring-1 ring-black/[0.05] transition active:scale-[0.99]">
+        {/* شريط علوي رفيع يميّزه كإعلان مموّل */}
+        <div className="flex items-center justify-between px-3 py-1 text-[11px] font-bold text-white"
+          style={{ backgroundImage: 'linear-gradient(135deg, var(--th-from, #0e5a6b), var(--th-to, #28a0a8))' }}>
+          <span className="flex items-center gap-1">📣 إعلان مموّل</span>
+          {ads.length > 1 && (
+            <span className="flex gap-1">
+              {ads.map((_, k) => <span key={k} className={`h-1.5 w-1.5 rounded-full ${k === i ? 'bg-white' : 'bg-white/40'}`} />)}
+            </span>
+          )}
         </div>
-        {ads.length > 1 && (
-          <span className="absolute bottom-1.5 left-3 flex gap-1">
-            {ads.map((_, k) => <span key={k} className={`h-1 w-1 rounded-full ${k === i ? 'bg-white' : 'bg-white/40'}`} />)}
-          </span>
-        )}
-        <button onClick={openInfo}
-          className="shrink-0 rounded-xl bg-white/25 px-3 py-1.5 text-xs font-bold hover:bg-white/35">
-          ⓘ عرض الإعلان
-        </button>
+        <div className="flex items-center gap-3 p-3">
+          {ad.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={ad.imageUrl} alt="" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+          ) : (
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-sand-100 text-3xl">📣</span>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-base font-extrabold text-engrave">{ad.title}</div>
+            {ad.advertiser && <div className="mt-0.5 truncate text-xs text-gray-500">{ad.advertiser}</div>}
+            <button onClick={openInfo}
+              className="mt-1.5 inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
+              style={{ backgroundImage: 'linear-gradient(135deg, var(--th-from, #0e5a6b), var(--th-to, #28a0a8))' }}>
+              عرض الإعلان ←
+            </button>
+          </div>
+        </div>
       </div>
   );
 }
