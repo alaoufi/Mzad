@@ -9,6 +9,11 @@ export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 20;
 
+// يحوّل صورة Data URL إلى رابط خفيف قابل للتخزين المؤقّت (يبقى الرابط الخارجي كما هو)
+function mediaLink<T extends { id: string; url: string }>(m: T): T {
+  return m.url?.startsWith('data:') ? { ...m, url: `/api/media/${m.id}` } : m;
+}
+
 // بحث وفلترة الإعلانات مع ترتيب جغرافي
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -109,7 +114,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  return json({ items: sorted, total, page, pageSize: PAGE_SIZE });
+  // نُخرِج الصور base64 من الحمولة: نعيد رابط /api/media/{id} القابل للتخزين المؤقّت بدل البيانات الضخمة
+  const light = sorted.map((l) => ({ ...l, media: l.media.map(mediaLink) }));
+
+  return json({ items: light, total, page, pageSize: PAGE_SIZE });
 }
 
 // إنشاء إعلان (يتطلب تسجيل دخول)

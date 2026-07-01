@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     kind,
     title: l.title,
     city: l.city ?? '',
-    image: l.media?.[0]?.url ?? null,
+    image: l.media?.[0] ? (l.media[0].url?.startsWith('data:') ? `/api/media/${l.media[0].id}` : l.media[0].url) : null,
     icon: l.category?.icon ?? null,
     categoryName: l.category?.name ?? null,
     verified: l.seller?.identityStatus === 'VERIFIED',

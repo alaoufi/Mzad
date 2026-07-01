@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUser, json } from '@/lib/server-auth';
+import { lightenMedia } from '@/lib/media-link';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,5 +21,5 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: 'desc' },
   });
 
-  return json({ items });
+  return json({ items: items.map(lightenMedia) });
 }

@@ -10,25 +10,39 @@ function getToken(): string | null {
   return localStorage.getItem('mazad_token');
 }
 
+// مؤشّر تحميل عام: نتتبّع الطلبات الجارية لعرض شريط تحميل علوي فلا يبدو الموقع «معلّقاً»
+let inflight = 0;
+const activityListeners = new Set<(n: number) => void>();
+export function onApiActivity(cb: (n: number) => void): () => void {
+  activityListeners.add(cb);
+  return () => activityListeners.delete(cb);
+}
+function setInflight(n: number) { inflight = n; activityListeners.forEach((l) => l(inflight)); }
+
 export async function api<T = any>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
   const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers ?? {}),
-    },
-    cache: 'no-store',
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.message ?? `خطأ ${res.status}`);
+  setInflight(inflight + 1);
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers ?? {}),
+      },
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message ?? `خطأ ${res.status}`);
+    }
+    return res.json();
+  } finally {
+    setInflight(Math.max(0, inflight - 1));
   }
-  return res.json();
 }
 
 // أنواع مختصرة

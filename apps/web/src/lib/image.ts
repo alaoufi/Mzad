@@ -1,6 +1,6 @@
 // يضغط الصورة المختارة من الجوال إلى حجم صغير ويحوّلها إلى Data URL
 // حتى تُحفظ مباشرة دون الحاجة لخدمة تخزين خارجية (مناسب للنموذج).
-export async function compressImage(file: File, maxSize = 1000, quality = 0.7): Promise<string> {
+export async function compressImage(file: File, maxSize = 860, quality = 0.62): Promise<string> {
   const dataUrl = await readFile(file);
   const img = await loadImage(dataUrl);
 
