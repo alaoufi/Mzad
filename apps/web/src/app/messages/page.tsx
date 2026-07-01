@@ -92,7 +92,7 @@ export default function MessagesPage() {
                   <span className="shrink-0 text-[11px] text-gray-400">{time(c.lastAt)}</span>
                 </div>
                 <div className="truncate text-xs text-gray-400">📋 {c.title}</div>
-                <div className="truncate text-sm text-gray-500">{c.lastMessage || 'لا رسائل بعد'}</div>
+                <div className="truncate text-sm text-gray-500">{c.lastMessage?.startsWith('[[BANK]]') ? '🏦 بيانات بنكية' : (c.lastMessage || 'لا رسائل بعد')}</div>
               </div>
             </Link>
           ))}
