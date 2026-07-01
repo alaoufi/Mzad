@@ -113,9 +113,10 @@ export default function HomePage() {
   }, [suppliesRoot]);
   // تقسيم السوق فقط (مواشٍ/مستلزمات) عبر جذر المستلزمات الثابت — بلا فلترة بشجرة العميل (قد تكون قديمة).
   // معرّفات الاهتمام تُرسل كما هي للخادم الذي يتحقّق منها بنفسه (subtree)، فلا تُسقَط معرّفات صحيحة.
-  const animalInterests = useMemo(() => interests.filter((id) => !suppliesIds.has(id)), [interests, suppliesIds]);
   const supplyInterests = useMemo(() => interests.filter((id) => suppliesIds.has(id)), [interests, suppliesIds]);
-  const marketInterests = mode === 'SUPPLIES' ? supplyInterests : animalInterests;
+  // موجز موحّد: كل اهتمامات المستخدم (مواشٍ + مستلزمات) تُعرض معاً في القائمة العادية بترتيب واحد.
+  // سوق المستلزمات المنفصل (SUPPLIES) يبقى فقط لتصفّح الزائر بلا اهتمامات.
+  const marketInterests = mode === 'SUPPLIES' ? supplyInterests : interests;
   const interestSet = useMemo(() => new Set(marketInterests), [marketInterests]);
 
   // جذور الاهتمام: العُقد المختارة التي لا يوجد لها سلف مختار — منها يبدأ التصفّح، ولا يُعرض ولا يُختار ما فوقها
@@ -196,8 +197,6 @@ export default function HomePage() {
 
   // هل لدى المستخدم اهتمامات؟ — لا نعتمد على شجرة العميل (قد تكون قديمة) حتى لا ينكسر الفلتر
   const hasCuratedInterests = interestActive && interests.length > 0;
-  // اختار الاثنين معاً (مواشٍ + مستلزمات) → نُظهر مبدّل سوقَين واضحاً وقوياً أعلى الصفحة
-  const hasBothMarkets = animalInterests.length > 0 && supplyInterests.length > 0;
 
   const loadSeq = useRef(0);
   const load = () => {
@@ -232,20 +231,14 @@ export default function HomePage() {
   useEffect(() => { if (tree.length && profileLoaded) load(); /* eslint-disable-next-line */ },
     [mode, path.map((p) => p.id).join('/'), tree.length, profileLoaded, hasCuratedInterests, marketInterests.join(','), suppliesRoot?.id, q, sort]);
 
-  // السوق الافتراضي يتبع الاهتمام تلقائياً حتى يختار المستخدم يدوياً (chooseMode).
-  // اشتقاق مستمرّ — لا «طلقة واحدة» — حتى لا يحرق سباقُ التحميل قرارَه على بيانات ناقصة ويعلق على السوق الخطأ.
+  // الموجز موحّد: لا فصل تلقائي. القائمة العادية (عروض/مزادات) تعرض كل الاهتمامات معاً.
   const userPickedMode = useRef(false);
   const [modeDecided, setModeDecided] = useState(false);
   const chooseMode = (m: Mode) => { userPickedMode.current = true; setMode(m); };
   useEffect(() => {
     if (!profileLoaded || !tree.length) return;
-    if (!userPickedMode.current) {
-      const wantSupplies = animalInterests.length === 0 && supplyInterests.length > 0;
-      const target: Mode = wantSupplies ? 'SUPPLIES' : 'DIRECT';
-      setMode((prev) => (prev === target || prev === 'AUCTION' ? prev : target));
-    }
     setModeDecided(true);
-  }, [profileLoaded, tree.length, animalInterests.length, supplyInterests.length]);
+  }, [profileLoaded, tree.length]);
 
   const deepest = path[path.length - 1];
   // اسم القسم في العنوان: التصنيف المفتوح، أو اسم الاهتمام الوحيد، أو «ما يهمّك» عند تعدّده
@@ -336,22 +329,6 @@ export default function HomePage() {
     <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 pb-6 pt-2 transition-all duration-500 animate-fadeup"
       style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
-        {/* مبدّل السوقَين — يظهر فقط لمن اختار الاثنين (مواشٍ + مستلزمات) لفصلٍ واضح ومتابعة سهلة */}
-        {modeDecided && hasBothMarkets && (
-          <div className="mb-3 grid grid-cols-2 gap-1.5 rounded-2xl bg-white/80 p-1 shadow-sm ring-1 ring-black/[0.04]">
-            <button onClick={() => chooseMode(mode === 'SUPPLIES' ? 'DIRECT' : mode)}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-extrabold transition ${mode !== 'SUPPLIES' ? 'text-white shadow' : 'text-gray-500'}`}
-              style={mode !== 'SUPPLIES' ? { backgroundImage: gradient(theme) } : undefined}>
-              🐾 سوق المواشي
-            </button>
-            <button onClick={() => chooseMode('SUPPLIES')}
-              className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-extrabold transition ${mode === 'SUPPLIES' ? 'text-white shadow' : 'text-gray-500'}`}
-              style={mode === 'SUPPLIES' ? { backgroundImage: gradient(theme) } : undefined}>
-              🛒 المستلزمات
-            </button>
-          </div>
-        )}
-
         {/* صفّ واحد أنيق تحت الهيدر: شرائح التصنيف + الترتيب */}
         <div className="mb-3 flex items-center gap-2">
           <div className="no-scrollbar flex flex-1 items-center gap-1.5 overflow-x-auto py-0.5">
@@ -396,13 +373,10 @@ export default function HomePage() {
           <div className="mb-3 h-12 animate-pulse rounded-2xl bg-black/5" />
         ) : mode === 'SUPPLIES' ? (
           <>
-            {/* زرّ العودة يظهر فقط حين لا يوجد مبدّل علوي (أي ليس مختاراً للسوقَين) */}
-            {!hasBothMarkets && (
-              <button onClick={() => chooseMode('DIRECT')}
-                className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
-                → العودة لأسواق المواشي
-              </button>
-            )}
+            <button onClick={() => chooseMode('DIRECT')}
+              className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
+              → العودة للسوق
+            </button>
             <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />
           </>
         ) : (
@@ -416,8 +390,8 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
-            {/* زرّ المستلزمات الصغير يظهر فقط حين لا يوجد مبدّل علوي */}
-            {suppliesRoot && !hasBothMarkets && (
+            {/* زرّ المستلزمات المنفصل: للزائر بلا اهتمامات فقط (صاحب الاهتمامات تظهر مستلزماته ضمن الموجز) */}
+            {suppliesRoot && !hasCuratedInterests && (
               <button onClick={() => chooseMode('SUPPLIES')} title="سوق المستلزمات"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm ring-1 ring-sand-200">
                 🛒
