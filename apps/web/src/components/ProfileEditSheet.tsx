@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '@/lib/api';
 import { uiToast } from '@/lib/ui';
+import { RegionCityPicker } from './RegionCityPicker';
 
 export interface EditableProfile {
   name?: string;
@@ -67,10 +68,7 @@ export function ProfileEditSheet({
           <Field label="الاسم" required>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="اسمك" />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="المدينة"><input className="input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="المدينة" /></Field>
-            <Field label="المنطقة"><input className="input" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="المنطقة" /></Field>
-          </div>
+          <RegionCityPicker region={region} city={city} onChange={(r, c) => { setRegion(r); setCity(c); }} />
           <Field label="تعريف بنفسك">
             <textarea className="input min-h-[64px]" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="نبذة مختصرة عنك ونشاطك في السوق" />
           </Field>

@@ -10,6 +10,7 @@ import { getCoords } from '@/lib/geo';
 import { nearestRegion, regionName } from '@/lib/ads';
 import { resolveTheme, gradient, catImageIcon } from '@/lib/themes';
 import { InterestPicker } from '@/components/InterestPicker';
+import { RegionCityPicker } from '@/components/RegionCityPicker';
 import { TEXT_DEFAULTS } from '@/lib/texts';
 import { uiToast } from '@/lib/ui';
 
@@ -317,9 +318,9 @@ export default function SellPage() {
               {manualLoc ? '▲ إخفاء الإدخال اليدوي' : '▼ أو أدخل المدينة والمنطقة يدوياً'}
             </button>
             {manualLoc && (
-              <div className="mt-2 grid grid-cols-2 gap-3">
-                <input className={`input ${tone(true, !!form.city.trim())}`} placeholder="المدينة *" value={form.city} onChange={(e) => set('city', e.target.value)} />
-                <input className={`input ${tone(true, !!form.region.trim())}`} placeholder="المنطقة *" value={form.region} onChange={(e) => set('region', e.target.value)} />
+              <div className="mt-2">
+                <RegionCityPicker region={form.region} city={form.city} required
+                  onChange={(r, c) => setForm((f: any) => ({ ...f, region: r, city: c }))} />
               </div>
             )}
           </>

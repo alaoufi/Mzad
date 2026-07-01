@@ -7,6 +7,7 @@ import { uiToast, uiConfirm } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { ACCOUNT_TYPES, accountTypeDef, roleForAccountType } from '@/lib/roles';
+import { RegionCityPicker } from '@/components/RegionCityPicker';
 
 interface AdminUser {
   id: string; name: string; phone: string; role: string; accountType?: string;
@@ -164,10 +165,7 @@ function UserEditModal({ u, onClose, onSaved }: { u: AdminUser; onClose: () => v
           <div className="space-y-3">
             <F label="الاسم"><input className="input" value={f.name} onChange={(e) => set('name', e.target.value)} /></F>
             <F label="الجوال"><input className="input" inputMode="numeric" value={f.phone} onChange={(e) => set('phone', e.target.value)} /></F>
-            <div className="grid grid-cols-2 gap-3">
-              <F label="المدينة"><input className="input" value={f.city} onChange={(e) => set('city', e.target.value)} /></F>
-              <F label="المنطقة"><input className="input" value={f.region} onChange={(e) => set('region', e.target.value)} /></F>
-            </div>
+            <RegionCityPicker region={f.region} city={f.city} onChange={(r, c) => setF((p) => ({ ...p, region: r, city: c }))} />
             <F label="التعريف"><textarea className="input min-h-[56px]" value={f.bio} onChange={(e) => set('bio', e.target.value)} /></F>
             <F label="سنوات الخبرة"><input className="input" inputMode="numeric" value={f.experienceYears} onChange={(e) => set('experienceYears', e.target.value.replace(/\D/g, ''))} /></F>
             <div className="rounded-xl bg-sand-50 p-3">
