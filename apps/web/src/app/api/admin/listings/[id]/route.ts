@@ -108,11 +108,18 @@ async function recordCommission(listingId: string, sellerId: string) {
   }
 }
 
-// حذف إعلان (إدارة)
+// حذف إعلان (إدارة) — يُمنع أثناء وجود نزاع مفتوح لحفظ الأدلّة
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = getUser(req);
   if (!auth) return json({ message: 'غير مصرّح' }, 401);
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
+
+  const openDispute = await prisma.dispute.count({
+    where: { listingId: params.id, status: { in: ['OPEN', 'REVIEWING'] } },
+  }).catch(() => 0);
+  if (openDispute > 0) {
+    return json({ message: 'لا يمكن حذف الإعلان أثناء وجود نزاع مفتوح — يُحفظ لأغراض التوثيق.' }, 400);
+  }
 
   await prisma.listing.delete({ where: { id: params.id } });
   return json({ ok: true });

@@ -61,6 +61,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // الأرشفة: للمالك أو الإدارة أو الدلال ضمن نطاقه — في أي وقت
   if (body.archived !== undefined) {
     if (!(isOwner || isAdmin || isBrokerInScope)) return json({ message: 'غير مصرّح بالأرشفة' }, 403);
+    // يُمنع إخفاء/أرشفة الإعلان أثناء نزاع مفتوح (حفظ الأدلّة)
+    if (body.archived === true) {
+      const openDispute = await prisma.dispute.count({ where: { listingId: params.id, status: { in: ['OPEN', 'REVIEWING'] } } }).catch(() => 0);
+      if (openDispute > 0) return json({ message: 'لا يمكن أرشفة الإعلان أثناء وجود نزاع مفتوح.' }, 400);
+    }
     data.archived = !!body.archived;
   }
 

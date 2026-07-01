@@ -95,6 +95,15 @@ export default function AdminPage() {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ identityStatus }) }); load(); }
     catch (e: any) { uiToast(e.message); }
   };
+  const [dbBusy, setDbBusy] = useState(false);
+  const dbSetup = async () => {
+    if (!await uiConfirm('تطبيق تهيئة قاعدة البيانات (إضافة الأعمدة الناقصة بأمان)؟')) return;
+    setDbBusy(true);
+    try {
+      const r = await api<{ ok: boolean; applied: number; failed: any[] }>('/admin/db-setup', { method: 'POST' });
+      uiToast(r.ok ? `✅ تمّت التهيئة (${r.applied} أمر)` : `تمّت جزئياً — فشل ${r.failed.length}`, r.ok ? 'success' : 'error');
+    } catch (e: any) { uiToast(e.message, 'error'); } finally { setDbBusy(false); }
+  };
   const setReportStatus = async (id: string, status: string) => {
     try { await api(`/admin/reports/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }); load(); }
     catch (e: any) { uiToast(e.message); }
@@ -181,6 +190,18 @@ export default function AdminPage() {
             <div key={c.label} className="card float-box p-2 text-center">{inner}</div>
           );
         })}
+      </div>
+
+      {/* صيانة قاعدة البيانات — تطبيق الأعمدة الناقصة بأمان */}
+      <div className="card flex items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🔧</span>
+          <div>
+            <div className="font-bold">تهيئة قاعدة البيانات</div>
+            <div className="text-xs text-gray-500">يطبّق الأعمدة الجديدة (المستخدمون/النزاعات) بأمان دون تكرار.</div>
+          </div>
+        </div>
+        <button onClick={dbSetup} disabled={dbBusy} className="btn-primary !min-h-0 !px-4 !py-2 !text-sm disabled:opacity-50">{dbBusy ? '...' : 'تطبيق'}</button>
       </div>
 
       {/* وضع الدخول: عام أو متخصص */}

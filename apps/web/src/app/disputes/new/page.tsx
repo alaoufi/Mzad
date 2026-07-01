@@ -6,7 +6,7 @@ import { uiToast } from '@/lib/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { compressImage } from '@/lib/image';
-import { DISPUTE_CATEGORIES, DISPUTE_DESIRES } from '@/lib/disputes';
+import { DISPUTE_CATEGORIES, DISPUTE_DESIRES, PAYMENT_METHODS } from '@/lib/disputes';
 
 interface Party { id: string; name: string; phone: string; city?: string | null; region?: string | null; identityStatus?: string }
 
@@ -34,6 +34,10 @@ function NewDisputeInner() {
   const [reason, setReason] = useState('');
   const [detail, setDetail] = useState('');
   const [contact, setContact] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [transferRef, setTransferRef] = useState('');
+  const [witnesses, setWitnesses] = useState('');
+  const [declared, setDeclared] = useState(false);
   const [evidence, setEvidence] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -61,6 +65,7 @@ function NewDisputeInner() {
   const submit = async () => {
     if (!reason.trim()) { uiToast('اكتب سبب النزاع باختصار', 'error'); return; }
     if (info?.myRole === 'SELLER' && !againstId) { uiToast('حدّد الطرف الآخر (المشتري)', 'error'); return; }
+    if (!declared) { uiToast('يجب الإقرار بصحة المعلومات', 'error'); return; }
     setBusy(true);
     try {
       await api('/disputes', { method: 'POST', body: JSON.stringify({
@@ -68,6 +73,8 @@ function NewDisputeInner() {
         category: category || null, desired: desired || null,
         amount: amount ? Number(amount) : null, incidentAt: incidentAt || null,
         contact: contact.trim() || null, evidence,
+        paymentMethod: paymentMethod || null, transferRef: transferRef.trim() || null,
+        witnesses: witnesses.trim() || null, declared,
         againstId: info?.myRole === 'SELLER' ? againstId : undefined,
       }) });
       uiToast('✅ فُتح النزاع — ستراجعه الإدارة، وأُشعر الطرف الآخر لتقديم إفادته', 'success');
@@ -159,6 +166,23 @@ function NewDisputeInner() {
             ))}
           </div>
         </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-sm font-bold text-gray-600">طريقة الدفع</label>
+            <select className="input" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <option value="">— اختر —</option>
+              {PAYMENT_METHODS.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-bold text-gray-600">رقم الحوالة/إثبات الدفع</label>
+            <input className="input" value={transferRef} onChange={(e) => setTransferRef(e.target.value)} placeholder="اختياري" />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-sm font-bold text-gray-600">شهود أو أطراف ذات علاقة (اختياري)</label>
+          <input className="input" value={witnesses} onChange={(e) => setWitnesses(e.target.value)} placeholder="أسماء/أرقام من حضر أو له علاقة" />
+        </div>
         <div>
           <label className="mb-1 block text-sm font-bold text-gray-600">وسيلة تواصل إضافية (اختياري)</label>
           <input className="input" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="جوال/واتساب للتواصل بخصوص النزاع" />
@@ -186,9 +210,13 @@ function NewDisputeInner() {
         </div>
 
         <p className="rounded-xl bg-amber-50 p-2 text-xs text-amber-800">
-          تُعرض هذه المعلومات على الإدارة للفصل، وقد تُسلَّم للطرفين لتقديمها للجهات المختصة. تأكّد من صحّتها.
+          تُعرض هذه المعلومات على الإدارة للفصل، وقد تُسلَّم للطرفين لتقديمها للجهات المختصة. المنصة جهة توثيق محايدة ولا تتحمّل مسؤولية الصفقة.
         </p>
-        <button onClick={submit} disabled={busy} className="btn-primary w-full disabled:opacity-50">{busy ? '...' : '⚖️ فتح النزاع'}</button>
+        <label className="flex items-start gap-2 rounded-xl bg-sand-50 p-3 text-sm">
+          <input type="checkbox" checked={declared} onChange={(e) => setDeclared(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-brand" />
+          <span className="text-gray-700">أقرّ بأن جميع المعلومات والمستندات المقدَّمة صحيحة، وأتحمّل المسؤولية القانونية الكاملة عند تقديم بيانات أو مستندات مزوّرة.</span>
+        </label>
+        <button onClick={submit} disabled={busy || !declared} className="btn-primary w-full disabled:opacity-50">{busy ? '...' : '⚖️ فتح النزاع'}</button>
       </div>
     </div>
   );

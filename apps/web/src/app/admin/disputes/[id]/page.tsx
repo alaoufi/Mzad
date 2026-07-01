@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { HijriDate } from '@/components/HijriDate';
 import { accountTypeDef } from '@/lib/roles';
-import { DISPUTE_STATUS, disputeCatEmoji, disputeCatLabel, disputeDesireLabel } from '@/lib/disputes';
+import { DISPUTE_STATUS, disputeCatEmoji, disputeCatLabel, disputeDesireLabel, paymentLabel } from '@/lib/disputes';
 
 interface Party {
   id: string; name: string; phone: string; city?: string | null; region?: string | null;
@@ -49,13 +49,16 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
   const dp = d.dispute;
   const opener = dp.openedBy as Party;
   const st = DISPUTE_STATUS[dp.status] ?? DISPUTE_STATUS.OPEN;
+  const caseNo = `نز-${String(dp.id).slice(0, 8).toUpperCase()}`;
   const cur = party === 'opener' ? opener : d.against;
   const curHistory = party === 'opener' ? d.openerHistory : d.againstHistory;
 
   // ملفّ نصّي للجهات المختصة
   const authoritiesFile = [
-    `ملف نزاع — منصة مزاد`,
+    `ملف نزاع — منصة مزاد | رقم القضية: ${caseNo}`,
     `النوع: ${disputeCatLabel(dp.category)} | الحالة: ${st.label}`,
+    `طريقة الدفع: ${paymentLabel(dp.paymentMethod)} | رقم الحوالة: ${dp.transferRef ?? '—'}`,
+    dp.witnesses ? `الشهود: ${dp.witnesses}` : '',
     `الإعلان: ${dp.listing?.title ?? '—'}`,
     `المبلغ محل النزاع: ${dp.amount ? Number(dp.amount).toLocaleString('ar-SA') + ' ريال' : '—'}`,
     `المطلوب: ${disputeDesireLabel(dp.desired)}`,
@@ -77,6 +80,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
         <h1 className="text-xl font-extrabold text-engrave">⚖️ ملف النزاع</h1>
         <span className={`mr-auto rounded-full px-3 py-0.5 text-sm font-bold ${st.cls}`}>{st.label}</span>
       </div>
+      <div className="text-xs font-bold text-gray-500">رقم القضية: <span className="text-brand-dark">{caseNo}</span> · فُتحت: <HijriDate value={dp.createdAt} short /></div>
 
       {/* الشكوى */}
       <div className="card p-4">
@@ -86,8 +90,11 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           {dp.amount && <span>المبلغ: {Number(dp.amount).toLocaleString('ar-SA')} ﷼</span>}
           {dp.desired && <span>المطلوب: {disputeDesireLabel(dp.desired)}</span>}
           {dp.incidentAt && <span>تاريخ الواقعة: <HijriDate value={dp.incidentAt} short /></span>}
+          {dp.paymentMethod && <span>الدفع: {paymentLabel(dp.paymentMethod)}</span>}
+          {dp.transferRef && <span>الحوالة: {dp.transferRef}</span>}
         </div>
         {dp.detail && <p className="mt-2 text-sm text-gray-700">{dp.detail}</p>}
+        {dp.witnesses && <p className="mt-1 text-sm text-gray-600">👥 الشهود: {dp.witnesses}</p>}
         {dp.listing && (
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Link href={`/listings/${dp.listing.id}`} className="rounded-lg bg-sand-100 px-2 py-1 text-xs font-bold text-brand-dark">📋 {dp.listing.title}</Link>
@@ -157,13 +164,32 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
         )}
       </div>
 
+      {/* الخط الزمني للقضية */}
+      <div className="card p-4">
+        <h2 className="mb-2 font-extrabold">🕒 الخط الزمني</h2>
+        <ol className="space-y-2 text-sm">
+          <TimelineRow color="bg-indigo-500" label="فُتحت القضية من المشتكي" at={dp.createdAt} />
+          {dp.respondedAt && <TimelineRow color="bg-orange-500" label="قدّم الطرف الآخر إفادته" at={dp.respondedAt} />}
+          {(dp.status === 'RESOLVED' || dp.status === 'REJECTED') && (
+            <TimelineRow color="bg-green-600" label={dp.status === 'RESOLVED' ? 'صدر قرار الإدارة (حلّ)' : 'رُفض النزاع'} at={dp.updatedAt} />
+          )}
+          {!dp.respondedAt && dp.status !== 'RESOLVED' && dp.status !== 'REJECTED' && (
+            <li className="flex items-center gap-2 text-gray-400"><span className="h-2.5 w-2.5 rounded-full bg-gray-300" /> بانتظار إفادة الطرف الآخر…</li>
+          )}
+        </ol>
+      </div>
+
       {/* ملف الجهات المختصة */}
       <div className="card p-4">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between gap-2">
           <h2 className="font-extrabold">📄 ملف للجهات المختصة</h2>
-          <button onClick={copyFile} className="rounded-xl bg-brand/10 px-3 py-1.5 text-sm font-bold text-brand-dark">📋 نسخ</button>
+          <div className="flex gap-2">
+            <button onClick={copyFile} className="rounded-xl bg-brand/10 px-3 py-1.5 text-sm font-bold text-brand-dark">📋 نسخ</button>
+            <button onClick={() => window.print()} className="rounded-xl bg-brand/10 px-3 py-1.5 text-sm font-bold text-brand-dark">🖨️ طباعة/PDF</button>
+          </div>
         </div>
         <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-xl bg-sand-50 p-3 text-xs leading-relaxed text-gray-700">{authoritiesFile}</pre>
+        <p className="mt-2 text-[11px] text-gray-400">المنصة جهة توثيق محايدة وتنظيمية، ولا تُصدر حكماً قضائياً ولا تتحمّل مسؤولية الصفقة.</p>
       </div>
 
       {/* قرار الإدارة */}
@@ -191,6 +217,16 @@ function Info({ label, value, children, copyable }: { label: string; value: stri
         {copyable && value && value !== '—' && <button onClick={copy} className="text-xs text-brand" title="نسخ">📋</button>}
       </div>
     </div>
+  );
+}
+
+function TimelineRow({ color, label, at }: { color: string; label: string; at?: string }) {
+  return (
+    <li className="flex items-center gap-2">
+      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${color}`} />
+      <span className="font-bold text-gray-700">{label}</span>
+      {at && <span className="mr-auto text-xs text-gray-400"><HijriDate value={at} short /></span>}
+    </li>
   );
 }
 

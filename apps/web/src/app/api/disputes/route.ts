@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
   const auth = getUser(req);
   if (!auth) return json({ message: 'يجب تسجيل الدخول' }, 401);
 
-  const { listingId, reason, detail, category, amount, incidentAt, desired, contact, evidence, againstId: againstInput } = await req.json();
+  const { listingId, reason, detail, category, amount, incidentAt, desired, contact, evidence, againstId: againstInput, paymentMethod, transferRef, witnesses, declared } = await req.json();
+  if (!declared) return json({ message: 'يجب الإقرار بصحة المعلومات وتحمّل المسؤولية' }, 400);
   if (!listingId) return json({ message: 'اختر الإعلان محل النزاع' }, 400);
   if (!reason?.trim()) return json({ message: 'سبب النزاع مطلوب' }, 400);
 
@@ -64,6 +65,10 @@ export async function POST(req: NextRequest) {
       desired: desired || null,
       contact: contact?.trim() || null,
       evidence: ev,
+      paymentMethod: paymentMethod || null,
+      transferRef: transferRef?.trim() || null,
+      witnesses: witnesses?.trim() || null,
+      declared: true,
     },
   });
   // إشعار الطرف الآخر ليقدّم إفادته
