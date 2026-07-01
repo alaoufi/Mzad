@@ -33,14 +33,20 @@ export function Header() {
     if (pathname !== '/') router.push('/');
   };
 
+  // رجوع موثوق: يستخدم سجلّ المتصفّح إن وُجد، وإلا يعود للرئيسية (مثلاً عند فتح رابط مباشر)
+  const goBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) router.back();
+    else router.push('/');
+  };
+
   return (
     <header className="sticky top-0 z-40 text-white shadow-lg transition-all duration-500"
       style={{ backgroundImage: `linear-gradient(120deg, var(--th-band-from, ${theme.from}), var(--th-band-to, ${theme.to}))` }}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           {!isHome && (
-            <button onClick={() => router.back()} aria-label="رجوع"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-xl ring-1 ring-white/25 active:scale-95">
+            <button onClick={goBack} aria-label="رجوع"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/25 text-2xl font-extrabold ring-1 ring-white/40 shadow-sm transition hover:bg-white/35 active:scale-90">
               →
             </button>
           )}
