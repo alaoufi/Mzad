@@ -200,17 +200,26 @@ const PATTERNS: Record<string, Pattern> = {
   // نقاط ناعمة — الافتراضي
   bloom: (c) => ({ size: '96px 96px', svg:
     `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><g fill='${c}' opacity='0.08'><circle cx='22' cy='22' r='6'/><circle cx='74' cy='52' r='4'/><circle cx='44' cy='80' r='5'/></g></svg>` }),
+  // سدو نجدي — نسيج بدوي تراثي بمعيّنات متتالية (للخيل والتراث)
+  sadu: (c) => ({ size: '80px 46px', svg:
+    `<svg xmlns='http://www.w3.org/2000/svg' width='80' height='46'><g fill='none' stroke='${c}' stroke-width='2' opacity='0.12'><path d='M0 23 L20 3 L40 23 L60 3 L80 23'/><path d='M0 23 L20 43 L40 23 L60 43 L80 23'/><path d='M14 23 L20 17 L26 23 L20 29 Z'/><path d='M54 23 L60 17 L66 23 L60 29 Z'/></g></svg>` }),
+  // سعف النخيل — لواحات المرعى والعائلة الخضراء
+  palms: (c) => ({ size: '120px 90px', svg:
+    `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='90'><g fill='none' stroke='${c}' stroke-width='1.8' stroke-linecap='round' opacity='0.12'><path d='M30 88 L30 40'/><path d='M30 46 L14 34 M30 46 L46 34 M30 54 L16 44 M30 54 L44 44 M30 62 L18 54 M30 62 L42 54'/><path d='M90 88 L90 44'/><path d='M90 50 L76 40 M90 50 L104 40 M90 58 L78 50 M90 58 L102 50'/></g></svg>` }),
+  // نجوم الصحراء — لليل النجدي والعائلات الداكنة
+  stars: (c) => ({ size: '110px 110px', svg:
+    `<svg xmlns='http://www.w3.org/2000/svg' width='110' height='110'><g fill='${c}' opacity='0.13'><path d='M24 12 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 z'/><path d='M82 46 l1.5 4.5 4.5 1.5 -4.5 1.5 -1.5 4.5 -1.5 -4.5 -4.5 -1.5 4.5 -1.5 z'/><circle cx='60' cy='90' r='2'/><circle cx='16' cy='70' r='1.6'/><circle cx='96' cy='96' r='1.6'/></g></svg>` }),
 };
 
 const SPECIES_MOTIF: Record<string, string> = {
-  'إبل': 'dunes', 'خيل': 'motion', 'غنم': 'hills', 'ماعز': 'peaks',
+  'إبل': 'dunes', 'خيل': 'sadu', 'غنم': 'palms', 'ماعز': 'peaks',
   'بقر': 'spots', 'دجاج': 'scales', 'طيور': 'scales', 'دواجن': 'scales',
   [SUPPLIES_NAME]: 'grid',
 };
 const FAMILY_MOTIF: Record<string, string> = {
-  'ذهبي وترابي': 'dunes', 'أخضر وفيروزي': 'hills', 'برتقالي وأحمر': 'peaks',
-  'أزرق وسماوي': 'waves', 'بنفسجي وأزرق': 'waves', 'وردي وبنفسجي': 'bloom',
-  'محايد وداكن': 'grid',
+  'ذهبي وترابي': 'dunes', 'أخضر وفيروزي': 'palms', 'برتقالي وأحمر': 'peaks',
+  'أزرق وسماوي': 'waves', 'بنفسجي وأزرق': 'stars', 'وردي وبنفسجي': 'bloom',
+  'محايد وداكن': 'stars',
 };
 
 // يحدّد نمط الشكل من سلسلة التصنيفات (اسم النوع أولاً) ثم العائلة اللونية
@@ -236,6 +245,9 @@ const SHAPES: Record<string, { card: string; chip: string; btn: string }> = {
   scales: { card: '1.25rem', chip: '1rem',   btn: '0.9rem'  },
   grid:   { card: '0.7rem',  chip: '0.5rem', btn: '0.5rem'  },
   bloom:  { card: '1.5rem',  chip: '9999px', btn: '1rem'    },
+  sadu:   { card: '0.6rem',  chip: '0.4rem', btn: '0.5rem'  }, // تراثي حادّ
+  palms:  { card: '1.85rem', chip: '9999px', btn: '1.3rem'  }, // عضوي ناعم
+  stars:  { card: '1.35rem', chip: '9999px', btn: '1rem'    }, // ليلي هادئ
 };
 
 const PATTERN_KEYS = Object.keys(PATTERNS);
@@ -326,6 +338,7 @@ export const MOTIF_OPTIONS = [
   { key: 'dunes', label: 'كثبان' }, { key: 'hills', label: 'تلال' }, { key: 'peaks', label: 'قمم' },
   { key: 'waves', label: 'أمواج' }, { key: 'scales', label: 'حراشف' }, { key: 'motion', label: 'حركة' },
   { key: 'spots', label: 'بقع' }, { key: 'grid', label: 'شبكة' }, { key: 'bloom', label: 'نقاط' },
+  { key: 'sadu', label: 'سدو نجدي' }, { key: 'palms', label: 'سعف النخيل' }, { key: 'stars', label: 'نجوم' },
 ];
 export const SHAPE_OPTIONS = [
   { key: 'hills', label: 'دائري ناعم' }, { key: 'dunes', label: 'انسيابي' }, { key: 'bloom', label: 'معتدل' },
@@ -360,6 +373,7 @@ const HERO_EDGES: Record<string, string> = {
 const MOTIF_EDGE: Record<string, string> = {
   dunes: 'wave', waves: 'wave', peaks: 'zigzag', scales: 'scallop',
   motion: 'slant', grid: 'flat', hills: 'curve', spots: 'curve', bloom: 'curve',
+  sadu: 'zigzag', palms: 'scallop', stars: 'curve',
 };
 export function heroEdgePath(motif: string): string {
   return HERO_EDGES[MOTIF_EDGE[motif] ?? 'curve'] ?? HERO_EDGES.curve;

@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { useActiveTheme } from '@/lib/theme-context';
-import { heroEdgePath, catImageIconForText } from '@/lib/themes';
+import { heroEdgePath, catImageIconForText, motifPattern } from '@/lib/themes';
 import { setSearchTerm } from '@/lib/search';
 
 export function Header() {
@@ -39,9 +39,15 @@ export function Header() {
     else router.push('/');
   };
 
+  // نسيج خفيف بهوية القسم فوق شريط الهيدر — كل نوع يبدو بشخصيته حتى في الهيدر
+  const bandGradient = `linear-gradient(120deg, var(--th-band-from, ${theme.from}), var(--th-band-to, ${theme.to}))`;
+  const tex = section?.motif ? motifPattern(section.motif, '#ffffff') : null;
+
   return (
     <header className="sticky top-0 z-40 text-white shadow-lg transition-all duration-500"
-      style={{ backgroundImage: `linear-gradient(120deg, var(--th-band-from, ${theme.from}), var(--th-band-to, ${theme.to}))` }}>
+      style={tex
+        ? { backgroundImage: `${tex.image}, ${bandGradient}`, backgroundSize: `${tex.size}, auto`, backgroundRepeat: 'repeat, no-repeat' }
+        : { backgroundImage: bandGradient }}>
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           {!isHome && (
