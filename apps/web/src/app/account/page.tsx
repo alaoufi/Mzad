@@ -115,35 +115,30 @@ export default function AccountPage() {
   return (
     <div className="space-y-5 animate-fadeup">
       {/* بطاقة الملف الشخصي — هوية بصرية */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-dark to-brand-light p-4 text-white shadow-xl"
-        style={{ boxShadow: '0 18px 36px -22px rgba(10,92,80,0.5)' }}>
-        <button onClick={() => setEditProfile(true)}
-          className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold ring-1 ring-white/30 hover:bg-white/30">
-          ✏️ تعديل بياناتي
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/25 text-xl font-extrabold">
-            {(profile?.name ?? user.name).charAt(0)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-xl font-extrabold text-emboss-light">{profile?.name ?? user.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">
-                {accountTypeDef(profile?.accountType).emoji} {accountTypeDef(profile?.accountType).label}
-              </span>
-              {profile?.identityStatus === 'VERIFIED' && (
-                <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">✔ موثّق بالهوية</span>
-              )}
-              {!!profile?.experienceYears && (
-                <span className="rounded-full bg-white/20 px-3 py-0.5 font-bold">🏅 خبرة {profile.experienceYears} سنة</span>
-              )}
-            </div>
-            {profile?.bio && <p className="mt-2 text-sm leading-relaxed text-white/85">{profile.bio}</p>}
-            {profile?.createdAt && (
-              <div className="mt-1 text-xs text-white/70">عضو منذ: <HijriDate value={profile.createdAt} short /></div>
-            )}
-          </div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-dark to-brand-light px-4 py-3 text-white"
+        style={{ boxShadow: '0 14px 28px -20px rgba(10,92,80,0.5)' }}>
+        <div className="flex items-center gap-2">
+          <h1 className="min-w-0 flex-1 truncate text-lg font-extrabold text-emboss-light">{profile?.name ?? user.name}</h1>
+          <button onClick={() => setEditProfile(true)}
+            className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-bold ring-1 ring-white/30 hover:bg-white/30">
+            ✏️ تعديل
+          </button>
         </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-bold">
+            {accountTypeDef(profile?.accountType).emoji} {accountTypeDef(profile?.accountType).label}
+          </span>
+          {profile?.identityStatus === 'VERIFIED' && (
+            <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-bold">✔ موثّق بالهوية</span>
+          )}
+          {!!profile?.experienceYears && (
+            <span className="rounded-full bg-white/20 px-2.5 py-0.5 font-bold">🏅 خبرة {profile.experienceYears} سنة</span>
+          )}
+          {profile?.createdAt && (
+            <span className="text-white/70">· عضو منذ <HijriDate value={profile.createdAt} short /></span>
+          )}
+        </div>
+        {profile?.bio && <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-white/85">{profile.bio}</p>}
       </div>
 
       {/* إحصائيات الثقة — مربّعات طائرة */}
