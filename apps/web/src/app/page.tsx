@@ -357,8 +357,22 @@ export default function HomePage() {
     <div className="scene-root relative -mx-4 -my-6 min-h-screen overflow-hidden px-4 pb-6 pt-2 transition-all duration-500 animate-fadeup"
       style={{ background: themeReady ? sceneBackground(theme, motif, mood) : '#fbf9f4', ...skinVars(skin) }}>
       <div className="relative">
-        {/* صفّ واحد أنيق تحت الهيدر: فلتر التصنيفات (قائمة منسدلة متعددة الاختيار) + الترتيب */}
+        {/* صفّ واحد أنيق تحت الهيدر: نوع البيع + التصنيفات + الفرز — ثلاث قوائم في صفّ واحد */}
         <div className="mb-3 flex items-center gap-2">
+          {/* نوع البيع: العروض / المزادات / الكل — كقائمة منسدلة */}
+          {!modeDecided ? (
+            <div className="h-9 w-20 shrink-0 animate-pulse rounded-full bg-black/5" />
+          ) : mode === 'SUPPLIES' ? (
+            <button onClick={() => chooseMode('DIRECT')}
+              className="shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">→ رجوع</button>
+          ) : (
+            <select value={mode} onChange={(e) => chooseMode(e.target.value as Mode)}
+              className="shrink-0 rounded-full border border-sand-200 bg-white px-2.5 py-1.5 text-sm font-bold text-gray-700 shadow-sm">
+              <option value="DIRECT">🏷️ العروض</option>
+              <option value="AUCTION">🔨 المزادات</option>
+              <option value="ALL">✨ الكل</option>
+            </select>
+          )}
           <div className="relative flex-1">
             {(!profileLoaded || !tree.length || !modeDecided) ? (
               <div className="h-9 w-full animate-pulse rounded-full bg-black/5" />
@@ -423,47 +437,24 @@ export default function HomePage() {
           </div>
           {!loading && listings.length > 0 && (
             <select value={sort} onChange={(e) => setSort(e.target.value)}
-              className="shrink-0 rounded-full border border-sand-200 bg-white px-3 py-1.5 text-sm font-bold text-gray-700 shadow-sm">
+              className="shrink-0 rounded-full border border-sand-200 bg-white px-2.5 py-1.5 text-sm font-bold text-gray-700 shadow-sm">
               <option value="recent">الأحدث</option>
               <option value="views">الأكثر مشاهدة</option>
               <option value="price_asc">الأقل سعراً</option>
               <option value="price_desc">الأعلى سعراً</option>
             </select>
           )}
+          {/* زرّ سوق المستلزمات المنفصل — للزائر بلا اهتمامات فقط */}
+          {mode !== 'SUPPLIES' && suppliesRoot && !hasCuratedInterests && (
+            <button onClick={() => chooseMode('SUPPLIES')} title="سوق المستلزمات"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm ring-1 ring-sand-200">
+              🛒
+            </button>
+          )}
         </div>
 
-        {/* ٢) المبدّل المدمج: عروض / مزادات + مستلزمات — أصغر ارتفاعاً.
-            لا نعرضه قبل استقرار السوق الافتراضي (modeDecided) كي لا يومض السوق الخطأ. */}
-        {!modeDecided ? (
-          <div className="mb-3 h-12 animate-pulse rounded-2xl bg-black/5" />
-        ) : mode === 'SUPPLIES' ? (
-          <>
-            <button onClick={() => chooseMode('DIRECT')}
-              className="mb-3 flex items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">
-              → العودة للسوق
-            </button>
-            <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />
-          </>
-        ) : (
-          <div className="mb-3 flex items-center gap-2">
-            <div className="grid flex-1 grid-cols-3 gap-1 rounded-2xl bg-white/80 p-1 ring-1 ring-black/[0.04]">
-              {([['DIRECT', '🏷️ العروض'], ['AUCTION', '🔨 المزادات'], ['ALL', '✨ الكل']] as [Mode, string][]).map(([m, label]) => (
-                <button key={m} onClick={() => chooseMode(m)}
-                  className={`rounded-xl py-2 text-sm font-bold transition ${mode === m ? 'text-white shadow' : 'text-gray-500'}`}
-                  style={mode === m ? { backgroundImage: gradient(theme) } : undefined}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            {/* زرّ المستلزمات المنفصل: للزائر بلا اهتمامات فقط (صاحب الاهتمامات تظهر مستلزماته ضمن الموجز) */}
-            {suppliesRoot && !hasCuratedInterests && (
-              <button onClick={() => chooseMode('SUPPLIES')} title="سوق المستلزمات"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm ring-1 ring-sand-200">
-                🛒
-              </button>
-            )}
-          </div>
-        )}
+        {/* إعلان أعلى سوق المستلزمات */}
+        {mode === 'SUPPLIES' && <AdBanner placement="SUPPLIES_TOP" categoryIds={adCtx} />}
 
         {q && (
           <div className="mb-3 flex items-center gap-2 rounded-2xl bg-white p-2 text-sm ring-1 ring-sand-200">
