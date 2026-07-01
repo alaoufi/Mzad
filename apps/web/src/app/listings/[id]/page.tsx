@@ -376,19 +376,26 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               {hasAuction ? (
                 <LiveAuction auctionId={listing.auction.id} canManage={canManage} />
               ) : (
-                <div className="card float-box relative overflow-hidden p-4 text-white"
+                <div className="card float-box animate-floaty relative overflow-hidden p-3.5 text-white"
                   style={{ backgroundImage: gradient(theme) }}>
-                  <div className="pointer-events-none absolute -left-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
-                  <div className="pointer-events-none absolute -bottom-12 right-6 h-28 w-28 rounded-full bg-white/10" />
-                  <div className="relative flex items-end justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-bold text-white/80">💰 السعر</div>
-                      <div className="text-4xl font-extrabold leading-none text-emboss-light">
-                        {listing.price ? <>{Number(listing.price).toLocaleString('ar-SA')} <span className="text-2xl">﷼</span></> : 'على السوم'}
+                  <div className="pointer-events-none absolute -left-6 -top-8 h-24 w-24 rounded-full bg-white/10" />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="mb-1 text-xs font-bold text-white/85">💰 السعر</div>
+                      <div className="inline-flex items-baseline gap-1 whitespace-nowrap rounded-xl bg-white px-3 py-1 shadow-md">
+                        {listing.price ? (
+                          <>
+                            <span className="text-2xl font-extrabold leading-none text-emerald-700">{Number(listing.price).toLocaleString('ar-SA')}</span>
+                            <span className="text-sm font-extrabold text-emerald-700/70">ريال</span>
+                          </>
+                        ) : (
+                          <span className="text-xl font-extrabold text-amber-600">على السوم</span>
+                        )}
                       </div>
                     </div>
                     <button onClick={requestPurchase}
-                      className="shrink-0 rounded-2xl bg-white px-6 py-3 text-base font-extrabold text-brand-dark shadow-lg transition active:scale-95">
+                      className="shrink-0 rounded-2xl px-5 py-2.5 text-sm font-extrabold text-white shadow-md transition active:scale-95"
+                      style={{ backgroundImage: 'linear-gradient(135deg, #e0b85a, #b9852b)' }}>
                       🛒 اطلب الشراء
                     </button>
                   </div>
