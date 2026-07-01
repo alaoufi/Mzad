@@ -15,20 +15,14 @@ export function RegionCityPicker({
   const cities = citiesOf(reg);
   return (
     <div dir="rtl" className={`grid grid-cols-2 gap-3 ${className}`}>
-      <div>
-        <label className="mb-1 block text-sm font-bold text-gray-600">المنطقة{required && <span className="text-red-500"> *</span>}</label>
-        <select className="input" value={reg} onChange={(e) => onChange(e.target.value, '')}>
-          <option value="">— اختر المنطقة —</option>
-          {REGION_NAMES.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-bold text-gray-600">المدينة{required && <span className="text-red-500"> *</span>}</label>
-        <select className="input disabled:opacity-60" value={city || ''} disabled={!reg} onChange={(e) => onChange(reg, e.target.value)}>
-          <option value="">{reg ? '— اختر المدينة —' : 'اختر المنطقة أولاً'}</option>
-          {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
+      <select className="input" value={reg} onChange={(e) => onChange(e.target.value, '')}>
+        <option value="">اختر المنطقة{required ? ' *' : ''}</option>
+        {REGION_NAMES.map((r) => <option key={r} value={r}>{r}</option>)}
+      </select>
+      <select className="input disabled:opacity-60" value={city || ''} disabled={!reg} onChange={(e) => onChange(reg, e.target.value)}>
+        <option value="">{reg ? `اختر المدينة${required ? ' *' : ''}` : 'اختر المنطقة أولاً'}</option>
+        {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+      </select>
     </div>
   );
 }
