@@ -6,9 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { ACCOUNT_TYPES, accountTypeDef } from '@/lib/roles';
+import { accountTypeDef } from '@/lib/roles';
 import { REQ_FIELD_OPTIONS } from '@/lib/sellFields';
-import { SITE_TEXTS } from '@/lib/texts';
 
 interface AdminData {
   stats: { users: number; listings: number; activeListings: number; pending: number; auctions: number; bids: number; reports: number; verifications: number; disputes: number };
@@ -38,9 +37,9 @@ export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'pending' | 'verify' | 'listings' | 'users'>('pending');
+  const [tab, setTab] = useState<'pending' | 'verify' | 'listings'>('pending');
   const contentRef = useRef<HTMLDivElement>(null);
-  const goTab = (t: 'pending' | 'verify' | 'listings' | 'users') => {
+  const goTab = (t: 'pending' | 'verify' | 'listings') => {
     setTab(t);
     setTimeout(() => contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
@@ -54,14 +53,6 @@ export default function AdminPage() {
     try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ reqFields }) }); uiToast('✅ حُفظت الحقول المطلوبة'); }
     catch (e: any) { uiToast(e.message); } finally { setSavingReq(false); }
   };
-  const [texts, setTexts] = useState<Record<string, string>>({});
-  const [savingTexts, setSavingTexts] = useState(false);
-  const saveTexts = async () => {
-    setSavingTexts(true);
-    try { await api('/admin/settings', { method: 'PATCH', body: JSON.stringify({ texts }) }); uiToast('✅ حُفظت النصوص'); }
-    catch (e: any) { uiToast(e.message); } finally { setSavingTexts(false); }
-  };
-
   const load = () =>
     api<AdminData>('/admin/stats').then(setData).catch((e) => setError(e.message)).finally(() => setLoading(false));
 
@@ -76,7 +67,6 @@ export default function AdminPage() {
         zeroCommissionNote: r.zeroCommissionNote ?? '',
       });
       setReqFields(Array.isArray(r.reqFields) ? r.reqFields : []);
-      setTexts(r.texts ?? {});
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -101,16 +91,8 @@ export default function AdminPage() {
     if (!await uiConfirm('حذف هذا الإعلان نهائياً؟')) return;
     try { await api(`/admin/listings/${id}`, { method: 'DELETE' }); load(); } catch (e: any) { uiToast(e.message); }
   };
-  const setRole = async (id: string, accountType: string) => {
-    try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ accountType }) }); load(); }
-    catch (e: any) { uiToast(e.message); }
-  };
   const setIdentity = async (id: string, identityStatus: string) => {
     try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ identityStatus }) }); load(); }
-    catch (e: any) { uiToast(e.message); }
-  };
-  const setActive = async (id: string, active: boolean) => {
-    try { await api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify({ active }) }); load(); }
     catch (e: any) { uiToast(e.message); }
   };
   const setReportStatus = async (id: string, status: string) => {
@@ -146,7 +128,7 @@ export default function AdminPage() {
     if (typeof document !== 'undefined') document.getElementById('reports-section')?.scrollIntoView({ behavior: 'smooth' });
   };
   const cards: { label: string; value: number; icon: string; act?: () => void }[] = [
-    { label: 'المستخدمون', value: data.stats.users, icon: '👥', act: () => goTab('users') },
+    { label: 'المستخدمون', value: data.stats.users, icon: '👥', act: () => router.push('/admin/users') },
     { label: 'الإعلانات', value: data.stats.listings, icon: '📋', act: () => goTab('listings') },
     { label: 'بانتظار الموافقة', value: data.stats.pending, icon: '⏳', act: () => goTab('pending') },
     { label: 'طلبات التوثيق', value: data.stats.verifications, icon: '🛡️', act: () => goTab('verify') },
@@ -156,6 +138,8 @@ export default function AdminPage() {
   ];
 
   const services = [
+    { label: 'المستخدمون', icon: '👥', href: '/admin/users' },
+    { label: 'النصوص', icon: '📝', href: '/admin/texts' },
     { label: 'التصنيفات', icon: '🗂️', href: '/admin/categories' },
     { label: 'الحالة الصحية', icon: '🩺', href: '/admin/health' },
     { label: 'النزاعات', icon: '⚖️', href: '/admin/disputes', badge: data.stats.disputes },
@@ -269,36 +253,12 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* النصوص الظاهرة للزائر والتاجر */}
-      <div className="card space-y-3 p-4">
-        <h2 className="text-lg font-bold">📝 النصوص</h2>
-        <p className="text-xs text-gray-500">عدّل النصوص الظاهرة للزوّار والتجّار. اترك الحقل فارغاً للرجوع للنص الافتراضي.</p>
-        <div className="space-y-2">
-          {SITE_TEXTS.map((t) => (
-            <div key={t.key}>
-              <label className="mb-1 block text-sm font-bold text-gray-600">{t.label}</label>
-              {t.multiline ? (
-                <textarea className="input min-h-[60px]" placeholder={t.def} value={texts[t.key] ?? ''}
-                  onChange={(e) => setTexts((p) => ({ ...p, [t.key]: e.target.value }))} />
-              ) : (
-                <input className="input" placeholder={t.def} value={texts[t.key] ?? ''}
-                  onChange={(e) => setTexts((p) => ({ ...p, [t.key]: e.target.value }))} />
-              )}
-            </div>
-          ))}
-        </div>
-        <button onClick={saveTexts} disabled={savingTexts} className="btn-primary w-full disabled:opacity-50">
-          {savingTexts ? '...' : 'حفظ النصوص'}
-        </button>
-      </div>
-
       {/* تبويبات */}
       <div ref={contentRef} className="grid grid-cols-2 gap-2 scroll-mt-3 sm:flex">
         {[
           ['pending', `بانتظار الموافقة (${data.stats.pending})`],
           ['verify', `التوثيق (${data.stats.verifications})`],
           ['listings', 'كل الإعلانات'],
-          ['users', 'المستخدمون'],
         ].map(([k, label]) => (
           <button key={k} onClick={() => goTab(k as any)}
             className={`rounded-2xl py-2.5 text-sm font-bold transition sm:flex-1 ${
@@ -388,38 +348,6 @@ export default function AdminPage() {
                 )}
                 <button onClick={() => remove(l.id)}
                   className="shrink-0 rounded-xl bg-red-100 px-3 py-2 text-sm font-bold text-red-600">حذف</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* المستخدمون */}
-      {tab === 'users' && (
-        <div className="card p-4">
-          <h2 className="mb-3 text-lg font-bold">إدارة المستخدمين والصلاحيات</h2>
-          <div className="space-y-2">
-            {data.usersList.map((u) => (
-              <div key={u.id} className={`flex items-center gap-2 rounded-2xl bg-sand-50 p-3 ${u.active === false ? 'opacity-60' : ''}`}>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-bold">
-                    {u.name}{u.identityStatus === 'VERIFIED' && <span className="mr-1 text-green-600" title="موثّق">✔</span>}
-                    {u.active === false && <span className="mr-1 text-xs text-red-500">(معطّل)</span>}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {u.phone} · {accountTypeDef(u.accountType).emoji} {accountTypeDef(u.accountType).label}
-                  </div>
-                </div>
-                <button onClick={() => setActive(u.id, u.active === false)}
-                  className={`shrink-0 rounded-xl px-2 py-2 text-xs font-bold ${u.active === false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                  {u.active === false ? '▶' : '⏸'}
-                </button>
-                <select value={u.accountType ?? 'SHOPPER'} onChange={(e) => setRole(u.id, e.target.value)}
-                  className="rounded-xl border-2 border-sand-200 bg-white px-2 py-2 text-sm font-bold">
-                  {ACCOUNT_TYPES.map((a) => (
-                    <option key={a.key} value={a.key}>{a.emoji} {a.label}</option>
-                  ))}
-                </select>
               </div>
             ))}
           </div>
