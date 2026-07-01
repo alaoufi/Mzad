@@ -329,7 +329,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         {/* المواصفات — كل حقل صفّ كامل بخلفية مميّزة، والقيمة تلتفّ لعدّة أسطر */}
         <div className="card float-box p-4">
           <h2 className="mb-2 text-lg font-extrabold text-engrave">📋 المواصفات</h2>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Spec icon="🏷️" label="النوع" value={[listing.category?.parent?.name, listing.category?.name].filter(Boolean).join(' / ')} />
             <Spec icon="🔢" label="العدد" value={listing.count} />
             <Spec icon="⚧" label="الجنس" value={sexLabel(listing.sex)} />
@@ -511,12 +511,10 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
 function Spec({ label, value, icon }: { label: string; value: any; icon?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-l from-sand-50 to-sand-100/60 px-4 py-3 ring-1 ring-black/[0.03]">
-      <div className="flex shrink-0 items-center gap-2 text-gray-500">
-        {icon && <span className="text-lg">{icon}</span>}
-        <span className="text-sm font-bold">{label}</span>
-      </div>
-      <span className="min-w-0 break-words text-left text-base font-extrabold text-gray-800">{value}</span>
+    <div className="flex items-center gap-2 rounded-xl bg-gradient-to-l from-sand-50 to-sand-100/60 px-3 py-2 ring-1 ring-black/[0.03]">
+      {icon && <span className="shrink-0 text-base">{icon}</span>}
+      <span className="shrink-0 text-sm text-gray-500">{label}</span>
+      <span className="min-w-0 break-words font-extrabold text-gray-800">{value}</span>
     </div>
   );
 }
