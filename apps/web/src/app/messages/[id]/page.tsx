@@ -5,6 +5,14 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { compressImage } from '@/lib/image';
+import { uiConfirm, uiToast } from '@/lib/ui';
+
+// رسالة البيانات البنكية تُرسل كنصّ يبدأ بهذه العلامة ثم JSON — بلا حاجة لتعديل قاعدة البيانات
+const BANK_PREFIX = '[[BANK]]';
+const parseBank = (body?: string): { name?: string; bank?: string; account?: string; iban?: string } | null => {
+  if (!body || !body.startsWith(BANK_PREFIX)) return null;
+  try { return JSON.parse(body.slice(BANK_PREFIX.length)); } catch { return null; }
+};
 
 interface Msg { id: string; senderId: string; type?: string; body: string; mediaUrl?: string | null; transcript?: string | null; createdAt: string }
 interface Data { listing: { id: string; title: string }; otherName: string; me: string; messages: Msg[] }
@@ -14,6 +22,35 @@ const time = (s: string) => {
   catch { return ''; }
 };
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+function BankRow({ label, value, copy }: { label: string; value?: string; copy?: boolean }) {
+  if (!value) return null;
+  const doCopy = async () => { try { await navigator.clipboard.writeText(value); uiToast('نُسخ', 'success'); } catch {} };
+  return (
+    <div className="flex items-center justify-between gap-2 border-b border-black/5 py-1 last:border-0">
+      <span className="text-[11px] text-gray-500">{label}</span>
+      <span className="flex items-center gap-1 font-extrabold text-gray-800">
+        <span className="ltr-num">{value}</span>
+        {copy && <button onClick={doCopy} className="text-brand" title="نسخ">📋</button>}
+      </span>
+    </div>
+  );
+}
+
+function BankCard({ bank }: { bank: { name?: string; bank?: string; account?: string; iban?: string } }) {
+  return (
+    <div className="min-w-[15rem] px-0.5">
+      <div className="mb-1 flex items-center gap-1 text-sm font-extrabold text-brand-dark">🏦 البيانات البنكية</div>
+      <BankRow label="الاسم" value={bank.name} />
+      <BankRow label="البنك" value={bank.bank} />
+      <BankRow label="رقم الحساب" value={bank.account} copy />
+      <BankRow label="الآيبان" value={bank.iban} copy />
+      <div className="mt-2 rounded-lg bg-amber-50 p-2 text-[11px] font-bold leading-relaxed text-amber-800 ring-1 ring-amber-200">
+        🛡️ لحمايتك: تأكّد من الاسم والبنك قبل التحويل. المنصّة غير مسؤولة عن الحوالات وأخطارها ومحتواها.
+      </div>
+    </div>
+  );
+}
 
 export default function ChatPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -71,6 +108,21 @@ export default function ChatPage({ params }: { params: { id: string } }) {
     setText('');
     pushLocal({ type: 'TEXT', body });
     post({ type: 'TEXT', body });
+  };
+
+  // إرسال البيانات البنكية للطرف الآخر داخل المحادثة (مع تنبيه الحماية)
+  const sendBank = async () => {
+    try {
+      const me = await api<any>('/users/me');
+      if (!me.bankAccount && !me.iban) {
+        if (await uiConfirm('لم تُضِف بياناتك البنكية بعد. هل تضيفها الآن من ملفك؟')) router.push('/account');
+        return;
+      }
+      if (!await uiConfirm('سيُرسَل حسابك البنكي في هذه المحادثة للطرف الآخر، مع تنبيه الحماية. متابعة؟')) return;
+      const body = BANK_PREFIX + JSON.stringify({ name: me.name, bank: me.bankName ?? '', account: me.bankAccount ?? '', iban: me.iban ?? '' });
+      pushLocal({ type: 'TEXT', body });
+      post({ type: 'TEXT', body });
+    } catch { uiToast('تعذّر جلب بياناتك البنكية', 'error'); }
   };
 
   const onPickImage = async (files: FileList | null) => {
@@ -186,10 +238,13 @@ export default function ChatPage({ params }: { params: { id: string } }) {
         ) : (
           data.messages.map((m) => {
             const mine = m.senderId === data.me;
+            const bank = (m.type !== 'IMAGE' && m.type !== 'VOICE') ? parseBank(m.body) : null;
             return (
               <div key={m.id} className={`flex ${mine ? 'justify-start' : 'justify-end'}`}>
                 <div className={`max-w-[80%] rounded-2xl px-2.5 py-2 shadow-sm ${mine ? 'bg-[#dcf8c6]' : 'bg-white'}`}>
-                  {m.type === 'IMAGE' && m.mediaUrl ? (
+                  {bank ? (
+                    <BankCard bank={bank} />
+                  ) : m.type === 'IMAGE' && m.mediaUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.mediaUrl} alt="صورة" className="max-h-64 w-full rounded-xl object-cover" />
                   ) : m.type === 'VOICE' && m.mediaUrl ? (
@@ -233,6 +288,8 @@ export default function ChatPage({ params }: { params: { id: string } }) {
               📷
               <input type="file" accept="image/*" className="hidden" onChange={(e) => onPickImage(e.target.files)} />
             </label>
+            <button onClick={sendBank} disabled={sending} title="إرسال حسابي البنكي"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm disabled:opacity-50">🏦</button>
             <textarea value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} rows={1}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
               placeholder="اكتب رسالة..."
