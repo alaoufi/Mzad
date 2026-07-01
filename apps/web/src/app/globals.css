@@ -58,11 +58,16 @@
   }
   /* بطاقات أنيقة بإحساس عمق — بلا backdrop-blur لتفادي بطء التمرير على الجوال.
      تتلوّن تلقائياً داخل الأقسام المُثيّمة عبر متغيّرات CSS مع رجوع للأبيض. */
+  /* بطاقة موحّدة بإحساس عمق ثلاثي الأبعاد في كل الصفحات — ظلّ متدرّج + حافّة علوية مضيئة + إطار شعري */
   .card {
-    @apply rounded-3xl overflow-hidden ring-1 shadow-soft;
+    @apply rounded-3xl overflow-hidden ring-1;
     border-radius: var(--card-radius, 1.5rem);
     background-color: var(--card-bg, #ffffff);
-    --tw-ring-color: var(--card-ring, rgba(0, 0, 0, 0.04));
+    --tw-ring-color: var(--card-ring, rgba(0, 0, 0, 0.05));
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04),
+                0 6px 14px -8px rgba(16, 24, 40, 0.16),
+                0 14px 30px -18px rgba(16, 24, 40, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.55);
   }
   .card-3d {
     @apply card transition-all duration-300;
