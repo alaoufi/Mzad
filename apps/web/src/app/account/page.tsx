@@ -294,6 +294,9 @@ export default function AccountPage() {
         <button className="card float-box col-span-3 flex items-center justify-center gap-2 p-3 text-sm font-bold text-brand-dark" onClick={() => router.push('/advertise')}>
           📣 <span>أعلن معنا — إعلانات مبوبة</span>
         </button>
+        <button className="card float-box col-span-3 flex items-center justify-center gap-2 p-3 text-sm font-bold text-gray-600" onClick={() => router.push('/policies')}>
+          📋 <span>السياسات والأحكام وإخلاء المسؤولية</span>
+        </button>
       </div>
 
       {editInterests && (

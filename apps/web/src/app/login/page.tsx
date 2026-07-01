@@ -110,6 +110,9 @@ export default function LoginPage() {
             <button onClick={requestOtp} disabled={busy || phone.length < 9} className="btn-primary w-full disabled:opacity-50">
               {busy ? '...' : 'إرسال الرمز'}
             </button>
+            <p className="mt-3 text-center text-xs text-gray-400">
+              بالمتابعة فأنت توافق على <a href="/policies" className="font-bold text-brand underline">السياسات والأحكام وإخلاء المسؤولية</a>.
+            </p>
           </>
         ) : (
           <>
