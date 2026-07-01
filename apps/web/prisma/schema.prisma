@@ -397,6 +397,16 @@ model Dispute {
   detail     String?
   status     String   @default("OPEN") // OPEN / REVIEWING / RESOLVED / REJECTED
   resolution String?  // قرار الإدارة
+  // جمع الأدلة والمعلومات لإثبات الشكوى وعرضها على الإدارة/الجهات المختصة
+  category   String?              // نوع الشكوى
+  amount     Decimal? @db.Decimal(12, 2) // المبلغ محل النزاع
+  incidentAt DateTime?            // تاريخ الواقعة
+  desired    String?              // المطلوب (استرجاع/تعويض/إلغاء…)
+  contact    String?              // وسيلة تواصل إضافية للمشتكي
+  evidence   String[] @default([]) // أدلة المشتكي (صور/مستندات)
+  response   String?              // إفادة الطرف الآخر (ردّه)
+  responseEvidence String[] @default([]) // أدلة الطرف الآخر
+  respondedAt DateTime?           // وقت ردّ الطرف الآخر
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 

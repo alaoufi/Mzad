@@ -8,6 +8,43 @@ export const dynamic = 'force-dynamic';
 
 const STATUSES = ['OPEN', 'REVIEWING', 'RESOLVED', 'REJECTED'];
 
+const UFULL = {
+  id: true, name: true, phone: true, city: true, region: true, identityStatus: true,
+  accountType: true, trustScore: true, bio: true, experienceYears: true,
+  bankName: true, bankAccount: true, iban: true, createdAt: true,
+} as const;
+
+// ملفّ النزاع الكامل للإدارة — بيانات الطرفين + سوابقهما + الأدلّة
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  const auth = getUser(req);
+  if (!auth) return json({ message: 'غير مصرّح' }, 401);
+  if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
+
+  const d = await prisma.dispute.findUnique({
+    where: { id: params.id },
+    include: {
+      listing: { select: { id: true, title: true, price: true, saleType: true, city: true, region: true, category: { select: { name: true, parent: { select: { name: true } } } } } },
+      openedBy: { select: UFULL, },
+    },
+  });
+  if (!d) return json({ message: 'النزاع غير موجود' }, 404);
+
+  const against = d.againstId ? await prisma.user.findUnique({ where: { id: d.againstId }, select: UFULL }) : null;
+
+  // سوابق النزاعات لكل طرف (فتحها / رُفعت ضدّه)
+  const history = async (uid?: string | null) => {
+    if (!uid) return { opened: 0, against: 0 };
+    const [opened, ag] = await Promise.all([
+      prisma.dispute.count({ where: { openedById: uid } }),
+      prisma.dispute.count({ where: { againstId: uid } }),
+    ]);
+    return { opened, against: ag };
+  };
+  const [openerHistory, againstHistory] = await Promise.all([history(d.openedById), history(d.againstId)]);
+
+  return json({ dispute: d, against, openerHistory, againstHistory });
+}
+
 // تحديث حالة النزاع وإضافة قرار الإدارة
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const auth = getUser(req);

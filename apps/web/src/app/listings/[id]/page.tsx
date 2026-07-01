@@ -449,15 +449,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           </button>
           <span className="text-gray-300">·</span>
           <button
-            onClick={async () => {
+            onClick={() => {
               if (!user) { uiToast('سجّل الدخول أولاً'); return; }
-              const reason = await uiPrompt('سبب فتح نزاع على هذه الصفقة:');
-              if (!reason?.trim()) return;
-              const detail = await uiPrompt('تفاصيل إضافية (اختياري):') || '';
-              try {
-                await api('/disputes', { method: 'POST', body: JSON.stringify({ listingId: listing.id, reason, detail }) });
-                uiToast('⚖️ تم فتح النزاع، ستراجعه الإدارة. تابعه من «نزاعاتي».');
-              } catch (e: any) { uiToast(e.message); }
+              router.push(`/disputes/new?listingId=${listing.id}`);
             }}
           >
             ⚖️ فتح نزاع على الصفقة

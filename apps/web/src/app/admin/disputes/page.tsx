@@ -105,6 +105,9 @@ export default function AdminDisputesPage() {
                 )}
                 <p className="mt-1 font-bold">{d.reason}</p>
                 {d.detail && <p className="mt-1 text-sm text-gray-600">{d.detail}</p>}
+                <Link href={`/admin/disputes/${d.id}`} className="mt-2 inline-flex items-center gap-1 rounded-xl bg-brand/10 px-3 py-1.5 text-sm font-extrabold text-brand-dark">
+                  📂 فتح الملف الكامل (الطرفان والأدلّة)
+                </Link>
                 {d.resolution && (
                   <div className="mt-3 rounded-2xl bg-green-50 p-3 text-sm text-green-800"><b>القرار:</b> {d.resolution}</div>
                 )}
