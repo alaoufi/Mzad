@@ -14,7 +14,7 @@ export function RegionCityPicker({
   const reg = region || regionOfCity(city) || '';
   const cities = citiesOf(reg);
   return (
-    <div className={`grid grid-cols-2 gap-3 ${className}`}>
+    <div dir="rtl" className={`grid grid-cols-2 gap-3 ${className}`}>
       <div>
         <label className="mb-1 block text-sm font-bold text-gray-600">المنطقة{required && <span className="text-red-500"> *</span>}</label>
         <select className="input" value={reg} onChange={(e) => onChange(e.target.value, '')}>
