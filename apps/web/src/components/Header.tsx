@@ -85,12 +85,11 @@ export function Header() {
             style={{ backgroundImage: 'linear-gradient(135deg, #e0b85a, #b9852b)' }}>
             ＋ أضف إعلان
           </Link>
+          {/* «حسابي» موجود بالشريط السفلي (👤) على الجوال — نُخفيه من الهيدر لتوفير المكان، ونُبقيه على الشاشات الكبيرة (لا شريط سفلي فيها) */}
           {user ? (
-            <Link href="/account" className="flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-2 ring-1 ring-white/20 hover:bg-white/25">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/25 text-sm font-bold">
-                {user.name.charAt(0)}
-              </span>
-              <span className="hidden text-sm font-bold sm:inline">حسابي</span>
+            <Link href="/account" className="hidden items-center gap-2 rounded-2xl bg-white/15 px-3 py-2 ring-1 ring-white/20 hover:bg-white/25 sm:flex">
+              <span className="text-lg">👤</span>
+              <span className="text-sm font-bold">حسابي</span>
             </Link>
           ) : (
             <Link href="/login" className="rounded-2xl bg-white/15 px-4 py-2 text-base font-bold ring-1 ring-white/20 hover:bg-white/25">
