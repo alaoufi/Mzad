@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       id: true, name: true, phone: true, role: true, accountType: true,
       identityStatus: true, active: true, city: true, region: true,
       bio: true, experienceYears: true, bankName: true, bankAccount: true, iban: true,
+      brokerCategories: true, brokerSharePct: true,
       trustScore: true, createdAt: true,
       _count: { select: { listings: true, bids: true } },
     },

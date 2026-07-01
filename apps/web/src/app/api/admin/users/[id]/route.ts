@@ -14,10 +14,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (auth.role !== 'ADMIN') return json({ message: 'للإدارة فقط' }, 403);
 
   const body = await req.json();
-  const { accountType, identityStatus, active, name, phone, city, region, bio, experienceYears, bankName, bankAccount, iban } = body;
+  const { accountType, identityStatus, active, name, phone, city, region, bio, experienceYears, bankName, bankAccount, iban, brokerSharePct, brokerCategories } = body;
 
   const data: any = {};
   if (active !== undefined) data.active = !!active;
+  // مسؤوليات الدلال: نصيبه من العمولة ونطاق تصنيفاته
+  if (brokerSharePct !== undefined) data.brokerSharePct = (brokerSharePct === null || brokerSharePct === '') ? null : Math.max(0, Math.min(100, Number(brokerSharePct)));
+  if (Array.isArray(brokerCategories)) data.brokerCategories = brokerCategories.filter((x: any) => typeof x === 'string').slice(0, 50);
   if (accountType !== undefined) {
     if (!ACCOUNT_TYPES.some((a) => a.key === accountType)) {
       return json({ message: 'دور غير صحيح' }, 400);
