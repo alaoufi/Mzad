@@ -406,12 +406,6 @@ export default function SellPage() {
           </button>
         )}
         <textarea maxLength={2000} className={`input mt-3 min-h-[110px] ${tone(true, form.description.trim().length > 2)}`} placeholder={`الوصف * — ${t('sellDescPlaceholder')}`} value={form.description} onChange={(e) => set('description', e.target.value)} />
-
-        {/* تنبيه مهم — بارز ثلاثي الأبعاد عائم، سطر واحد */}
-        <div className="mt-3 animate-floaty whitespace-nowrap overflow-hidden text-ellipsis rounded-xl bg-gradient-to-b from-amber-200 to-amber-100 px-3 py-1.5 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
-          style={{ boxShadow: '0 10px 20px -8px rgba(180,120,20,0.5), inset 0 1px 0 rgba(255,255,255,0.8)', textShadow: '0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.25)' }}>
-          ⚠️ {t('sellWarning')}
-        </div>
       </Section>
 
       {/* الصور */}

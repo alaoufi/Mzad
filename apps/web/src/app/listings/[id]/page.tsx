@@ -15,6 +15,7 @@ import { usePageTheme, useHeaderSection } from '@/lib/theme-context';
 import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
 import { HijriDate } from '@/components/HijriDate';
+import { TEXT_DEFAULTS } from '@/lib/texts';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -353,6 +354,12 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         <div className="card float-box p-4">
           <h2 className="mb-2 text-lg font-extrabold text-engrave">📝 الوصف</h2>
           <p className="leading-relaxed text-gray-700">{listing.description}</p>
+        </div>
+
+        {/* تنبيه الشراء — يظهر في عرض الإعلان لحماية المشتري */}
+        <div className="animate-floaty rounded-2xl bg-gradient-to-b from-amber-200 to-amber-100 px-4 py-3 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
+          style={{ boxShadow: '0 12px 24px -10px rgba(180,120,20,0.5), inset 0 1px 0 rgba(255,255,255,0.8)', textShadow: '0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.2)' }}>
+          ⚠️ {TEXT_DEFAULTS.sellWarning}
         </div>
 
         {/* السعر / المزاد / على السوم */}
