@@ -284,8 +284,8 @@ export default function AccountPage() {
         <button className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold" onClick={() => router.push('/disputes')}>
           ⚖️ <span>نزاعاتي</span>
         </button>
-        <button className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold" onClick={() => router.push('/help')}>
-          ❓ <span>كيف يعمل</span>
+        <button className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold" onClick={() => router.push('/guide')}>
+          📖 <span>دليل الاستخدام</span>
         </button>
         <a href="https://wa.me/9665000000" target="_blank" rel="noopener noreferrer"
           className="card float-box flex flex-col items-center justify-center gap-1 p-3 text-sm font-bold text-green-700">
