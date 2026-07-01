@@ -13,6 +13,7 @@ export const ACCOUNT_TYPES: AccountTypeDef[] = [
   { key: 'ADMIN', label: 'مشرف', role: 'ADMIN', emoji: '🛡️' },
   { key: 'BROKERS_LEAD', label: 'كبير الدلالين', role: 'BROKER', emoji: '🎖️' },
   { key: 'BROKER', label: 'دلال', role: 'BROKER', emoji: '🧑‍⚖️' },
+  { key: 'MARKETER', label: 'مسوّق', role: 'USER', emoji: '📣' },
   { key: 'MERCHANT', label: 'تاجر', role: 'USER', emoji: '🏪' },
   { key: 'SHOPPER', label: 'متسوّق', role: 'USER', emoji: '🛍️' },
   { key: 'VISITOR', label: 'زائر', role: 'USER', emoji: '👋' },
