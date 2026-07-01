@@ -46,6 +46,10 @@ export default function AccountPage() {
   const [editInterests, setEditInterests] = useState(false);
   const [editProfile, setEditProfile] = useState(false);
   const [cats, setCats] = useState<Cat[]>([]);
+  // ترتيب العرض الافتراضي في الصفحة الرئيسية (محفوظ محلياً)
+  const [sortPref, setSortPref] = useState('recent');
+  useEffect(() => { try { setSortPref(localStorage.getItem('mzad_sort') || 'recent'); } catch {} }, []);
+  const changeSortPref = (v: string) => { setSortPref(v); try { localStorage.setItem('mzad_sort', v); } catch {} };
 
   const loadProfile = () => api<Profile>('/users/me').then(setProfile).catch(() => {});
 
@@ -256,6 +260,24 @@ export default function AccountPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ترتيب العرض الافتراضي — ينطبق على الصفحة الرئيسية */}
+      <div className="card flex items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">↕️</span>
+          <div>
+            <div className="font-bold">ترتيب العرض الافتراضي</div>
+            <div className="text-sm text-gray-500">كيف تُرتَّب الإعلانات في الرئيسية</div>
+          </div>
+        </div>
+        <select value={sortPref} onChange={(e) => changeSortPref(e.target.value)}
+          className="shrink-0 rounded-xl border border-sand-200 bg-white px-3 py-2 text-sm font-bold text-gray-700 shadow-sm">
+          <option value="recent">الأحدث</option>
+          <option value="views">الأكثر مشاهدة</option>
+          <option value="price_asc">الأقل سعراً</option>
+          <option value="price_desc">الأعلى سعراً</option>
+        </select>
       </div>
 
       <div className="grid grid-cols-3 gap-3">

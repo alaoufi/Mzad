@@ -27,7 +27,11 @@ export default function HomePage() {
   const [mode, setMode] = useState<Mode>('DIRECT');
   const [path, setPath] = useState<Cat[]>([]);
   const q = useSearchTerm();
-  const [sort, setSort] = useState('recent');
+  // الفرز الافتراضي يأتي من الملف الشخصي (محفوظ محلياً)
+  const [sort, setSort] = useState(() => {
+    if (typeof window !== 'undefined') { try { return localStorage.getItem('mzad_sort') || 'recent'; } catch {} }
+    return 'recent';
+  });
   const [loading, setLoading] = useState(true);
   // فلتر التصنيفات بقائمة منسدلة متعددة الاختيار (فارغ = كل الاهتمامات)
   const [selCats, setSelCats] = useState<Set<string>>(new Set());
@@ -367,13 +371,14 @@ export default function HomePage() {
               className="shrink-0 rounded-full bg-white px-3 py-1.5 text-sm font-bold text-brand-dark shadow-sm ring-1 ring-sand-200">→ رجوع</button>
           ) : (
             <select value={mode} onChange={(e) => chooseMode(e.target.value as Mode)}
-              className="shrink-0 rounded-full border border-sand-200 bg-white px-2.5 py-1.5 text-sm font-bold text-gray-700 shadow-sm">
-              <option value="DIRECT">🏷️ العروض</option>
-              <option value="AUCTION">🔨 المزادات</option>
-              <option value="ALL">✨ الكل</option>
+              className="shrink-0 rounded-full px-3 py-2 text-sm font-extrabold text-white shadow-sm"
+              style={{ backgroundImage: gradient(theme) }}>
+              <option value="DIRECT" className="text-gray-800">🏷️ العروض</option>
+              <option value="AUCTION" className="text-gray-800">🔨 المزادات</option>
+              <option value="ALL" className="text-gray-800">✨ الكل</option>
             </select>
           )}
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             {(!profileLoaded || !tree.length || !modeDecided) ? (
               <div className="h-9 w-full animate-pulse rounded-full bg-black/5" />
             ) : (hasCuratedInterests && mode !== 'SUPPLIES' && catOptions.length > 1) ? (
@@ -435,15 +440,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          {!loading && listings.length > 0 && (
-            <select value={sort} onChange={(e) => setSort(e.target.value)}
-              className="shrink-0 rounded-full border border-sand-200 bg-white px-2.5 py-1.5 text-sm font-bold text-gray-700 shadow-sm">
-              <option value="recent">الأحدث</option>
-              <option value="views">الأكثر مشاهدة</option>
-              <option value="price_asc">الأقل سعراً</option>
-              <option value="price_desc">الأعلى سعراً</option>
-            </select>
-          )}
+          {/* الفرز الافتراضي يُضبط من الملف الشخصي (حساب المستخدم) */}
           {/* زرّ سوق المستلزمات المنفصل — للزائر بلا اهتمامات فقط */}
           {mode !== 'SUPPLIES' && suppliesRoot && !hasCuratedInterests && (
             <button onClick={() => chooseMode('SUPPLIES')} title="سوق المستلزمات"
