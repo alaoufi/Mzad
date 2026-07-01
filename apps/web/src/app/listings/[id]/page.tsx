@@ -16,6 +16,7 @@ import { isOpenEnd } from '@/lib/auction';
 import { HeartButton } from '@/lib/favorites';
 import { HijriDate } from '@/components/HijriDate';
 import { TEXT_DEFAULTS } from '@/lib/texts';
+import { CategoryPicker } from '@/components/CategoryPicker';
 
 const HEALTH_LABELS: Record<string, string> = {
   vaccinated: 'مُطعّم',
@@ -36,7 +37,10 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const [savingEdit, setSavingEdit] = useState(false);
   const [form, setForm] = useState<any>({});
   const [mounted, setMounted] = useState(false);
+  const [cats, setCats] = useState<any[]>([]);
   useEffect(() => { setMounted(true); }, []);
+  // شجرة التصنيفات — لمنتقي التصنيف في التعديل
+  useEffect(() => { api<any[]>('/categories').then(setCats).catch(() => {}); }, []);
 
   const load = useCallback(() => {
     api(`/listings/${params.id}`).then(setListing).catch((e) => setError(e.message));
@@ -48,7 +52,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
     setForm({
       title: listing.title, description: listing.description, count: listing.count, sex: listing.sex,
       approxWeightKg: listing.approxWeightKg ?? '', city: listing.city, region: listing.region,
-      price: listing.price ?? '',
+      price: listing.price ?? '', categoryId: listing.category?.id ?? '',
     });
     setEditing(true);
   };
@@ -471,6 +475,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
             </div>
             <div className="space-y-3">
               <input className="input" placeholder="عنوان الإعلان" value={form.title ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, title: e.target.value }))} />
+              {cats.length > 0 && (
+                <CategoryPicker tree={cats} valueId={form.categoryId} onChange={(id) => setForm((f: any) => ({ ...f, categoryId: id }))} />
+              )}
               <textarea className="input min-h-[100px]" placeholder="الوصف" value={form.description ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, description: e.target.value }))} />
               <div className="grid grid-cols-2 gap-3">
                 <input type="number" className="input" placeholder="العدد" value={form.count ?? ''} onChange={(e) => setForm((f: any) => ({ ...f, count: e.target.value }))} />

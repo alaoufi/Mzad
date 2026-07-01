@@ -64,11 +64,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   // تعديل الحقول: الإدارة/الدلال في أي وقت، والمالك خلال ساعتين فقط
   const canEditFields = isAdmin || isBrokerInScope || (isOwner && withinWindow);
-  const fieldKeys = ['title', 'description', 'count', 'sex', 'approxWeightKg', 'productionStatus', 'city', 'region', 'price'];
+  const fieldKeys = ['title', 'description', 'count', 'sex', 'approxWeightKg', 'productionStatus', 'city', 'region', 'price', 'categoryId'];
   const wantsFieldEdit = fieldKeys.some((k) => body[k] !== undefined);
   if (wantsFieldEdit) {
     if (!canEditFields) {
       return json({ message: isOwner ? 'انتهت مهلة تعديل الإعلان (ساعتان من النشر)' : 'غير مصرّح بتعديل هذا الإعلان' }, 403);
+    }
+    // تغيير التصنيف — نتحقّق من وجوده قبل الربط
+    if (body.categoryId !== undefined && String(body.categoryId).trim()) {
+      const cat = await prisma.category.findUnique({ where: { id: String(body.categoryId) }, select: { id: true } });
+      if (!cat) return json({ message: 'التصنيف غير موجود' }, 400);
+      data.category = { connect: { id: cat.id } };
     }
     if (body.title !== undefined && String(body.title).trim()) data.title = String(body.title).trim();
     if (body.description !== undefined) data.description = String(body.description);
