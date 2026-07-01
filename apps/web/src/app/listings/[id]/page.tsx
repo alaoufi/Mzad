@@ -199,9 +199,9 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       {/* الميديا */}
-      <div>
+      <div className="min-w-0">
         <div className="card float-box relative aspect-[4/3] bg-sand-100">
           {media[activeImg] ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -261,7 +261,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* التفاصيل */}
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <div>
           {crumb && (
             <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-brand-dark shadow-sm ring-1 ring-black/5">
@@ -322,16 +322,16 @@ export default function ListingPage({ params }: { params: { id: string } }) {
           )}
         </div>
 
-        {/* المواصفات */}
+        {/* المواصفات — كل حقل صفّ كامل بخلفية مميّزة، والقيمة تلتفّ لعدّة أسطر */}
         <div className="card float-box p-4">
           <h2 className="mb-3 text-lg font-extrabold text-engrave">📋 المواصفات</h2>
-          <dl className="grid grid-cols-2 gap-2.5 text-sm">
-            <Spec icon="🏷️" label="النوع" value={`${listing.category?.parent?.name ?? ''} / ${listing.category?.name ?? ''}`} />
+          <div className="space-y-2">
+            <Spec icon="🏷️" label="النوع" value={[listing.category?.parent?.name, listing.category?.name].filter(Boolean).join(' / ')} />
             <Spec icon="🔢" label="العدد" value={listing.count} />
             <Spec icon="⚧" label="الجنس" value={sexLabel(listing.sex)} />
             {listing.approxWeightKg && <Spec icon="⚖️" label="الوزن التقريبي" value={`${listing.approxWeightKg} كجم`} />}
             {listing.productionStatus && <Spec icon="🥛" label="حالة الإنتاج" value={listing.productionStatus} />}
-          </dl>
+          </div>
         </div>
 
         {/* الحالة الصحية */}
@@ -497,12 +497,12 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
 function Spec({ label, value, icon }: { label: string; value: any; icon?: string }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-2xl bg-gradient-to-br from-sand-50 to-sand-100 px-3 py-2.5 ring-1 ring-black/[0.03]">
-      {icon && <span className="text-xl">{icon}</span>}
-      <div className="min-w-0">
-        <dt className="text-[11px] text-gray-400">{label}</dt>
-        <dd className="truncate font-extrabold text-gray-800">{value}</dd>
+    <div className="flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-l from-sand-50 to-sand-100/60 px-4 py-3 ring-1 ring-black/[0.03]">
+      <div className="flex shrink-0 items-center gap-2 text-gray-500">
+        {icon && <span className="text-lg">{icon}</span>}
+        <span className="text-sm font-bold">{label}</span>
       </div>
+      <span className="min-w-0 break-words text-left text-base font-extrabold text-gray-800">{value}</span>
     </div>
   );
 }
