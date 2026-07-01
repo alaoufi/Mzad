@@ -215,12 +215,12 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               {listing.category?.parent?.icon ?? listing.category?.icon ?? '🐾'}
             </div>
           )}
-          {/* أزرار عائمة على الصورة — إحساس عمق */}
+          {/* أزرار عائمة على الصورة — إحساس عمق (بلا backdrop-blur لتفادي بطء الجوال) */}
           <div className="absolute left-3 top-3 flex gap-2">
             <button onClick={share} aria-label="مشاركة"
-              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/85 text-xl shadow-lg ring-1 ring-black/5 backdrop-blur-sm transition active:scale-90">↗️</button>
+              className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-xl shadow-lg ring-1 ring-black/5 transition active:scale-90">↗️</button>
           </div>
-          <HeartButton id={listing.id} className="absolute right-3 top-3 !h-11 !w-11 !text-2xl !bg-white/85 shadow-lg ring-1 ring-black/5 backdrop-blur-sm" />
+          <HeartButton id={listing.id} className="absolute right-3 top-3 !h-11 !w-11 !text-2xl !bg-white shadow-lg ring-1 ring-black/5" />
           {/* شارة نوع البيع أسفل الصورة */}
           <span className="absolute bottom-3 right-3 rounded-full px-3 py-1 text-xs font-extrabold text-white shadow-lg"
             style={{ backgroundImage: gradient(theme) }}>
@@ -358,7 +358,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
 
         {/* تنبيه الشراء — يظهر في عرض الإعلان لحماية المشتري */}
-        <div className="animate-floaty rounded-2xl bg-gradient-to-b from-amber-200 to-amber-100 px-4 py-3 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
+        <div className="rounded-2xl bg-gradient-to-b from-amber-200 to-amber-100 px-4 py-3 text-center text-sm font-extrabold text-amber-900 ring-2 ring-amber-400/70"
           style={{ boxShadow: '0 12px 24px -10px rgba(180,120,20,0.5), inset 0 1px 0 rgba(255,255,255,0.8)', textShadow: '0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.2)' }}>
           ⚠️ {TEXT_DEFAULTS.sellWarning}
         </div>
