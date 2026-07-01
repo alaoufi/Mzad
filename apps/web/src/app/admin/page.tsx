@@ -4,45 +4,52 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import { SECTIONS, can, canAny } from '@/lib/permissions';
+import { can } from '@/lib/permissions';
 import { accountTypeDef } from '@/lib/roles';
-import { AdminNav } from '@/components/AdminNav';
+import AccountPage from '@/app/account/page';
+import { SiteSection } from '@/components/admin/SiteSection';
+import { ListingsSection } from '@/components/admin/ListingsSection';
+import { MarketSection } from '@/components/admin/MarketSection';
 
-// لوحة الإدارة — موزّعة على أربعة أقسام مستقلّة، كلٌّ في صفحته، بحسب صلاحية الدور
+type Tab = 'profile' | 'site' | 'listings' | 'market';
+
+const TABS: { key: Tab; label: string; icon: string; section?: 'site' | 'listings' | 'market' }[] = [
+  { key: 'profile', label: 'الملف الشخصي', icon: '👤' },
+  { key: 'site', label: 'تجهيزات الموقع', icon: '⚙️', section: 'site' },
+  { key: 'listings', label: 'ترتيب الإعلانات', icon: '📋', section: 'listings' },
+  { key: 'market', label: 'المستخدمون وحركة السوق', icon: '⚖️', section: 'market' },
+];
+
+// لوحة الإدارة — صفحة واحدة بأربعة تبويبات ثلاثية الأبعاد، كل تبويب يستدعي محتواه خلفه.
+// الافتراضي «الملف الشخصي»، وتظهر التبويبات بحسب صلاحيات الدور.
 export default function AdminHub() {
   const router = useRouter();
   const { user, ready } = useAuth();
-  const [me, setMe] = useState<{ accountType?: string } | null>(null);
+  const [tab, setTab] = useState<Tab>('profile');
+  const [acct, setAcct] = useState<string | undefined>(undefined);
   const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    api<any>('/users/me').then((r) => setMe(r)).catch(() => {});
-    api<any>('/admin/stats').then((r) => setStats(r.stats)).catch((e) => setError(e.message)).finally(() => setLoading(false));
+    if (!user) return;
+    api<any>('/users/me').then((r) => setAcct(r.accountType)).catch(() => {});
+    api<any>('/admin/stats').then((r) => setStats(r.stats)).catch(() => {});
   }, [user]);
 
   if (!ready) return null;
   if (!user) return (
     <div className="mx-auto max-w-md text-center"><div className="card p-8">
-      <p className="mb-4 text-5xl">🛡️</p><p className="mb-4 text-lg">لوحة الإدارة — سجّل الدخول بحساب مصرّح</p>
+      <p className="mb-4 text-5xl">🛡️</p><p className="mb-4 text-lg">لوحة الإدارة — سجّل الدخول</p>
       <button className="btn-primary w-full" onClick={() => router.push('/login')}>تسجيل الدخول</button>
     </div></div>
   );
-  if (loading) return <p className="py-10 text-center text-gray-500">جارٍ التحميل...</p>;
-  if (error) return (
-    <div className="card p-8 text-center"><p className="text-5xl">🚫</p><p className="mt-3 text-lg font-bold">{error}</p>
-      <p className="mt-1 text-sm text-gray-500">هذه اللوحة للأدوار المصرّح لها فقط.</p></div>
-  );
 
-  // نوع الحساب من الملف، وإلا اشتقاق مبدئي من صلاحية الجلسة (حتى لا تختفي الأقسام قبل تحميل /users/me)
-  const acct = me?.accountType || (user.role === 'ADMIN' ? 'ADMIN' : user.role === 'BROKER' ? 'BROKER' : 'SHOPPER');
-  const def = accountTypeDef(acct);
-  // نُظهر «الملف الشخصي» دائماً، وبقية الأقسام بحسب صلاحية الاطلاع
-  const sections = SECTIONS.filter((s) => s.key === 'profile' || canAny(acct, s.key));
+  // اشتقاق مبدئي من صلاحية الجلسة حتى لا تختفي التبويبات قبل تحميل /users/me
+  const role = acct || (user.role === 'ADMIN' ? 'ADMIN' : user.role === 'BROKER' ? 'BROKER' : 'SHOPPER');
+  const def = accountTypeDef(role);
+  const visible = TABS.filter((t) => t.key === 'profile' || (t.section && can(role, t.section, 'view')));
   const badge: Record<string, number | undefined> = {
-    listings: stats?.pending, market: (stats?.disputes ?? 0) + (stats?.reports ?? 0) + (stats?.verifications ?? 0),
+    listings: stats?.pending,
+    market: (stats?.disputes ?? 0) + (stats?.reports ?? 0) + (stats?.verifications ?? 0),
   };
 
   return (
@@ -52,43 +59,36 @@ export default function AdminHub() {
         <span className="rounded-full bg-brand/10 px-3 py-1 text-sm font-extrabold text-brand-dark">{def.emoji} {def.label}</span>
       </div>
 
-      {/* التبويبات الأربعة — أزرار ثلاثية الأبعاد، كل زرّ يفتح قسمه المستقل */}
-      <AdminNav />
-
-      {/* وصف مختصر لكل قسم */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {sections.filter((s) => s.key !== 'profile').map((s) => (
-          <button key={s.key} onClick={() => router.push(s.href)}
-            className="card relative flex items-center gap-3 p-3 text-right transition active:scale-[0.99]">
-            {!!badge[s.key] && badge[s.key]! > 0 && (
-              <span className="absolute left-3 top-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">{badge[s.key]}</span>
-            )}
-            <span className="text-xl">{s.icon}</span>
-            <span className="min-w-0 text-xs text-gray-500">{s.desc}</span>
-          </button>
-        ))}
+      {/* التبويبات — أزرار ثلاثية الأبعاد، كل زرّ يستدعي محتواه خلفه */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {visible.map((t) => {
+          const active = tab === t.key;
+          return (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`float-box relative flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-3 text-center transition active:scale-95 ${
+                active ? 'text-white ring-2 ring-white/60' : 'bg-white text-gray-700 ring-1 ring-black/[0.05] hover:-translate-y-0.5'}`}
+              style={active ? { backgroundImage: 'linear-gradient(135deg, #1aa893, #0a5246)' } : undefined}>
+              {!!badge[t.key] && badge[t.key]! > 0 && (
+                <span className="absolute left-2 top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{badge[t.key]}</span>
+              )}
+              <span className="text-2xl drop-shadow-sm">{t.icon}</span>
+              <span className="text-[12px] font-extrabold leading-tight">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* لمحة سريعة */}
-      {stats && (
-        <div className="grid grid-cols-4 gap-2">
-          {[['👥 مستخدمون', stats.users], ['📋 إعلانات', stats.listings], ['⏳ موافقات', stats.pending], ['⚖️ نزاعات', stats.disputes]].map(([l, v]) => (
-            <div key={l as string} className="card float-box p-2 text-center">
-              <div className="text-lg font-extrabold text-brand-dark text-emboss">{v as number}</div>
-              <div className="text-[10px] leading-tight text-gray-500">{l as string}</div>
-            </div>
-          ))}
+      {/* محتوى التبويب النشط — بورقتين خلفيّتين توحيان بصفحات متراكمة (ثلاثي الأبعاد) */}
+      <div className="relative mt-3">
+        <div className="pointer-events-none absolute -top-2.5 left-4 right-4 h-5 rounded-2xl bg-black/[0.05]" />
+        <div className="pointer-events-none absolute -top-1.5 left-2 right-2 h-5 rounded-2xl bg-black/[0.08]" />
+        <div className="relative rounded-3xl bg-white/40 p-3 shadow-lift ring-1 ring-black/[0.05]">
+          {tab === 'profile' && <AccountPage />}
+          {tab === 'site' && can(role, 'site', 'view') && <SiteSection embedded />}
+          {tab === 'listings' && can(role, 'listings', 'view') && <ListingsSection embedded />}
+          {tab === 'market' && can(role, 'market', 'view') && <MarketSection embedded />}
         </div>
-      )}
-
-      {/* مرجع الصلاحيات */}
-      {can(acct, 'site', 'view') && (
-        <button onClick={() => router.push('/admin/roles')} className="card float-box flex w-full items-center gap-3 p-3 text-right">
-          <span className="text-2xl">🔑</span>
-          <span className="min-w-0"><span className="block font-bold">الصلاحيات والأدوار</span>
-          <span className="block text-xs text-gray-500">مصفوفة الاطلاع/الإضافة/التعديل/الحذف لكل دور</span></span>
-        </button>
-      )}
+      </div>
     </div>
   );
 }
