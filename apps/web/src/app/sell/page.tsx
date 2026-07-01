@@ -38,6 +38,7 @@ export default function SellPage() {
   const [error, setError] = useState('');
   const [manualLoc, setManualLoc] = useState(false);
   const [catSearch, setCatSearch] = useState('');
+  const [catOpen, setCatOpen] = useState(false);
 
   const [form, setForm] = useState<any>({
     catPath: [] as Cat[], categoryId: '',
@@ -216,13 +217,17 @@ export default function SellPage() {
     ? (deepestCat?.children ?? []).filter((c: Cat) => relevant(c.id))
     : (interests.length ? interestRootCats : tree);
   const chooseCat = (c: Cat) => {
+    const isLeaf = !(c.children && c.children.length);
     const newPath = [...form.catPath, c];
-    setForm((f: any) => ({ ...f, catPath: newPath, categoryId: c.children && c.children.length ? '' : c.id }));
+    setForm((f: any) => ({ ...f, catPath: newPath, categoryId: isLeaf ? c.id : '' }));
+    if (isLeaf) setCatOpen(false); // إغلاق القائمة المنسدلة عند اختيار صنف نهائي
   };
   const pickPath = (path: Cat[]) => {
     const leaf = path[path.length - 1];
-    setForm((f: any) => ({ ...f, catPath: path, categoryId: leaf.children?.length ? '' : leaf.id }));
+    const isLeaf = !leaf.children?.length;
+    setForm((f: any) => ({ ...f, catPath: path, categoryId: isLeaf ? leaf.id : '' }));
     setCatSearch('');
+    if (isLeaf) setCatOpen(false);
   };
   const truncateCat = (i: number) => setForm((f: any) => ({ ...f, catPath: f.catPath.slice(0, i), categoryId: '' }));
   const cardTheme = (c: Cat) => resolveTheme([{ name: c.name, themeKey: c.themeKey ?? null }, ...[...form.catPath].reverse().map((p: Cat) => ({ name: p.name, themeKey: p.themeKey ?? null }))]);
@@ -321,79 +326,92 @@ export default function SellPage() {
         )}
       </Section>
 
-      {/* التصنيف — بحث + بطاقات ملوّنة */}
+      {/* التصنيف — قائمة منسدلة مضغوطة توفّر المساحة */}
       <Section title="🗂️ التصنيف" badge="req" tint="bg-amber-50 border-amber-200">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <span className="text-xs font-bold text-gray-500">{interests.length ? '✦ من اهتماماتك فقط' : 'كل التصنيفات'}</span>
-          <button type="button" onClick={() => setShowInterestPicker(true)} className="flex shrink-0 items-center gap-1 rounded-lg bg-white px-2 py-1 text-xs font-bold text-brand ring-1 ring-sand-200">✎ تعديل الاهتمامات</button>
-        </div>
-        <div className="relative mb-3">
-          <input className={`input !pr-10 ${tone(true, !!form.categoryId)}`} placeholder="🔍 ابحث عن تصنيف بالاسم..." value={catSearch} onChange={(e) => setCatSearch(e.target.value)} />
-        </div>
+        {/* زرّ منسدل يعرض المحدّد ويفتح المنتقي */}
+        <button type="button" onClick={() => setCatOpen((o) => !o)}
+          className={`flex w-full items-center justify-between gap-2 rounded-2xl bg-white px-4 py-3 text-right ring-1 transition ${form.categoryId ? 'ring-2 ring-green-400' : 'ring-sand-200'}`}>
+          <span className="min-w-0 flex-1 truncate">
+            {form.categoryId
+              ? `✓ ${form.catPath.map((c: Cat) => c.name).join(' › ')}`
+              : form.catPath.length
+                ? `${form.catPath.map((c: Cat) => c.name).join(' › ')} … (أكمِل)`
+                : 'اختر التصنيف'}
+          </span>
+          <span className={`shrink-0 text-gray-400 transition ${catOpen ? 'rotate-180' : ''}`}>▾</span>
+        </button>
 
-        {(!interestsReady || !tree.length) ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {[0, 1, 2, 3].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl bg-black/5" />)}
-          </div>
-        ) : catSearch.trim() ? (
-          <div className="space-y-1.5">
-            {searchResults.length === 0 ? <p className="py-3 text-center text-gray-500">لا نتائج لـ «{catSearch}»</p> :
-              searchResults.map(({ cat, path }) => {
-                const t = resolveTheme([{ name: cat.name, themeKey: cat.themeKey ?? null }]);
-                return (
-                  <button key={path.map((p) => p.id).join('/')} onClick={() => pickPath(path)}
-                    className="flex w-full items-center gap-2 rounded-xl border-2 border-sand-200 p-2 text-right hover:border-brand">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg" style={{ backgroundImage: gradient(t), color: '#fff' }}>{cat.icon ?? '🐾'}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-bold">{cat.name}</span>
-                      <span className="block truncate text-xs text-gray-500">{path.map((p) => p.name).join(' › ')}</span>
-                    </span>
-                    {cat.children?.length ? <span className="shrink-0 text-xs text-gray-400">فروع ›</span> : <span className="shrink-0 text-xs font-bold text-brand">اختيار</span>}
-                  </button>
-                );
-              })}
-          </div>
-        ) : (
-          <>
-            <div className="mb-3 flex flex-wrap items-center gap-1 text-sm">
-              <button onClick={() => truncateCat(0)} className={`font-bold ${form.catPath.length === 0 ? 'text-brand' : 'text-gray-500'}`}>الكل</button>
-              {form.catPath.map((c: Cat, i: number) => (
-                <span key={c.id} className="flex items-center gap-1">
-                  <span className="text-gray-300">›</span>
-                  <button onClick={() => truncateCat(i + 1)} className="font-bold text-gray-600">{c.icon} {c.name}</button>
-                </span>
-              ))}
+        {catOpen && (
+          <div className="mt-2 rounded-2xl bg-white p-3 ring-1 ring-sand-200">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-xs text-gray-500">{interests.length ? '✦ من اهتماماتك فقط' : 'كل التصنيفات'}</span>
+              <button type="button" onClick={() => setShowInterestPicker(true)} className="flex shrink-0 items-center gap-1 rounded-lg bg-sand-50 px-2 py-1 text-xs text-brand ring-1 ring-sand-200">✎ تعديل الاهتمامات</button>
             </div>
-            {catOptions.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {catOptions.map((c) => {
-                  const isLeaf = !c.children || c.children.length === 0;
-                  const selected = form.categoryId === c.id;
-                  const t = cardTheme(c);
-                  return (
-                    <button key={c.id} onClick={() => chooseCat(c)}
-                      className={`relative flex flex-col items-center gap-1 overflow-hidden rounded-2xl p-4 text-center font-bold text-white shadow-sm transition active:scale-95 ${selected ? 'ring-4 ring-white' : ''}`}
-                      style={{ backgroundImage: gradient(t), boxShadow: `0 10px 24px -14px ${t.from}` }}>
-                      {catImageIcon(c.name) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={catImageIcon(c.name)!} alt="" width={44} height={44} className="h-11 w-11 rounded-full object-cover ring-2 ring-white/70 drop-shadow" />
-                      ) : (
-                        <span className="text-3xl drop-shadow">{c.icon ?? '🐾'}</span>
-                      )}
-                      <span className="text-emboss-light">{c.name}</span>
-                      <span className="rounded-full bg-black/20 px-2 py-0.5 text-[10px] font-bold">{isLeaf ? (selected ? '✓ محدّد' : 'اختيار') : 'فروع ›'}</span>
-                    </button>
-                  );
-                })}
+            <div className="relative mb-3">
+              <input className="input !pr-10" placeholder="🔍 ابحث عن تصنيف بالاسم..." value={catSearch} onChange={(e) => setCatSearch(e.target.value)} />
+            </div>
+
+            {(!interestsReady || !tree.length) ? (
+              <div className="space-y-1.5">{[0, 1, 2].map((i) => <div key={i} className="h-12 animate-pulse rounded-xl bg-black/5" />)}</div>
+            ) : catSearch.trim() ? (
+              <div className="max-h-72 space-y-1.5 overflow-y-auto">
+                {searchResults.length === 0 ? <p className="py-3 text-center text-gray-500">لا نتائج لـ «{catSearch}»</p> :
+                  searchResults.map(({ cat, path }) => {
+                    const t = resolveTheme([{ name: cat.name, themeKey: cat.themeKey ?? null }]);
+                    return (
+                      <button key={path.map((p) => p.id).join('/')} onClick={() => pickPath(path)}
+                        className="flex w-full items-center gap-2 rounded-xl border-2 border-sand-200 p-2 text-right hover:border-brand">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg" style={{ backgroundImage: gradient(t), color: '#fff' }}>{cat.icon ?? '🐾'}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-bold">{cat.name}</span>
+                          <span className="block truncate text-xs text-gray-500">{path.map((p) => p.name).join(' › ')}</span>
+                        </span>
+                        {cat.children?.length ? <span className="shrink-0 text-xs text-gray-400">فروع ›</span> : <span className="shrink-0 text-xs font-bold text-brand">اختيار</span>}
+                      </button>
+                    );
+                  })}
               </div>
             ) : (
-              <p className="rounded-2xl bg-white/70 p-3 text-center text-sm text-gray-500">
-                {interests.length ? 'لا تطابق اهتماماتك هنا — عدّل اهتماماتك بالأعلى لعرض أصناف أخرى.' : 'لا توجد تصنيفات فرعية.'}
-              </p>
+              <>
+                <div className="mb-2 flex flex-wrap items-center gap-1 text-sm">
+                  <button onClick={() => truncateCat(0)} className={`${form.catPath.length === 0 ? 'text-brand' : 'text-gray-500'}`}>الكل</button>
+                  {form.catPath.map((c: Cat, i: number) => (
+                    <span key={c.id} className="flex items-center gap-1">
+                      <span className="text-gray-300">›</span>
+                      <button onClick={() => truncateCat(i + 1)} className="text-gray-600">{c.icon} {c.name}</button>
+                    </span>
+                  ))}
+                </div>
+                {catOptions.length > 0 ? (
+                  <div className="max-h-72 space-y-1.5 overflow-y-auto">
+                    {catOptions.map((c) => {
+                      const isLeaf = !c.children || c.children.length === 0;
+                      const selected = form.categoryId === c.id;
+                      const t = cardTheme(c);
+                      return (
+                        <button key={c.id} type="button" onClick={() => chooseCat(c)}
+                          className={`flex w-full items-center gap-2 rounded-xl border-2 p-2 text-right transition active:scale-[0.99] ${selected ? 'border-brand bg-brand/5' : 'border-sand-200 hover:border-brand'}`}>
+                          {catImageIcon(c.name) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={catImageIcon(c.name)!} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                          ) : (
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg text-white" style={{ backgroundImage: gradient(t) }}>{c.icon ?? '🐾'}</span>
+                          )}
+                          <span className="min-w-0 flex-1 truncate font-bold">{c.name}</span>
+                          <span className={`shrink-0 text-xs font-bold ${isLeaf ? 'text-brand' : 'text-gray-400'}`}>{isLeaf ? (selected ? '✓ محدّد' : 'اختيار') : 'فروع ›'}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="rounded-2xl bg-sand-50 p-3 text-center text-sm text-gray-500">
+                    {interests.length ? 'لا تطابق اهتماماتك هنا — عدّل اهتماماتك بالأعلى.' : 'لا توجد تصنيفات فرعية.'}
+                  </p>
+                )}
+              </>
             )}
-          </>
+          </div>
         )}
-        {form.categoryId && <p className="mt-3 rounded-2xl bg-green-50 p-2 text-center font-bold text-green-700">✓ {form.catPath.map((c: Cat) => c.name).join(' › ')}</p>}
       </Section>
 
       {/* العنوان والوصف — مطلوب */}
