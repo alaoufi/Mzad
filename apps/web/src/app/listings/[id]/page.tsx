@@ -160,7 +160,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
   const canArchive = isOwner || isStaff;
 
   return (
-    <div className="scene-root -mx-4 -my-6 min-h-screen overflow-hidden px-4 py-6 animate-fadeup" style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
+    <div className="scene-root -mx-4 -my-6 min-h-screen overflow-hidden px-4 pb-6 pt-3 animate-fadeup" style={{ background: sceneBackground(theme, motif, mood), ...skinVars(skin) }}>
       {listing.status === 'DRAFT' && (
         <div className="mb-4 rounded-2xl bg-amber-50 p-3 text-center font-bold text-amber-800">
           ⏳ إعلانك بانتظار موافقة الإدارة قبل ظهوره للجميع
@@ -169,7 +169,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
       {/* شريط إدارة الإعلان (تعديل/إخفاء/أرشفة) */}
       {(canEditFields || canArchive) && (
-        <div className="card mb-4 p-3">
+        <div className="card float-box mb-3 p-3">
           <div className="mb-2 text-xs font-bold text-gray-500">⚙️ إدارة الإعلان</div>
           <div className="flex flex-wrap items-center gap-2">
             {listing.archived && <span className="chip !bg-gray-200 !text-gray-700">🗄️ مؤرشف</span>}
@@ -199,7 +199,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {/* الميديا */}
       <div className="min-w-0">
         <div className="card float-box relative aspect-[4/3] bg-sand-100">
@@ -261,7 +261,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* التفاصيل */}
-      <div className="min-w-0 space-y-4">
+      <div className="min-w-0 space-y-2.5">
         <div>
           {crumb && (
             <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-brand-dark shadow-sm ring-1 ring-black/5">
@@ -324,7 +324,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
 
         {/* المواصفات — كل حقل صفّ كامل بخلفية مميّزة، والقيمة تلتفّ لعدّة أسطر */}
         <div className="card float-box p-4">
-          <h2 className="mb-3 text-lg font-extrabold text-engrave">📋 المواصفات</h2>
+          <h2 className="mb-2 text-lg font-extrabold text-engrave">📋 المواصفات</h2>
           <div className="space-y-2">
             <Spec icon="🏷️" label="النوع" value={[listing.category?.parent?.name, listing.category?.name].filter(Boolean).join(' / ')} />
             <Spec icon="🔢" label="العدد" value={listing.count} />
@@ -337,7 +337,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
         {/* الحالة الصحية */}
         {listing.health?.length > 0 && (
           <div className="card float-box p-4">
-            <h2 className="mb-3 text-lg font-extrabold text-engrave">🩺 الحالة الصحية والعيوب</h2>
+            <h2 className="mb-2 text-lg font-extrabold text-engrave">🩺 الحالة الصحية والعيوب</h2>
             <div className="flex flex-wrap gap-2">
               {listing.health.map((h: any) => (
                 <span
@@ -376,7 +376,7 @@ export default function ListingPage({ params }: { params: { id: string } }) {
               {hasAuction ? (
                 <LiveAuction auctionId={listing.auction.id} canManage={canManage} />
               ) : (
-                <div className="card float-box relative overflow-hidden p-5 text-white"
+                <div className="card float-box relative overflow-hidden p-4 text-white"
                   style={{ backgroundImage: gradient(theme) }}>
                   <div className="pointer-events-none absolute -left-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
                   <div className="pointer-events-none absolute -bottom-12 right-6 h-28 w-28 rounded-full bg-white/10" />
