@@ -408,10 +408,6 @@ model Dispute {
   witnesses  String?              // شهود أو أطراف ذات علاقة
   declared   Boolean  @default(false) // إقرار بصحة المعلومات
   evidence   String[] @default([]) // أدلة المشتكي (صور/مستندات)
-  paymentMethod String?           // طريقة الدفع المستخدمة
-  transferRef String?             // رقم الحوالة/إثبات الدفع
-  witnesses  String?              // شهود أو أطراف ذات علاقة
-  declared   Boolean  @default(false) // إقرار بصحة المعلومات وتحمّل المسؤولية
   response   String?              // إفادة الطرف الآخر (ردّه)
   responseEvidence String[] @default([]) // أدلة الطرف الآخر
   respondedAt DateTime?           // وقت ردّ الطرف الآخر
